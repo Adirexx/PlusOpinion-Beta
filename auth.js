@@ -247,7 +247,8 @@ async function signInWithProvider(provider) {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
       options: {
-        redirectTo: 'https://plusopinion.com/feed'
+        // Automatically redirects to /feed on whatever domain the user is currently on
+        redirectTo: window.location.origin + '/feed'
       }
     });
 
