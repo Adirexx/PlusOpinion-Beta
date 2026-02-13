@@ -156,41 +156,8 @@
                 return user;
             };
 
-            window.signInUser = async function (email, password) {
-                console.log('🔑 signInUser called with:', email);
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) {
-                    console.error('❌ Login error from Supabase:', error);
-                    throw error;
-                }
-                console.log('✅ Login successful:', data.user?.email);
-                return data.user;
-            };
-
-            window.signInWithProvider = async function (provider) {
-                console.log(`🔵 Initiating ${provider} login...`);
-                try {
-                    const { data, error } = await supabase.auth.signInWithOAuth({
-                        provider: provider,
-                        options: {
-                            redirectTo: window.location.origin + '/HOMEPAGE_FINAL.HTML'
-                        }
-                    });
-
-                    if (error) {
-                        console.error('❌ Supabase OAuth Error:', error);
-                        alert(`Login Error: ${error.message}`);
-                        throw error;
-                    }
-
-                    console.log('✅ OAuth initiated:', data);
-                    return data;
-                } catch (err) {
-                    console.error('❌ Unexpected OAuth Error:', err);
-                    alert(`Unexpected Login Error: ${err.message}`);
-                    throw err;
-                }
-            };
+            // Auth functions (signUpUser, signInUser, etc.) are now managed exclusively in auth.js
+            // This prevents conflicts and ensures consistent redirect behavior.
 
             window.signOutUser = async function () {
                 console.log('🚪 signOutUser called');
@@ -205,12 +172,6 @@
                 return data?.user || null;
             };
 
-            window.resetPassword = async function (email) {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + "/reset-password.html"
-                });
-                if (error) throw error;
-            };
 
             // Signal that auth is ready
             window.authReady = true;
