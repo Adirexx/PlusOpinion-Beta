@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | PlusOpinion</title>
+    <meta name="description"
+        content="Learn about PlusOpinion - the trusted platform for authentic product reviews and consumer opinions. Discover our mission, vision, and commitment to transparency.">
+    <meta name="keywords"
+        content="about plusopinion, company mission, authentic reviews, consumer platform, opinion network">
+
+    <!-- Favicon for browser tabs -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D42E61TP4M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-D42E61TP4M');
+    </script>
+
+    <!-- Router for clean URLs -->
+    <script src="./router.js"></script>
+    <script>
+        if (window.RouteCleaner) window.RouteCleaner.cleanCurrentUrl();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            /* Fixed typo 'border: 1px border' */
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, #60A5FA, #3B82F6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-gradient-gold {
+            background: linear-gradient(to right, #FBBF24, #D97706);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-[#020617] text-slate-300 antialiased selection:bg-blue-500/30 selection:text-white">
+    <!-- Header Space -->
+    <div
+        class="h-20 w-full border-b border-white/5 flex items-center px-8 md:px-20 justify-between fixed top-0 bg-[#020617]/90 backdrop-blur-md z-50">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl font-black tracking-tighter text-white">PlusOpinion</span>
+            <span
+                class="px-2 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 text-[10px] font-bold text-blue-400 tracking-widest uppercase">BETA</span>
+        </div>
+        <a href="javascript:void(0)"
+            onclick="if(history.length>1){history.back()}else{window.location.href='index.html'}"
+            class="text-sm font-medium hover:text-white transition-colors">Back</a>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 pt-32 pb-20">
+
+        <!-- Hero Section -->
+        <header class="mb-20 text-center">
+            <h1 class="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight leading-tight">
+                We are <span class="text-blue-500">PlusOpinion</span>, <br>
+                and we are here for <span class="text-white">you.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                Refusing the noise of the digital world. Reclaiming trust. A platform for the truth to be heard.
+            </p>
+        </header>
+
+        <div class="space-y-16">
+
+            <!-- Our Mission (The Story) -->
+            <section>
+                <div class="glass-card p-8 md:p-12 rounded-3xl border border-white/5">
+                    <h2 class="text-2xl font-bold text-white mb-6">More Than Just Social Media</h2>
+                    <div class="space-y-6 text-lg leading-relaxed text-slate-300">
+                        <p>
+                            We are not just another platform for following and unfollowing. We are a sanctuary for the
+                            <strong class="text-white">whole population</strong> to write their opinions without fear or
+                            insecurity.
+                        </p>
+                        <p>
+                            In a digital age filled with noise, manipulation, and fake reviews, authentic voices often
+                            get lost. We are here to change that. Whether you choose to speak publicly or anonymously,
+                            we ensure secure expression where <strong class="text-white">no one knows who you are until
+                                you choose to reveal yourself.</strong>
+                        </p>
+                        <p class="italic text-slate-400 border-l-2 border-blue-500 pl-4">
+                            "You can write whatever opinion you have, and we will make sure you don't get unheard."
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- For Consumers / Public -->
+            <section>
+                <h3 class="text-xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span class="w-8 h-[1px] bg-blue-500"></span>
+                    For The Public
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass-card p-8 rounded-2xl">
+                        <h4 class="text-lg font-bold text-white mb-3">Unfiltered Truth</h4>
+                        <p class="text-sm leading-relaxed">
+                            We are building trust in the market with <strong>verified consumer opinions</strong>. We
+                            assure that real experiences will no longer fade into the background of manipulated
+                            narratives.
+                        </p>
+                    </div>
+                    <div class="glass-card p-8 rounded-2xl">
+                        <h4 class="text-lg font-bold text-white mb-3">Blind Trust</h4>
+                        <p class="text-sm leading-relaxed">
+                            A platform you can trust blindly before making any purchase or simply to stay informed about
+                            what’s truly happening in the world. Real people, real stories.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- For Partners -->
+            <section>
+                <div
+                    class="glass-card p-8 md:p-10 rounded-3xl border border-blue-500/10 bg-blue-500/5 relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none">
+                    </div>
+
+                    <h3 class="text-xl font-bold text-white mb-4 relative z-10">Empowering Partners</h3>
+                    <p class="text-lg text-slate-300 mb-6 relative z-10">
+                        We believe that the value of a platform is created by its users. That's why we share our
+                        success.
+                    </p>
+                    <p class="text-sm leading-relaxed text-slate-400 relative z-10">
+                        We are opening income opportunities for <strong>middle-class families, students, and
+                            side-hustlers</strong>. Through our Partner Program, you don't just contribute content—you
+                        earn a share of the platform's overall revenue. Your voice has value, literally.
+                    </p>
+                </div>
+            </section>
+
+            <!-- For Brands -->
+            <section>
+                <h3 class="text-xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span class="w-8 h-[1px] bg-white/20"></span>
+                    For Brands & Companies
+                </h3>
+                <div class="glass-card p-8 rounded-3xl">
+                    <p class="text-lg text-slate-300 leading-relaxed">
+                        We provide a <strong>SaaS-driven ecosystem</strong> for Research & Development. Companies can
+                        access summarized, authentic data to improve products and make informed business decisions. We
+                        offer advanced tools for proper customer and market research, bridging the gap between consumers
+                        and creators.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Global Ambition -->
+            <section class="py-10">
+                <div class="text-center max-w-2xl mx-auto">
+                    <h2 class="text-3xl font-black text-white mb-6">From India, For The World</h2>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-8">
+                        It has long been said that there isn't a global digital giant from India. <br>
+                        <strong class="text-white">We are here to disrupt that.</strong>
+                    </p>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        PlusOpinion is designed to be a category-creator, disrupting traditional social networking. We
+                        are the new-age platform, built with Indian ingenuity, for the global citizen.
+                    </p>
+                </div>
+            </section>
+
+        </div>
+
+        <footer class="mt-20 pt-10 border-t border-white/5 text-center text-sm text-slate-500">
+            <p>© 2026 PlusOpinion Technologies. All rights reserved.</p>
+            <div class="flex justify-center gap-6 mt-4">
+                <a href="TERMS_AND_CONDITIONS.HTML" class="hover:text-white transition-colors">Terms</a>
+                <a href="PRIVACY_POLICY.HTML" class="hover:text-white transition-colors">Privacy</a>
+                <a href="mailto:support@plusopinion.com" class="hover:text-white transition-colors">Contact</a>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Subtle Background Animation -->
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/5 rounded-full blur-[100px]">
+        </div>
+    </div>
+</body>
+
+</html>

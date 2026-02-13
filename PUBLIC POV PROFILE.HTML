@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PlusOpinion - Public Profile</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Global Design System -->
+    <link rel="stylesheet" href="./global.css">
+
+    <!-- Favicon for browser tabs -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+
+    <!-- Supabase UMD bundle (must load before supabase.js) -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./api.js"></script>
+
+    <!-- SPA Core Infrastructure -->
+    <script type="module" src="./state_manager.js"></script>
+    <script type="module" src="./router.js"></script>
+    <script type="module" src="./pull_to_refresh.js"></script>
+    <script type="module" src="./navigation_preloader.js"></script>
+
+    <script type="module" src="./notifications.js"></script>
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./runtime.js"></script>
+    <script src="./bridge.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./service-worker.js");
+            });
+        }
+    </script>
+
+    <!-- Visual Tokens & Global CSS -->
+    <style>
+        :root {
+            --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-heading: 'Space Grotesk', system-ui, serif;
+
+            --bg-deep: #020205;
+            --neon: #2f8bff;
+            --neon-weak: rgba(47, 139, 255, 0.18);
+            --muted: rgba(255, 255, 255, 0.65);
+            --card: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-green: #6BFFB6;
+            --accent-gold: #FFD700;
+            --danger: #ff4d4d;
+
+            --radius: 16px;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: var(--font-body);
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- AMBIENT BACKGROUND --- */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 0%, #050814 0%, var(--bg-deep) 90%);
+            z-index: -2;
+            pointer-events: none;
+            transform: translateZ(0);
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.4;
+            animation: breathe 8s infinite ease-in-out alternate;
+        }
+
+        .orb-1 {
+            top: -10%;
+            left: -20%;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, var(--neon), transparent);
+        }
+
+        .orb-2 {
+            bottom: -10%;
+            right: -20%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, #4f46e5, transparent);
+            animation-delay: -5s;
+        }
+
+        @keyframes breathe {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 0.5;
+            }
+        }
+
+        /* --- APP CONTAINER --- */
+        #root {
+            width: 100%;
+            height: 100%;
+            max-width: 450px;
+            background-color: rgba(3, 4, 18, 0.85);
+            backdrop-filter: blur(20px);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+        }
+
+        /* --- UTILITIES --- */
+        .smooth-scroll-container {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            overscroll-behavior-y: contain;
+        }
+
+        .font-heading {
+            font-family: var(--font-heading);
+        }
+
+        .glass-panel {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.2s ease;
+        }
+
+        .header-glass {
+            background: rgba(3, 4, 18, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .rqs-pill {
+            background: linear-gradient(90deg, var(--neon), #6fb6ff);
+            box-shadow: 0 0 12px var(--neon-weak);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Profile Specifics */
+        .profile-avatar-container {
+            width: 105px;
+            height: 105px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            background-color: #000;
+        }
+
+        .banner-gradient {
+            background: linear-gradient(135deg, #1a1f35 0%, #0d101b 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-gradient::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop') center/cover;
+            opacity: 0.2;
+            mix-blend-mode: overlay;
+        }
+
+        /* OPINION BUTTON ANIMATION */
+        .opinion-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .opinion-icon {
+            transition: transform 0.5s ease;
+        }
+
+        .opinion-btn:active .opinion-icon,
+        .opinion-btn:hover .opinion-icon {
+            transform: rotate(90deg);
+        }
+
+        .opinion-btn:active,
+        .opinion-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(47, 139, 255, 0.8);
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-enter {
+            animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            40% {
+                transform: scale(1.4);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .touch-scale:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+            transition: all 0.1s;
+        }
+
+        /* Tooltips */
+        .delayed-label {
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition-delay: 0s;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .group:active .delayed-label,
+        .group:hover .delayed-label {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 1s;
+        }
+
+        /* MySpace Swoosh */
+        .myspace-swoosh {
+            opacity: 0.7;
+            transform: translateX(-5px) translateY(5px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .myspace-trigger:hover .myspace-swoosh {
+            opacity: 1;
+            transform: translateX(0) translateY(0);
+            stroke: var(--neon);
+        }
+
+        /* Image Magnify for Post */
+        .img-magnify-wrapper {
+            overflow: hidden;
+        }
+
+        .img-magnify {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+        }
+
+        .group:hover .img-magnify,
+        .group:active .img-magnify {
+            transform: scale(1.08);
+        }
+
+        .nav-glass {
+            background: rgba(3, 4, 18, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Hide Scrollbar but allow scroll */
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
+    <script type="module">
+        import { supabase } from "./supabase.js";
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (!session) {
+                window.location.href = "index.html";
+            }
+        });
+    </script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        neon: 'var(--neon)',
+                        muted: 'var(--muted)',
+                        'accent-green': 'var(--accent-green)',
+                        'accent-gold': 'var(--accent-gold)',
+                        danger: 'var(--danger)',
+                    },
+                    fontFamily: {
+                        heading: ['Space Grotesk', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
+        const goTo = (page) => {
+            window.scrollTo(0, 0);
+            window.location.href = page;
+        };
+
+        function dispatchAction(action) {
+            if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+                // Already on homepage
+                window.PlusOpinionActions[action]();
+            } else {
+                // On another page → redirect with hash
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        }
+
+        const triggerAction = (action) => {
+            if (window.PlusOpinionActions?.[action]) {
+                window.PlusOpinionActions[action]();
+            } else {
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        };
+
+        // 🔁 PAGE → TAB MAP (GLOBAL)
+        const PAGE_TAB_MAP = {
+            'HOMEPAGE_FINAL.HTML': 'home',
+            'CATAGORYPAGE.HTML': 'categories',
+            'MY SPACE FINAL (USER).HTML': 'myspace',
+            'NOTIFICATION PANEL.HTML': 'notifs',
+            'PRIVATE OWNER PROFILE.HTML': 'profile'
+        };
+
+        // --- ICONS ---
+        const Icons = {
+            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>,
+            Search: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
+            MoreVertical: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>,
+            MoreHorizontal: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>,
+            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
+            Link: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>,
+            Edit: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>,
+            BarChart2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="18" y1="20" y2="10" /><line x1="12" x2="12" y1="20" y2="4" /><line x1="6" x2="6" y1="20" y2="14" /></svg>,
+            ShieldCheck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>,
+            Plus: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+            ThumbsUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" /></svg>,
+            Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
+            WhatsApp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" /></svg>,
+            Instagram: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>,
+            MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>,
+            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+            Flag: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>,
+            Slash: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="4.93" x2="19.07" y1="4.93" y2="19.07" /></svg>,
+            Repeat: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></svg>,
+            BookMark: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>,
+            BarChart: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="20" y2="10" /><line x1="18" x2="18" y1="20" y2="4" /><line x1="6" x2="6" y1="20" y2="16" /></svg>,
+
+            // Edit Icons
+            Camera: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
+
+            // Nav Icons
+            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+            ArrowRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>,
+            EyeOff: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" x2="22" y1="2" y2="22" /></svg>,
+            Trash: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>,
+            Send: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>,
+            FileText: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" x2="8" y1="13" y2="13" /><line x1="16" x2="8" y1="17" y2="17" /><line x1="10" x2="8" y1="9" y2="9" /></svg>,
+            MySpaceLogo: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 3L3 22" strokeLinejoin="bevel" />
+                    <path d="M21 22L11 3" strokeLinejoin="bevel" />
+                    <path d="M22 8L4 18" className="myspace-swoosh" strokeWidth="2.5" />
+                </svg>
+            )
+        };
+
+        const Icon = ({ icon, size = 20, className = "" }) => {
+            const Component = Icons[icon];
+            if (!Component) return null;
+            return <Component width={size} height={size} className={className} />;
+        };
+
+        const NavItem = ({ icon, label, isActive, onClick, isMySpace }) => {
+            const handleClick = () => {
+                vibrate();
+                if (isMySpace) {
+                    checkMySpaceRedirect();
+                } else if (onClick) {
+                    onClick();
+                }
+            };
+
+            return (
+                <button
+                    onClick={handleClick}
+                    className={`flex flex-col items-center justify-center gap-1 w-full transition-all duration-300 ${isActive ? 'text-neon scale-110' : 'text-muted/60 hover:text-white/80'}`}
+                >
+                    <div className="relative">
+                        <Icon icon={icon} size={22} className={`${isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`} />
+                        {isActive && (
+                            <div className="absolute -inset-2 bg-neon/10 blur-xl rounded-full -z-10"></div>
+                        )}
+                    </div>
+                    <span className={`text-[10px] font-medium tracking-wide ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+                        {label}
+                    </span>
+                </button>
+            );
+        };
+
+        const vibrate = () => {
+            if (navigator.vibrate) navigator.vibrate(5);
+        };
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+
+        // --- HELPERS ---
+        const formatTime = (dateString) => {
+            if (!dateString) return 'recently';
+            const now = new Date();
+            const past = new Date(dateString);
+            const diffMs = now - past;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHour / 24);
+
+            if (diffSec < 60) return 'just now';
+            if (diffMin < 60) return `${diffMin}m`;
+            if (diffHour < 24) return `${diffHour}h`;
+            if (diffDay < 7) return `${diffDay}d`;
+            return past.toLocaleDateString();
+        };
+
+        const checkMySpaceRedirect = async () => {
+            try {
+                const user = await window.getCurrentUser();
+                if (!user) {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    return;
+                }
+                const { data: profile } = await window.supabase
+                    .from('profiles')
+                    .select('is_business_account, company_name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile && profile.is_business_account) {
+                    window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+                } else {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                }
+            } catch (e) {
+                window.location.href = 'MY SPACE FINAL (USER).HTML';
+            }
+        };
+
+        // --- COMPONENTS ---
+        // Mock data removed - now using dynamic state from Supabase
+
+        // --- COMPONENTS ---
+
+        // NavItem and BottomNav moved to global helpers and App component respectively
+
+        // --- SHARE MODAL ---
+        const ShareModal = ({ isOpen, onClose, post, user }) => {
+            if (!isOpen || (!post && !user)) return null;
+
+            const isProfileShare = !!user && !post;
+            const shareUrl = isProfileShare
+                ? `${window.location.origin}/profile?id=${user.id}`
+                : `${window.location.origin}/post/${post.id || 'demo'}`;
+
+            const shareText = isProfileShare
+                ? `Check out ${user.full_name}'s profile on PlusOpinion`
+                : `Customer feedback on ${post.product || 'Product'}`;
+
+            const handleCopy = async () => {
+                try {
+                    await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied to clipboard', icon: 'Link', isSuccess: true } }));
+                    onClose();
+                } catch (err) { console.error(err); }
+            };
+
+            const handleNativeShare = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        onClose();
+                    } catch (err) { }
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing not supported', icon: 'AlertTriangle' } }));
+                }
+            };
+
+            const handleWhatsApp = () => {
+                let waText = "";
+                if (isProfileShare) {
+                    waText = `*Check out ${user.full_name} (@${user.username}) on PlusOpinion*\n\n${user.bio || ''}\n\nView profile: ${shareUrl}`;
+                } else {
+                    waText = `*Check out this opinion by @${post.username}*\n\n"${post.text ? post.text.substring(0, 80) : ''}..."\n\nSee full opinion here: ${shareUrl}`;
+                }
+                window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
+                onClose();
+            };
+
+            const handleInstagram = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        onClose();
+                    } catch (e) { }
+                } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied! Open Instagram to share.', icon: 'Instagram', isSuccess: true } }));
+                    setTimeout(() => {
+                        window.open('https://instagram.com', '_blank');
+                    }, 1000);
+                    onClose();
+                }
+            };
+
+            const displayName = isProfileShare ? user.full_name : post.name;
+            const displayHandle = isProfileShare ? user.username : post.username;
+            const displayAvatar = isProfileShare ? user.avatar_url : post.avatar;
+            const displayText = isProfileShare ? (user.bio || 'Check out my profile on PlusOpinion!') : post.text;
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6">
+                            <span className="text-white font-heading font-bold text-lg">Share Feedback</span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        </div>
+                        {/* Post Preview Card */}
+                        <div className="bg-[#1E1E1E] rounded-xl p-4 mb-6 border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-neon/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="flex items-center gap-3 mb-3">
+                                <img src={displayAvatar || DEFAULT_AVATAR} className="w-8 h-8 rounded-full object-cover" />
+                                <div>
+                                    <div className="text-white text-sm font-bold">{displayName}</div>
+                                    <div className="text-white/40 text-xs text-muted">@{displayHandle}</div>
+                                </div>
+                            </div>
+                            <div className="text-gray-300 text-sm mb-3 line-clamp-3 leading-relaxed font-light">
+                                {displayText}
+                            </div>
+                        </div>
+                        {/* Share Grid */}
+                        <div className="grid grid-cols-4 gap-4 mb-4">
+                            <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Link" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">Copy Link</span>
+                            </button>
+                            <button onClick={handleWhatsApp} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="WhatsApp" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">WhatsApp</span>
+                            </button>
+                            <button onClick={handleInstagram} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Instagram" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">Instagram</span>
+                            </button>
+                            <button onClick={handleNativeShare} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="MoreHorizontal" size={24} className="text-blue-400" />
+                                </div>
+                                <span className="text-xs text-muted">More</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+
+        const Avatar = ({ src, className, fallbackSize = 24, onClick }) => {
+            const [error, setError] = useState(false);
+
+            useEffect(() => { setError(false); }, [src]);
+
+            if (!src || error) {
+                return (
+                    <img
+                        src={DEFAULT_AVATAR}
+                        className={`${className} object-cover`}
+                        onClick={onClick}
+                        alt="Avatar"
+                    />
+                );
+            }
+
+            return (
+                <img
+                    src={src}
+                    className={className}
+                    onError={() => setError(true)}
+                    onClick={onClick}
+                    alt="Avatar"
+                />
+            );
+        };
+
+        const CommentItem = ({ comment }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+
+            useEffect(() => {
+                const checkLike = async () => {
+                    if (window.hasLikedComment) {
+                        try {
+                            const liked = await window.hasLikedComment(comment.id);
+                            setIsLiked(liked);
+                        } catch (e) { }
+                    }
+                };
+                checkLike();
+            }, [comment.id]);
+
+
+
+            const handleLike = async () => {
+                vibrate(5);
+                const newStatus = !isLiked;
+                setIsLiked(newStatus);
+                setLikesCount(prev => newStatus ? prev + 1 : prev - 1);
+
+                try {
+                    if (newStatus) {
+                        await window.likeComment(comment.id);
+                    } else {
+                        await window.unlikeComment(comment.id);
+                    }
+                } catch (e) {
+                    console.error('Comment like failed', e);
+                    setIsLiked(!newStatus);
+                    setLikesCount(prev => !newStatus ? prev + 1 : prev - 1);
+                }
+            };
+
+            return (
+                <div className={`flex gap-3 text-sm animate-fade-in ${comment.isPending ? 'opacity-50' : ''} group`}>
+                    <div className="flex-shrink-0">
+                        <Avatar
+                            src={comment.avatar}
+                            className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
+                            fallbackSize={12}
+                            onClick={() => { vibrate(); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline justify-between focus-within:ring-0">
+                            <div
+                                className="flex items-baseline gap-2 cursor-pointer group/name"
+                                onClick={() => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
+                            >
+                                <span className="font-bold text-white text-xs group-hover/name:text-neon transition-colors">{comment.user}</span>
+                                <span className="text-[10px] text-muted">{comment.time}</span>
+                            </div>
+                            <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                <Icon icon="ThumbsUp" size={12} className={`stroke-[1.5px] ${isLiked ? "fill-white" : ""}`} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
+                                {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
+                            </button>
+                        </div>
+                        <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{comment.text}</p>
+                    </div>
+                </div >
+            );
+        };
+
+        // --- OPINION CARD (PUBLIC VIEW) ---
+        const Post = ({ post, index, onShare, onReport, userProfile, onBookmark, savedPosts, onRemove, targetUserId }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [localLikes, setLocalLikes] = useState(post.agrees || 0);
+            const [showMoreMenu, setShowMoreMenu] = useState(false);
+            const [isHidden, setIsHidden] = useState(post.isHidden || false);
+            const isSaved = savedPosts?.has(String(post.id));
+            const [localCommentCount, setLocalCommentCount] = useState(post.comments || 0);
+            const [showComments, setShowComments] = useState(false);
+            const [localComments, setLocalComments] = useState([]);
+            const [isLoadingComments, setIsLoadingComments] = useState(false);
+            const [commentText, setCommentText] = useState('');
+
+            const handleLike = async () => {
+                vibrate(10);
+                const newLiked = !isLiked;
+                setIsLiked(newLiked);
+                setLocalLikes(prev => newLiked ? prev + 1 : prev - 1);
+
+                try {
+                    if (newLiked) await window.likePost(post.id);
+                    else await window.unlikePost(post.id);
+                } catch (err) {
+                    console.error('Like action failed', err);
+                    setIsLiked(!newLiked);
+                    setLocalLikes(prev => !newLiked ? prev + 1 : prev - 1);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: err.message || 'Action failed', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            useEffect(() => {
+                const checkLikeStatus = async () => {
+                    if (window.hasLikedPost) {
+                        try {
+                            const hasLiked = await window.hasLikedPost(post.id);
+                            setIsLiked(hasLiked);
+                        } catch (e) {
+                            console.error('Like check failed', e);
+                        }
+                    }
+                };
+                checkLikeStatus();
+            }, [post.id]);
+
+            useEffect(() => {
+                const channel = window.supabase.channel(`post-likes:${post.id}`)
+                    .on('postgres_changes', {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'posts',
+                        filter: `id=eq.${post.id}`
+                    }, (payload) => {
+                        if (payload.new) {
+                            if (payload.new.agrees_count !== undefined) {
+                                setLocalLikes(payload.new.agrees_count);
+                            }
+                            if (payload.new.comments_count !== undefined) {
+                                setLocalCommentCount(payload.new.comments_count);
+                            }
+                        }
+                    })
+                    .subscribe();
+
+                return () => {
+                    window.supabase.removeChannel(channel);
+                };
+            }, [post.id]);
+
+            useEffect(() => {
+                if (!showComments) return;
+
+                const fetchComments = async () => {
+                    setIsLoadingComments(true);
+                    try {
+                        const comments = await window.getComments(post.id);
+                        const transformed = (comments || []).map(c => ({
+                            id: c.id,
+                            user: c.profiles?.full_name || 'User',
+                            avatar: c.profiles?.avatar_url || '',
+                            text: c.text_content,
+                            time: formatTime(c.created_at),
+                            user_id: c.user_id
+                        }));
+                        setLocalComments(transformed);
+                    } catch (e) {
+                        console.error('Failed to load comments', e);
+                    } finally {
+                        setIsLoadingComments(false);
+                    }
+                };
+
+                fetchComments();
+
+                const channel = window.supabase.channel(`post-comments:${post.id}`)
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'comments',
+                        filter: `post_id=eq.${post.id}`
+                    }, async (payload) => {
+                        const { data: profile } = await window.supabase
+                            .from('profiles')
+                            .select('full_name, avatar_url')
+                            .eq('id', payload.new.user_id)
+                            .single();
+
+                        const newComment = {
+                            id: payload.new.id,
+                            user_id: payload.new.user_id,
+                            user: profile?.full_name || 'User',
+                            avatar: profile?.avatar_url || '',
+                            text: payload.new.text_content,
+                            time: 'Just now'
+                        };
+
+                        setLocalComments(prev => [...prev, newComment]);
+                        vibrate(5);
+                    })
+                    .subscribe();
+
+                return () => {
+                    window.supabase.removeChannel(channel);
+                };
+            }, [showComments, post.id]);
+
+            const toggleComments = () => {
+                vibrate(5);
+                setShowComments(!showComments);
+            };
+
+            const handleSendComment = async () => {
+                if (!commentText.trim()) return;
+
+                const tempId = Date.now();
+                const tempComment = {
+                    id: tempId,
+                    user: userProfile?.full_name || 'You',
+                    user_id: userProfile?.id,
+                    avatar: userProfile?.avatar_url || '',
+                    text: commentText,
+                    time: 'Just now',
+                    isPending: true
+                };
+
+                setLocalComments(prev => [...prev, tempComment]);
+                setCommentText('');
+                vibrate(10);
+
+                try {
+                    const newComment = await window.createComment(post.id, commentText);
+                    setLocalComments(prev => prev.map(c => c.id === tempId ? { ...c, id: newComment.id, isPending: false } : c));
+                } catch (e) {
+                    console.error('Failed to add comment', e);
+                    setLocalComments(prev => prev.filter(c => c.id !== tempId));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to post comment', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            const handleMoreAction = (action) => {
+                vibrate(10);
+                setShowMoreMenu(false);
+
+                if (action === 'edit') {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Edit feature coming soon!', icon: 'FileText' } }));
+                } else if (action === 'delete') {
+                    if (confirm('Are you sure you want to delete this opinion?')) {
+                        if (onRemove) onRemove(post.id, 'Deleted', 'delete');
+                    }
+                } else if (action === 'not_interested') {
+                    if (onRemove) onRemove(post.id, 'Marked as not interested', 'not_interested', post.category);
+                } else if (action === 'hide') {
+                    setIsHidden(true);
+                    if (onRemove) onRemove(post.id, 'Opinion hidden', 'hide_post');
+                } else if (action === 'block_brand') {
+                    if (onRemove) onRemove(post.id, `Posts from ${post.seenBy || 'Brand'} hidden`, 'mute_brand', post.seenBy);
+                } else if (action === 'bookmark') {
+                    const nextState = !isSaved;
+                    if (onBookmark) onBookmark(post.id, nextState);
+                } else if (action === 'insight') {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Insight feature coming soon!', icon: 'BarChart' } }));
+                }
+            };
+
+            const toggleMoreMenu = (e) => {
+                e.stopPropagation();
+                vibrate(5);
+                setShowMoreMenu(!showMoreMenu);
+            };
+
+            // Calculate position for the portal menu
+            const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+            const moreButtonRef = useRef(null);
+
+            useEffect(() => {
+                if (showMoreMenu && moreButtonRef.current) {
+                    const rect = moreButtonRef.current.getBoundingClientRect();
+                    setMenuPosition({
+                        top: rect.bottom + window.scrollY + 10,
+                        right: window.innerWidth - rect.right
+                    });
+                }
+            }, [showMoreMenu]);
+
+            if (isHidden) {
+                return (
+                    <div className="glass-panel rounded-2xl p-4 mb-4 flex items-center justify-between animate-fade-in">
+                        <div className="flex items-center gap-3">
+                            <Icon icon="EyeOff" size={20} className="text-muted" />
+                            <span className="text-sm text-gray-400">Opinion hidden</span>
+                        </div>
+                        <button onClick={() => setIsHidden(false)} className="underline text-neon text-xs">Undo</button>
+                    </div>
+                );
+            }
+
+            return (
+                <div
+                    className="glass-panel rounded-2xl p-4 mb-4 relative transition-all duration-300 animate-enter"
+                >
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex gap-3 w-full">
+                            <div
+                                className="group relative cursor-pointer active:scale-95 transition-transform"
+                                onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
+                            >
+                                <img src={post.avatar || DEFAULT_AVATAR} alt="Profile" loading="lazy" className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
+                                <span className="delayed-label absolute top-12 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Profile</span>
+                            </div>
+
+                            <div className="flex-1 min-w-0 pr-8">
+                                <div className="flex items-center gap-2">
+                                    <div
+                                        className="group relative cursor-pointer hover:text-neon transition-colors"
+                                        onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
+                                    >
+                                        <span className="font-heading font-bold text-white text-sm truncate">{post.name}</span>
+                                        <span className="delayed-label absolute bottom-6 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Profile</span>
+                                    </div>
+                                    <div className="group relative rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0">
+                                        <span className="font-heading font-bold text-[9px] text-white tracking-wide cursor-default">RQS {post.rqs}</span>
+                                        <span className="delayed-label absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">Review Quality Score</span>
+                                    </div>
+                                </div>
+                                <div
+                                    className="group relative inline-block cursor-pointer"
+                                    onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
+                                >
+                                    <div className="text-xs text-muted truncate hover:text-white transition-colors">@{post.username}</div>
+                                    <span className="delayed-label absolute top-5 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Profile</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute top-4 right-4 touch-scale text-muted/60 hover:text-white group z-10" onClick={toggleMoreMenu} ref={moreButtonRef}>
+                            <Icon icon="MoreVertical" size={18} />
+                        </div>
+                    </div>
+
+                    {showMoreMenu && ReactDOM.createPortal(
+                        <>
+                            <div className="fixed inset-0 z-[9998]" onClick={(e) => { e.stopPropagation(); setShowMoreMenu(false); }}></div>
+                            <div
+                                className="absolute z-[9999] bg-[#1A1C2E] border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1 w-56 animate-fade-in origin-top-right backdrop-blur-xl"
+                                style={{ top: `${menuPosition.top}px`, right: `${menuPosition.right}px` }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {userProfile && String(userProfile.id) === String(post.user_id || post.profiles?.id) ? (
+                                    /* Owner Options */
+                                    <>
+                                        <button onClick={() => handleMoreAction('edit')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="FileText" size={16} className="text-muted" />
+                                            <span>Edit Opinion</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('delete')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-red-400 group">
+                                            <Icon icon="Trash" size={16} className="text-red-400" />
+                                            <span>Delete Opinion</span>
+                                        </button>
+                                        <div className="h-px bg-white/10 my-1"></div>
+                                        <button onClick={() => handleMoreAction('bookmark')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="BookMark" size={16} className={isSaved ? "text-neon" : "text-muted"} />
+                                            <span>{isSaved ? 'Bookmarked' : 'Bookmark'}</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    /* Non-Owner Options */
+                                    <>
+                                        <button onClick={() => handleMoreAction('not_interested')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="EyeOff" size={16} className="text-muted" />
+                                            <span>Not interested in this post</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('hide')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="X" size={16} className="text-muted" />
+                                            <span>Hide this opinion</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('block_brand')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="Flag" size={16} className="text-muted" />
+                                            <span>Don't show posts from {post.seenBy || 'Brand'}</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('bookmark')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="BookMark" size={16} className={isSaved ? "text-neon" : "text-muted"} />
+                                            <span>{isSaved ? 'Bookmarked' : 'Bookmark'}</span>
+                                        </button>
+                                    </>
+                                )}
+                                {/* Common Options */}
+                                <div className="h-px bg-white/10 my-1"></div>
+                                <button onClick={() => handleMoreAction('insight')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                    <Icon icon="BarChart" size={16} className="text-muted" />
+                                    <div className="flex flex-col items-start">
+                                        <span>View Insights</span>
+                                        <span className="text-[8px] text-neon font-bold tracking-wider">COMING SOON</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </>,
+                        document.body
+                    )}
+
+                    <div className="flex items-center flex-wrap gap-2 mb-3 mt-1">
+                        <div className="group relative border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium">
+                            <span className="text-neon">{post.category}</span>
+                            <span className="mx-1.5 opacity-30">|</span>
+                            <span>{post.product}</span>
+                        </div>
+                        {post.verified && (
+                            <div className="flex items-center gap-1 text-accent-green touch-scale group relative">
+                                <Icon icon="ShieldCheck" size={16} />
+                                <span className="delayed-label absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">Verified Purchase</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{post.text}</p>
+
+                    {
+                        post.media && (
+                            <div className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 img-magnify-wrapper group cursor-zoom-in overflow-hidden">
+                                {post.media_type === 'video' ? (
+                                    <video
+                                        src={post.media}
+                                        className="w-full max-h-[500px] object-contain bg-black"
+                                        controls
+                                        playsInline
+                                        loop
+                                        muted
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                ) : (
+                                    <img src={post.media} alt="Post media" loading="lazy" className="w-full h-auto max-h-[500px] object-contain bg-black img-magnify" />
+                                )}
+                            </div>
+                        )
+                    }
+
+                    <div className="flex items-end justify-between pt-3 mt-1 relative">
+                        <div className="flex items-center gap-6">
+                            <button
+                                onClick={handleLike}
+                                className="flex items-center gap-1.5 touch-scale group relative"
+                            >
+                                <div className={isLiked ? "animate-pop" : ""}>
+                                    <Icon icon="ThumbsUp" size={20}
+                                        className={`transition-all duration-300 stroke-[1.5px] ${isLiked ? 'fill-white stroke-black/80 filter drop-shadow-[0_2px_0_rgba(255,255,255,0.4)]' : ''}`}
+                                        style={isLiked ? {
+                                            fill: 'white',
+                                            stroke: '#000',
+                                            strokeWidth: '1.5px',
+                                            filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
+                                        } : {}}
+                                    />
+                                </div>
+                                <span className="text-xs font-medium">{localLikes}</span>
+                            </button>
+                            <button className={`flex items-center gap-1.5 touch-scale transition-transform group relative ${showComments ? 'text-white' : 'text-muted hover:text-white'}`} onClick={toggleComments}>
+                                <Icon icon="MessageCircle" size={20} className="stroke-[1.5]" />
+                                <span className="text-xs font-medium">{showComments ? localComments.length : Math.max(localCommentCount, localComments.length)}</span>
+                            </button>
+                            <button className="text-muted hover:text-white transition-colors touch-scale group relative" onClick={() => { vibrate(); if (onShare) onShare(post); }}>
+                                <Icon icon="Share" size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            {post.seenBy && (
+                                <span className="group relative text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 cursor-default flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
+                                    Seen by {post.seenBy}
+                                </span>
+                            )}
+                            <button className="text-muted/40 hover:text-danger transition-colors touch-scale group relative" onClick={() => { vibrate(); if (onReport) onReport(post.id); }}>
+                                <Icon icon="AlertTriangle" size={18} className="stroke-[1.5]" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[10px] text-muted/40 font-medium">
+                        <Icon icon="Clock" size={12} />
+                        <span>Posted {post.time} ago</span>
+                    </div>
+
+                    {/* Inline Comment Section */}
+                    {showComments && (
+                        <div className="mt-4 pt-0 border-t border-white/5 animate-fade-in origin-top">
+                            <div className="flex justify-between items-center mb-3 pt-2">
+                                <span className="text-xs font-bold text-white">Comments ({localComments.length})</span>
+                                <button onClick={() => setShowComments(false)} className="text-muted hover:text-white text-xs">Close</button>
+                            </div>
+
+                            {/* Comments List */}
+                            <div className="space-y-3 mb-4 max-h-60 overflow-y-auto no-scrollbar">
+                                {isLoadingComments && <div className="text-center text-muted text-xs py-2">Loading comments...</div>}
+
+                                {localComments.map(c => (
+                                    <CommentItem key={c.id} comment={c} />
+                                ))}
+
+                                {!isLoadingComments && localComments.length === 0 && (
+                                    <div className="text-center text-muted text-xs py-2">No comments yet. Be the first!</div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors">
+                                <input
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    placeholder="Add a comment..."
+                                    className="bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
+                                />
+                                <button onClick={handleSendComment} className={`${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors`}><Icon icon="Send" size={14} /></button>
+                            </div>
+                        </div>
+                    )}
+                </div >
+            );
+        };
+
+        // --- REPORT USER MODAL ---
+        const ReportUserModal = ({ isOpen, onClose, onSubmit }) => {
+            if (!isOpen) return null;
+
+            const reasons = [
+                "Suspicious activity detected",
+                "Something else"
+            ];
+
+            const handleSelected = (reason) => {
+                onSubmit(reason);
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 z-[70] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#18181b] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden flex flex-col">
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg flex items-center gap-2">
+                                <Icon icon="AlertTriangle" size={20} className="text-red-500" />
+                                Report Account
+                            </span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
+                            <p className="text-sm text-gray-400 mb-4">Why are you reporting this user's account?</p>
+                            <div className="space-y-2">
+                                {reasons.map((reason) => (
+                                    <button
+                                        key={reason}
+                                        onClick={() => handleSelected(reason)}
+                                        className="w-full text-left p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex justify-between items-center group"
+                                    >
+                                        <span className="text-sm text-white">{reason}</span>
+                                        <Icon icon="ArrowRight" size={16} className="text-white/20 group-hover:text-white transition-colors" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- REPORT MODAL ---
+        const ReportModal = ({ isOpen, onClose, onSubmit }) => {
+            const [step, setStep] = useState(1);
+            const [selectedReason, setSelectedReason] = useState(null);
+
+            if (!isOpen) return null;
+
+            const reasons = [
+                "It's spam",
+                "Nudity or sexual activity",
+                "Hate speech or symbols",
+                "Violence or dangerous organizations",
+                "Bullying or harassment",
+                "Selling illegal or regulated goods",
+                "Intellectual property violations",
+                "Suicide or self-injury",
+                "False information"
+            ];
+
+            const handleSubmit = (action) => {
+                if (onSubmit) onSubmit(selectedReason, action);
+                onClose();
+                setStep(1);
+                setSelectedReason(null);
+            };
+
+            return (
+                <div className="fixed inset-0 z-[70] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#18181b] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg flex items-center gap-2">
+                                <Icon icon="AlertTriangle" size={20} className="text-red-500" />
+                                {step === 1 ? 'Report Opinion' : 'What would you like to do?'}
+                            </span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        </div>
+
+                        {step === 1 && (
+                            <div className="flex-1 overflow-y-auto no-scrollbar">
+                                <p className="text-sm text-gray-400 mb-4">Why are you reporting this post?</p>
+                                <div className="space-y-2">
+                                    {reasons.map((reason) => (
+                                        <button
+                                            key={reason}
+                                            onClick={() => { setSelectedReason(reason); setStep(2); }}
+                                            className="w-full text-left p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex justify-between items-center group"
+                                        >
+                                            <span className="text-sm text-white">{reason}</span>
+                                            <Icon icon="ArrowRight" size={16} className="text-white/20 group-hover:text-white transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div className="flex-1 flex flex-col justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-400 mb-6">You've selected: <span className="text-white font-medium">{selectedReason}</span></p>
+
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={() => handleSubmit('remove')}
+                                            className="w-full p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-3 group"
+                                        >
+                                            <div className="p-2 rounded-full bg-red-500/20 text-red-500"><Icon icon="EyeOff" size={20} /></div>
+                                            <div className="text-left">
+                                                <div className="text-white font-bold text-sm">Remove from my feed</div>
+                                                <div className="text-xs text-gray-400">I don't want to see this anymore</div>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleSubmit('keep')}
+                                            className="w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-3"
+                                        >
+                                            <div className="p-2 rounded-full bg-white/10 text-white"><Icon icon="ShieldCheck" size={20} /></div>
+                                            <div className="text-left">
+                                                <div className="text-white font-bold text-sm">Just report it</div>
+                                                <div className="text-xs text-gray-400">Let support review it, but keep seeing it</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button onClick={() => setStep(1)} className="mt-6 text-xs text-muted hover:text-white text-center w-full">Back</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+            const [toastMessage, setToastMessage] = useState(null); // Toast State
+            const [menuOpen, setMenuOpen] = useState(false);
+            const [contentTab, setContentTab] = useState('opinions');
+            const [swipeOffset, setSwipeOffset] = useState(0);
+            const scrollContainerRef = useRef(null);
+            const [activeTab, setActiveTab] = useState('home'); // Assume viewer is on home tab
+            const [navVisible, setNavVisible] = useState(true);
+            const [fabVisible, setFabVisible] = useState(true);
+            const lastY = useRef(0);
+            const touchStartX = useRef(0);
+            const touchStartY = useRef(0);
+
+            // Share/Report State
+            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+            const [sharePostData, setSharePostData] = useState(null);
+            const [shareUserData, setShareUserData] = useState(null);
+
+            const [isReportModalOpen, setIsReportModalOpen] = useState(false); // For Posts
+            const [isReportUserModalOpen, setIsReportUserModalOpen] = useState(false); // For Profile
+            const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+
+            const [userProfile, setUserProfile] = useState(null);
+            const [savedPosts, setSavedPosts] = useState(new Set());
+            const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
+            const [mutedBrands, setMutedBrands] = useState(new Set());
+            const [mutedCategories, setMutedCategories] = useState(new Set());
+            const [reportPostId, setReportPostId] = useState(null);
+
+            // Target Profile State
+            const [targetUser, setTargetUser] = useState(null);
+            const [targetPosts, setTargetPosts] = useState([]);
+            const [commentedPosts, setCommentedPosts] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const hasInitialized = useRef(false);
+
+            // Removed local formatTime helper (now global)
+
+            // Toast Handler
+            useEffect(() => {
+                const handler = (e) => showToast(e.detail.message, e.detail.icon, e.detail.isSuccess);
+                window.addEventListener('toast', handler);
+                return () => window.removeEventListener('toast', handler);
+            }, []);
+
+            const showToast = (msg, icon = null, isSuccess = false, action = null) => {
+                setToastMessage({ msg, icon, isSuccess, action });
+                setTimeout(() => setToastMessage(null), 4000);
+            };
+
+            useEffect(() => {
+                // Prevent multiple initializations
+                if (hasInitialized.current) return;
+                hasInitialized.current = true;
+
+                const initData = async () => {
+                    try {
+                        // 1. Get current logged in user (viewer)
+                        const user = await window.getCurrentUser();
+                        if (user) {
+                            const { data: profile } = await window.supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('id', user.id)
+                                .single();
+                            setUserProfile(profile);
+
+                            // Load bookmarks
+                            const { data: bookmarks } = await window.supabase
+                                .from('bookmarks')
+                                .select('post_id')
+                                .eq('user_id', user.id);
+                            if (bookmarks) {
+                                setSavedPosts(new Set(bookmarks.map(b => String(b.post_id))));
+                            }
+
+                            // Load hidden items
+                            try {
+                                const hidden = await window.getHiddenItems();
+                                if (hidden && hidden.posts) {
+                                    setHiddenPostIds(new Set(hidden.posts.map(id => String(id))));
+                                }
+                            } catch (e) { }
+                        }
+
+                        // 2. Get target user profile from URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const targetId = urlParams.get('id');
+
+                        if (targetId) {
+                            const cacheKey = `profile_${targetId}`;
+
+                            // CACHE-FIRST: Try to load from cache first
+                            if (window.StateManager) {
+                                const cachedData = await window.StateManager.get(cacheKey);
+                                if (cachedData) {
+                                    console.log('📦 Loading profile from cache');
+                                    setTargetUser(cachedData.profile);
+                                    setTargetPosts(cachedData.posts || []);
+                                    setCommentedPosts(cachedData.commentedPosts || []);
+                                    setIsLoading(false);
+                                    // Continue to fetch fresh data in background
+                                }
+                            }
+
+                            const profile = await window.getUserProfile(targetId);
+                            setTargetUser(profile);
+
+                            const posts = await window.getUserPosts(targetId);
+                            setTargetPosts(posts || []);
+
+                            // Fetch commented posts for Comments tab
+                            const commented = await window.getUserCommentedPosts(targetId);
+                            const commentedByUser = commented || [];
+
+                            // Also include target user's posts that have received comments
+                            const postsWithComments = posts ? posts.filter(p => (p.comments_count || 0) > 0) : [];
+
+                            // Merge and unique by ID
+                            const allCommentedMap = new Map();
+                            commentedByUser.forEach(p => allCommentedMap.set(p.id, p));
+                            postsWithComments.forEach(p => allCommentedMap.set(p.id, p));
+
+                            const commentedPostsArray = Array.from(allCommentedMap.values());
+                            setCommentedPosts(commentedPostsArray);
+
+                            // SAVE TO CACHE (10 minute TTL for profile, indefinite for posts)
+                            if (window.StateManager) {
+                                await window.StateManager.set(cacheKey, {
+                                    profile,
+                                    posts,
+                                    commentedPosts: commentedPostsArray
+                                }, { ttl: 10 * 60 * 1000 });
+                                console.log('💾 Saved profile to cache');
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error fetching profile data:', err);
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Profile not found', icon: 'AlertTriangle' } }));
+                    } finally {
+                        // Only set loading to false once, after everything is done
+                        setIsLoading(false);
+                    }
+                };
+                initData();
+            }, []);
+
+            // Setup pull-to-refresh handler
+            useEffect(() => {
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
+
+            const handleBlockUser = async (targetId) => {
+                vibrate();
+                try {
+                    await window.blockUser(targetId);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'User blocked', icon: 'Slash', isSuccess: true } }));
+                    // Navigate away or refresh
+                    setTimeout(() => window.history.back(), 1500);
+                } catch (err) {
+                    console.error('Block failed', err);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to block user', icon: 'AlertTriangle' } }));
+                }
+            };
+
+            const handleReportUser = async (reason) => {
+                vibrate();
+                try {
+                    const reportedId = targetUser.id;
+                    const reporter = await window.getCurrentUser();
+
+                    await window.reportUser(reportedId, reason, {
+                        reported_username: targetUser.username,
+                        reporter_username: reporter?.username || 'anonymous',
+                        profile_url: window.location.href
+                    });
+
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'User Reported', icon: 'Flag', isSuccess: true } }));
+                    setIsReportUserModalOpen(false);
+                } catch (err) {
+                    console.error('Report failed', err);
+                }
+            };
+
+            const toggleBookmark = async (postId, shouldSave) => {
+                try {
+                    if (shouldSave) {
+                        await window.bookmarkPost(postId);
+                        setSavedPosts(prev => new Set(prev).add(postId));
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Added to Bookmarks', icon: 'BookMark', isSuccess: true } }));
+                    } else {
+                        await window.removeBookmark(postId);
+                        setSavedPosts(prev => {
+                            const next = new Set(prev);
+                            next.delete(postId);
+                            return next;
+                        });
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Removed from Bookmarks', icon: 'BookMark', isSuccess: true } }));
+                    }
+                } catch (err) {
+                    console.error('Bookmark toggle failed', err);
+                }
+            };
+
+            const handleRemove = async (postId, message, type, value) => {
+                // Shared removal logic (Hide, Not interested, block brand, delete)
+                if (type === 'delete') {
+                    try {
+                        await window.deletePost(postId);
+                        setTargetPosts(prev => prev.filter(p => p.id !== postId));
+                        setCommentedPosts(prev => prev.filter(p => p.id !== postId));
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Opinion deleted', icon: 'Trash', isSuccess: true } }));
+                    } catch (err) {
+                        console.error('Delete failed', err);
+                    }
+                    return;
+                }
+
+                // Others use window.hideItem
+                try {
+                    await window.hideItem(type, value, postId);
+                    setHiddenPostIds(prev => new Set(prev).add(postId));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: message, icon: 'EyeOff', isSuccess: true } }));
+                } catch (err) {
+                    console.error('Action failed', err);
+                }
+            };
+
+            const handleShare = (post) => {
+                setSharePostData(post);
+                setIsShareModalOpen(true);
+            };
+
+            const handleReport = (postId) => {
+                setReportPostId(postId);
+                setIsReportModalOpen(true);
+            };
+
+            const submitReport = async (reason, action) => {
+                const post = targetPosts.find(p => String(p.id) === String(reportPostId));
+                if (post) {
+                    try {
+                        const currentUser = await window.getCurrentUser();
+                        let reporterUsername = 'Anonymous';
+                        if (currentUser) {
+                            const { data: profile } = await window.supabase
+                                .from('profiles')
+                                .select('username')
+                                .eq('id', currentUser.id)
+                                .single();
+                            if (profile) reporterUsername = profile.username;
+                        }
+
+                        const additionalData = {
+                            reporter_username: reporterUsername,
+                            reported_username: post.username,
+                            post_url: `https://plusopinion.com/post/${post.id}`
+                        };
+
+                        // Use default action 'pending' if not 'remove'
+                        const actionTaken = action === 'remove' ? 'remove' : 'pending';
+
+                        // Call the API
+                        await window.reportPost(post.id, reason, actionTaken, additionalData);
+
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Report submitted', icon: 'Check', isSuccess: true } }));
+                    } catch (err) {
+                        console.error('Report submission failed', err);
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Report failed', icon: 'AlertTriangle', isSuccess: false } }));
+                    }
+                }
+
+                if (action === 'remove' && reportPostId) {
+                    setHiddenPostIds(prev => new Set(prev).add(reportPostId));
+                }
+
+                setIsReportModalOpen(false);
+                setReportPostId(null);
+            };
+
+            // PUBLIC TABS CONFIG
+            const TABS = ['opinions', 'comments', 'brands'];
+
+            const handleScroll = (e) => {
+                const currentY = e.target.scrollTop;
+                const isScrollingDown = currentY > lastY.current;
+
+                if (isScrollingDown && currentY > 50) {
+                    setNavVisible(false);
+                    setFabVisible(false);
+                } else {
+                    setNavVisible(true);
+                    setFabVisible(true);
+                }
+                lastY.current = currentY;
+            };
+
+            const triggerMySpace = (section) => {
+                vibrate();
+                // In public view, this might show a tooltip about what RQS/Verified means, not navigate
+                console.log(`Show tooltip for: ${section}`);
+            };
+
+            // SWIPE LOGIC
+            const handleTouchStart = (e) => {
+                touchStartX.current = e.touches[0].clientX;
+                touchStartY.current = e.touches[0].clientY;
+                setSwipeOffset(0);
+            };
+
+            const handleTouchMove = (e) => {
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const diffX = touchX - touchStartX.current;
+                const diffY = touchY - touchStartY.current;
+
+                // Only apply stretch if horizontal swipe dominant AND significant magnitude
+                // And verify we aren't just scrolling casually
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+                    // Add resistance (sqrt or dimishing return)
+                    const resistance = 0.4;
+                    let offset = diffX * resistance;
+
+                    // Limit max stretch
+                    if (offset > 100) offset = 100 + (offset - 100) * 0.2;
+                    if (offset < -100) offset = -100 + (offset + 100) * 0.2;
+
+                    setSwipeOffset(offset);
+                }
+            };
+
+            const handleTouchEnd = (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+
+                const diffX = touchStartX.current - touchEndX;
+                const diffY = touchStartY.current - touchEndY;
+
+                if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+                    const currentIndex = TABS.indexOf(contentTab);
+                    if (diffX > 0) {
+                        if (currentIndex < TABS.length - 1) {
+                            setContentTab(TABS[currentIndex + 1]);
+                            vibrate();
+                        }
+                    } else {
+                        if (currentIndex > 0) {
+                            setContentTab(TABS[currentIndex - 1]);
+                            vibrate();
+                        }
+                    }
+                }
+                // Reset stretch
+                setSwipeOffset(0);
+            };
+
+            // SKELETON COMPONENTS
+            const SkeletonProfile = () => (
+                <div className="flex-1 flex flex-col relative h-full">
+                    {/* Header Skeleton */}
+                    <div className="h-[60px] header-glass flex items-center px-4 sticky top-0 z-30 shrink-0 border-b border-white/5">
+                        <div className="w-8 h-8 rounded-full bg-[#1c1e1e] animate-pulse"></div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
+                        {/* Banner & Avatar */}
+                        <div className="relative mb-6">
+                            <div className="h-[140px] w-full bg-[#1c1e1e] animate-pulse"></div>
+                            <div className="absolute bottom-1.5 left-4">
+                                <div className="w-[84px] h-[84px] rounded-full bg-[#020205] p-1">
+                                    <div className="w-full h-full rounded-full bg-[#1c1e1e] animate-pulse"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="px-5 mt-2 mb-8">
+                            <div className="w-48 h-8 rounded bg-[#1c1e1e] animate-pulse mb-3"></div>
+                            <div className="flex gap-2 mb-4">
+                                <div className="w-20 h-4 rounded bg-[#1c1e1e] animate-pulse"></div>
+                                <div className="w-24 h-4 rounded bg-[#1c1e1e] animate-pulse"></div>
+                            </div>
+                            <div className="w-full h-4 rounded bg-[#1c1e1e] animate-pulse mb-2"></div>
+                            <div className="w-3/4 h-4 rounded bg-[#1c1e1e] animate-pulse mb-6"></div>
+
+                            {/* Stats */}
+                            <div className="flex gap-3 h-[72px]">
+                                <div className="flex-1 rounded-xl bg-[#1c1e1e] animate-pulse"></div>
+                                <div className="flex-1 rounded-xl bg-[#1c1e1e] animate-pulse"></div>
+                            </div>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex w-full px-4 border-b border-white/5 mb-6">
+                            <div className="flex-1 py-3 flex justify-center"><div className="w-16 h-4 rounded bg-[#1c1e1e] animate-pulse"></div></div>
+                            <div className="flex-1 py-3 flex justify-center"><div className="w-16 h-4 rounded bg-[#1c1e1e] animate-pulse"></div></div>
+                            <div className="flex-1 py-3 flex justify-center"><div className="w-16 h-4 rounded bg-[#1c1e1e] animate-pulse"></div></div>
+                        </div>
+
+                        {/* Posts */}
+                        <div className="px-4">
+                            <SkeletonPost delay="0ms" />
+                            <SkeletonPost delay="100ms" />
+                            <SkeletonPost delay="200ms" />
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const SkeletonPost = ({ delay }) => (
+                <div className="glass-panel rounded-2xl p-4 mb-4 animate-fade-in" style={{ animationDelay: delay }}>
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-[#1c1e1e] animate-pulse"></div>
+                        <div className="flex-1">
+                            <div className="w-24 h-3 rounded bg-[#1c1e1e] animate-pulse mb-2"></div>
+                            <div className="w-16 h-2 rounded bg-[#1c1e1e] animate-pulse"></div>
+                        </div>
+                    </div>
+                    <div className="w-full h-3 rounded bg-[#1c1e1e] animate-pulse mb-2"></div>
+                    <div className="w-3/4 h-3 rounded bg-[#1c1e1e] animate-pulse mb-4"></div>
+                    <div className="w-full h-48 rounded-xl bg-[#1c1e1e] animate-pulse"></div>
+                </div>
+            );
+
+            if (isLoading) {
+                return <SkeletonProfile />;
+            }
+
+            if (!targetUser) {
+                return (
+                    <div className="flex-1 flex flex-col items-center justify-center px-6 text-center py-20">
+                        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                            <Icon icon="User" size={40} className="text-white/10" />
+                        </div>
+                        <h2 className="text-xl font-heading font-bold text-white mb-2">Private or Non-Existent</h2>
+                        <p className="text-muted text-sm mb-8 max-w-[280px]">This profile is either private or doesn't exist on PlusOpinion.</p>
+                        <button
+                            onClick={() => window.location.href = 'HOMEPAGE_FINAL.HTML'}
+                            className="bg-neon text-white px-8 py-3 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(47,139,255,0.2)] active:scale-95 transition-transform"
+                        >
+                            Back to Opinions
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex-1 flex flex-col relative h-full overflow-hidden">
+                    {/* TOP NAVIGATION (PUBLIC VIEW) */}
+                    <div className={`header-glass fixed top-0 left-0 w-full h-[60px] flex items-center justify-between px-4 z-30 transition-transform duration-500 ease-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                        <button className="p-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors relative z-10" onClick={() => { vibrate(); window.history.back(); }}>
+                            <Icon icon="ArrowLeft" size={20} />
+                        </button>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="font-heading font-bold text-sm tracking-widest uppercase text-white/90">Profile</span>
+                        </div>
+                        <div className="flex items-center gap-2 relative z-50">
+                            <button className="p-2 text-white/80 hover:text-white" onClick={() => { vibrate(); triggerAction('openLens'); }}>
+                                <Icon icon="Search" size={20} />
+                            </button>
+                            <div className="relative">
+                                <button
+                                    className="p-2 text-white/80 hover:text-white relative"
+                                    onClick={() => { vibrate(); setMenuOpen(!menuOpen); }}
+                                >
+                                    <Icon icon="MoreVertical" size={20} />
+                                </button>
+
+                                {/* MENU DROPDOWN (PUBLIC ACTIONS) */}
+                                {menuOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-[90]" onClick={() => setMenuOpen(false)}></div>
+                                        <div className="absolute top-10 right-0 w-48 bg-[#1A1C2E] border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-[100] overflow-hidden animate-enter backdrop-blur-xl">
+                                            <button
+                                                onClick={() => {
+                                                    setMenuOpen(false);
+                                                    vibrate();
+                                                    setShareUserData(targetUser);
+                                                    setIsShareModalOpen(true);
+                                                }}
+                                                className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 flex items-center gap-2"
+                                            >
+                                                <Icon icon="Share" size={16} /> Share Profile
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setMenuOpen(false);
+                                                    vibrate();
+                                                    setIsReportUserModalOpen(true);
+                                                }}
+                                                className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 flex items-center gap-2 border-t border-white/5"
+                                            >
+                                                <Icon icon="Flag" size={16} /> Report Profile
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setMenuOpen(false);
+                                                    vibrate();
+                                                    setIsBlockConfirmOpen(true);
+                                                }}
+                                                className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-400/10 flex items-center gap-2 border-t border-white/5"
+                                            >
+                                                <Icon icon="Slash" size={16} /> Block User
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <ShareModal
+                        isOpen={isShareModalOpen}
+                        onClose={() => { setIsShareModalOpen(false); setShareUserData(null); setSharePostData(null); }}
+                        post={sharePostData}
+                        user={shareUserData}
+                    />
+
+                    <ReportModal
+                        isOpen={isReportModalOpen}
+                        onClose={() => { setIsReportModalOpen(false); setReportPostId(null); }}
+                        onSubmit={submitReport}
+                    />
+
+                    <ReportUserModal
+                        isOpen={isReportUserModalOpen}
+                        onClose={() => setIsReportUserModalOpen(false)}
+                        onSubmit={handleReportUser}
+                    />
+
+                    {/* Block Confirmation Modal */}
+                    {isBlockConfirmOpen && (
+                        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBlockConfirmOpen(false)}></div>
+                            <div className="relative w-full max-w-sm bg-[#121212] border border-white/10 rounded-2xl p-6 shadow-2xl animate-enter">
+                                <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-4">
+                                    <Icon icon="Slash" size={24} />
+                                </div>
+                                <h3 className="text-white font-bold text-lg text-center mb-2">Block @{targetUser?.username}?</h3>
+                                <p className="text-white/60 text-sm text-center mb-8">
+                                    They won't be able to see your profile or posts, and you won't see theirs. This can be undone in Settings.
+                                </p>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setIsBlockConfirmOpen(false)}
+                                        className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsBlockConfirmOpen(false);
+                                            handleBlockUser(targetUser.id);
+                                        }}
+                                        className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-colors shadow-lg shadow-red-500/20"
+                                    >
+                                        Block
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SCROLLABLE CONTENT AREA */}
+                    <div
+                        className="absolute inset-0 overflow-y-auto smooth-scroll-container pb-6"
+                        onScroll={handleScroll}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        ref={scrollContainerRef}
+                    >
+                        {/* SPACER FOR FIXED HEADER */}
+                        <div className="h-[60px] shrink-0"></div>
+
+                        {/* PROFILE HEADER (PUBLIC) */}
+                        <div className="relative mb-6">
+                            {targetUser.banner_url ? (
+                                <div className="relative h-[140px] w-full">
+                                    <img src={targetUser.banner_url} alt="Banner" className="h-[140px] w-full object-cover" />
+                                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#020205] to-transparent"></div>
+                                </div>
+                            ) : (
+                                <div className="h-[140px] w-full banner-gradient"></div>
+                            )}
+
+                            <div className="absolute bottom-1.5 left-4 flex items-end">
+                                <div className="profile-avatar-container bg-[#020205] shadow-[0_0_20px_rgba(47,139,255,0.3)] border-2 border-[#020205]">
+                                    <img src={targetUser.avatar_url || DEFAULT_AVATAR} alt="Profile" className="w-full h-full object-cover" />
+                                </div>
+                            </div>
+
+                            {/* NO EDIT BUTTON IN PUBLIC VIEW */}
+                        </div>
+
+                        <div className="px-5 mt-2 mb-6">
+                            <h1 className="text-2xl font-heading font-bold text-white leading-tight">{targetUser.full_name}</h1>
+                            <div className="flex items-center gap-2 text-muted text-sm mt-0.5 mb-3">
+                                <span>@{targetUser.username}</span>
+                                <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                                <span className="flex items-center gap-1"><Icon icon="MapPin" size={12} /> {targetUser.location || 'Everywhere'}</span>
+                            </div>
+                            <p className="text-sm text-gray-300 font-light leading-relaxed mb-4">{targetUser.bio || 'This user prefers to keep their bio a mystery.'}</p>
+
+                            {targetUser.website && (
+                                <div className="flex items-center gap-1.5 text-xs text-neon font-medium mb-5">
+                                    <Icon icon="Link" size={14} />
+                                    <a href={targetUser.website.startsWith('http') ? targetUser.website : `https://${targetUser.website}`} target="_blank" className="hover:underline">{targetUser.website}</a>
+                                </div>
+                            )}
+
+                            {/* CREDIBILITY BLOCK (TRUST METRICS ONLY) - NO INSIGHTS */}
+                            <div className="flex items-center gap-3 mb-6">
+                                {/* RQS Badge - Blue Glass Gradient Pill */}
+                                <button onClick={() => triggerMySpace('rqs')} className="flex-1 group relative overflow-hidden rounded-full p-[1px] shadow-[0_0_20px_rgba(47,139,255,0.15)] hover:shadow-[0_0_25px_rgba(47,139,255,0.4)] transition-all duration-300 hover:scale-[1.02] active:scale-95">
+                                    <span className="absolute inset-0 bg-gradient-to-r from-[#2F8BFF] to-[#1A73E8] rounded-full opacity-100 group-hover:opacity-90 transition-opacity"></span>
+                                    <div className="relative h-10 bg-inherit flex items-center justify-between px-1 rounded-full">
+                                        <div className="flex items-center gap-2 pl-3">
+                                            <Icon icon="Zap" className="text-white fill-white animate-pulse-slow" size={16} />
+                                            <span className="text-white font-bold tracking-wider text-sm">RQS</span>
+                                        </div>
+                                        <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 mr-1">
+                                            <span className="text-white font-heading font-bold leading-none">{targetUser.rqs_score || 0}</span>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                {/* Verified Badge - Dark Glass Pill */}
+                                <button onClick={() => triggerMySpace('verification')} className="flex-1 group relative overflow-hidden rounded-full bg-[#020205]/40 backdrop-blur-xl border border-accent-green/30 hover:border-accent-green/80 transition-all duration-300 hover:scale-[1.02] active:scale-95 h-10 shadow-[0_0_15px_rgba(34,197,94,0.05)] hover:shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                                    <div className="relative h-full flex items-center justify-center gap-2 px-4">
+                                        <Icon icon="ShieldCheck" className="text-accent-green group-hover:text-[#4ade80] transition-colors" size={18} />
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-white font-bold text-sm tracking-wide">{targetUser.verified_count || 0}</span>
+                                            <span className="text-[10px] text-accent-green/80 uppercase font-bold tracking-wider whitespace-nowrap group-hover:text-accent-green transition-colors">Verified Opinions</span>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                {/* Insight Tool - Glass Icon Pill */}
+                                <button onClick={() => triggerMySpace('insights')} className="h-10 w-10 rounded-full bg-[#020205]/40 backdrop-blur-xl border border-white/10 hover:border-white/40 hover:bg-white/5 transition-all duration-300 hover:scale-110 active:scale-90 flex items-center justify-center group relative overflow-hidden shrink-0 shadow-lg">
+                                    <Icon icon="BarChart2" size={18} className="text-white/70 group-hover:text-neon transition-all relative z-10" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* STICKY TABS (PUBLIC TABS) */}
+                        <div className={`sticky z-20 bg-[#020205] border-b border-white/5 mb-4 shadow-lg before:absolute before:inset-0 before:bg-gradient-to-b before:from-neon/5 before:to-transparent before:opacity-0 before:transition-opacity transition-[top] duration-300 ease-out`} style={{ top: navVisible ? '60px' : '0px' }}>
+                            <div className="flex w-full px-4">
+                                {TABS.map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => {
+                                            vibrate();
+                                            setContentTab(tab);
+                                        }}
+                                        className={`
+                                            flex-1 py-4 text-[13px] font-bold tracking-widest uppercase transition-all relative
+                                            ${contentTab === tab ? 'text-white' : 'text-white/40 hover:text-white/70'}
+                                        `}
+                                    >
+                                        <div className="flex items-center gap-2 justify-center">
+                                            {tab === 'opinions' && "Opinions"}
+                                            {tab === 'comments' && "Comments"}
+                                            {tab === 'brands' && "Brand Engagement"}
+                                        </div>
+                                        {contentTab === tab && (
+                                            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-neon shadow-[0_0_10px_var(--neon)]"></div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* TAB CONTENT */}
+                        <div
+                            className="px-4 min-h-[300px] transition-transform duration-200 ease-out will-change-transform"
+                            style={{ transform: `translateX(${swipeOffset}px)` }}
+                        >
+                            {contentTab === 'opinions' && (
+                                <div className="animate-enter">
+                                    {targetPosts.map((post, i) => (
+                                        <Post
+                                            key={post.id}
+                                            targetUserId={targetUser.id}
+                                            post={{
+                                                ...post,
+                                                isHidden: hiddenPostIds.has(String(post.id)),
+                                                name: post.profiles?.full_name || 'User',
+                                                username: post.profiles?.username || 'user',
+                                                avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
+                                                rqs: post.profiles?.rqs_score || 0,
+                                                verified: post.is_verified_purchase,
+                                                category: post.category,
+                                                product: post.product_name || post.brand_name || 'Product',
+                                                text: post.text_content,
+                                                media: post.media_url || post.media || post.image_url || ((post.images && post.images.length > 0) ? post.images[0] : null),
+                                                media_type: post.media_type || 'image',
+                                                time: formatTime(post.created_at),
+                                                agrees: post.agrees_count || 0,
+                                                comments: post.comments_count || 0,
+                                                seenBy: post.brand_name
+                                            }}
+                                            onShare={handleShare}
+                                            onReport={handleReport}
+                                            userProfile={userProfile}
+                                            onBookmark={toggleBookmark}
+                                            savedPosts={savedPosts}
+                                            onRemove={handleRemove}
+                                        />
+                                    ))}
+                                    {targetPosts.length === 0 && (
+                                        <div className="text-center py-12 text-muted/40 tracking-widest font-heading">
+                                            NO OPINIONS YET
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {contentTab === 'comments' && (
+                                <div className="animate-enter">
+                                    {commentedPosts.length === 0 ? (
+                                        <div className="text-center py-12 text-muted/40 tracking-widest font-heading">
+                                            NO COMMENTS YET
+                                        </div>
+                                    ) : (
+                                        commentedPosts.map((post, i) => (
+                                            <Post
+                                                key={post.id}
+                                                targetUserId={targetUser.id}
+                                                post={{
+                                                    ...post,
+                                                    isHidden: hiddenPostIds.has(String(post.id)),
+                                                    name: post.profiles?.full_name || 'User',
+                                                    username: post.profiles?.username || 'user',
+                                                    avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
+                                                    rqs: post.profiles?.rqs_score || 0,
+                                                    verified: post.is_verified_purchase,
+                                                    category: post.category,
+                                                    product: post.product_name || post.brand_name || 'Product',
+                                                    text: post.text_content,
+                                                    media: post.media_url || post.media || post.image_url || ((post.images && post.images.length > 0) ? post.images[0] : null),
+                                                    media_type: post.media_type || 'image',
+                                                    time: formatTime(post.created_at),
+                                                    agrees: post.agrees_count || 0,
+                                                    comments: post.comments_count || 0,
+                                                    seenBy: post.brand_name
+                                                }}
+                                                onShare={handleShare}
+                                                onReport={handleReport}
+                                                userProfile={userProfile}
+                                                onBookmark={toggleBookmark}
+                                                savedPosts={savedPosts}
+                                                onRemove={handleRemove}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {contentTab === 'brands' && (
+                                <div className="h-40 flex flex-col items-center justify-center text-muted/30 animate-enter">
+                                    <Icon icon="Grid" size={32} className="mb-2 opacity-50" />
+                                    <span className="text-xs font-heading tracking-widest">NO ACTIVITY YET</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* FAB (+ OPINION) - REQUIRED PUBLICLY */}
+                    <button
+                        onClick={() => { vibrate(); window.location.href = 'HOMEPAGE_FINAL.HTML#opinion'; }}
+                        className={`absolute bottom-6 right-5 bg-neon text-white h-12 pl-4 pr-5 rounded-full flex items-center gap-2 z-30 transition-all duration-500 opinion-btn ${fabVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
+                    >
+                        <div className="opinion-icon"><Icon icon="Plus" size={20} className="stroke-[3px]" /></div>
+                        <span className="font-heading font-bold text-sm tracking-wide">OPINION</span>
+                    </button>
+
+                    {/* TOAST NOTIFICATION */}
+                    <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[110] transition-all duration-300 w-auto whitespace-nowrap ${toastMessage ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+                        <div className="bg-[#0A0F1D]/90 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex items-center gap-3">
+                            {toastMessage?.icon && <Icon icon={toastMessage.icon} size={16} className={toastMessage.isSuccess ? "text-[#6BFFB6]" : "text-[#2f8bff]"} />}
+                            <span className="text-white text-sm font-medium tracking-wide">{toastMessage?.msg}</span>
+                            {toastMessage?.action && (
+                                <button
+                                    onClick={() => {
+                                        toastMessage.action.onClick();
+                                        setToastMessage(null);
+                                    }}
+                                    className="ml-2 text-xs font-bold text-[#2f8bff] hover:text-white transition-colors"
+                                >
+                                    {toastMessage.action.label}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

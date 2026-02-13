@@ -1,0 +1,41 @@
+# robots.txt for PlusOpinion
+# Guide search engines on which pages to crawl
+
+User-agent: *
+
+# Allow all public pages
+Allow: /
+Allow: /index.html
+Allow: /HOMEPAGE_FINAL.HTML
+Allow: /CATAGORYPAGE.HTML
+Allow: /PUBLIC%20POV%20PROFILE.HTML
+
+# Disallow private user areas
+Disallow: /MY%20SPACE%20FINAL%20(USER).HTML
+Disallow: /MY%20SPACE%20FINAL(COMPANIES).HTML
+Disallow: /PRIVATE%20OWNER%20PROFILE.HTML
+Disallow: /NOTIFICATION%20PANEL.HTML
+
+# Disallow authentication pages
+Disallow: /reset-password.html
+
+# Disallow temporary/test files
+Disallow: /index2.html
+
+# Disallow backend/API directories (if applicable)
+Disallow: /api/
+Disallow: /.env
+Disallow: /node_modules/
+
+# Allow CSS, JS, and image files for proper rendering
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.svg$
+Allow: /*.webp$
+
+# Sitemap location
+Sitemap: https://plusopinion.com/sitemap.xml

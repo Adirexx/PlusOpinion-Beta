@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Complete Your Profile - PlusOpinion</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Global Design System -->
+    <link rel="stylesheet" href="./global.css">
+
+    <!-- Favicon for browser tabs -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./api.js"></script>
+    <script type="module" src="./notifications.js"></script>
+    <script src="./rqs_calculator.js"></script>
+    <script src="./router.js"></script>
+    <script>
+        if (window.RouteCleaner) window.RouteCleaner.cleanCurrentUrl();
+    </script>
+
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020205;
+            color: white;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+            color: #000;
+            font-weight: 700;
+            padding: 16px 32px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 230, 118, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input,
+        textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #00E676;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-area:hover {
+            border-color: #00E676;
+            background: rgba(0, 230, 118, 0.05);
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 16px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .banner-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: #00E676;
+        }
+
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @keyframes spin {
+            to {
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function OnboardingApp() {
+            const [loading, setLoading] = useState(true);
+            const [step, setStep] = useState('terms'); // 'terms' or 'profile'
+            const [user, setUser] = useState(null);
+            const [submitting, setSubmitting] = useState(false);
+            const [usernameStatus, setUsernameStatus] = useState(''); // '', 'checking', 'available', 'taken'
+
+            const [formData, setFormData] = useState({
+                full_name: '',
+                username: '',
+                bio: '',
+                avatar_file: null,
+                avatar_preview: null,
+                banner_file: null,
+                banner_preview: null
+            });
+
+            let usernameCheckTimeout;
+
+            useEffect(() => {
+                checkUserStatus();
+            }, []);
+
+            const checkUserStatus = async () => {
+                try {
+                    const currentUser = await window.getCurrentUser();
+                    if (!currentUser) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    setUser(currentUser);
+
+                    // Check if profile is already completed
+                    const { data: profile } = await window.supabase
+                        .from('profiles')
+                        .select('profile_completed, terms_accepted')
+                        .eq('id', currentUser.id)
+                        .single();
+
+                    // If profile is already completed, redirect to homepage
+                    if (profile?.profile_completed && profile?.terms_accepted) {
+                        console.log('Profile already completed, redirecting to homepage...');
+                        window.navigateTo('HOMEPAGE_FINAL.HTML');
+                        return;
+                    }
+
+                    // Pre-fill full name from signup
+                    const fullName = currentUser.user_metadata?.full_name || '';
+                    if (fullName) {
+                        setFormData(prev => ({ ...prev, full_name: fullName }));
+                    }
+
+                    // Check if user has accepted terms
+                    const hasAccepted = await window.hasAcceptedTerms();
+                    if (hasAccepted) {
+                        setStep('profile');
+                    } else {
+                        setStep('terms');
+                    }
+                } catch (error) {
+                    console.error('Error checking user status:', error);
+                    window.location.href = 'index.html';
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+
+            const handleAcceptTerms = async () => {
+                try {
+                    setSubmitting(true);
+
+                    // Call the acceptTerms function which now properly returns true/false
+                    await window.acceptTerms();
+
+                    console.log('✅ Terms accepted, moving to profile setup');
+                    setStep('profile');
+                } catch (error) {
+                    console.error('Error accepting terms:', error);
+                    alert('Failed to accept terms. Please try again.');
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+
+            const checkUsernameAvailability = async (username) => {
+                if (!username || username.length < 3) {
+                    setUsernameStatus('');
+                    return;
+                }
+
+                setUsernameStatus('checking');
+
+                try {
+                    const available = await window.checkUsernameAvailable(username);
+                    setUsernameStatus(available ? 'available' : 'taken');
+                } catch (error) {
+                    console.error('Username check error:', error);
+                    setUsernameStatus('');
+                }
+            };
+
+            const handleUsernameChange = (e) => {
+                const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                setFormData(prev => ({ ...prev, username: value }));
+
+                clearTimeout(usernameCheckTimeout);
+                if (value.length >= 3) {
+                    usernameCheckTimeout = setTimeout(() => {
+                        checkUsernameAvailability(value);
+                    }, 500);
+                } else {
+                    setUsernameStatus('');
+                }
+            };
+
+            const handleAvatarChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('File size must be less than 2MB');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFormData(prev => ({
+                            ...prev,
+                            avatar_file: file,
+                            avatar_preview: reader.result
+                        }));
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleBannerChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must be less than 5MB');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFormData(prev => ({
+                            ...prev,
+                            banner_file: file,
+                            banner_preview: reader.result
+                        }));
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const uploadFile = async (file, bucket, path) => {
+                const { data, error } = await window.supabase.storage
+                    .from(bucket)
+                    .upload(path, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = window.supabase.storage
+                    .from(bucket)
+                    .getPublicUrl(path);
+
+                return publicUrl;
+            };
+
+            const handleProfileSubmit = async (e) => {
+                e.preventDefault();
+
+                if (!formData.full_name.trim()) {
+                    alert('Please enter your full name');
+                    return;
+                }
+
+                if (!formData.username.trim()) {
+                    alert('Please enter a username');
+                    return;
+                }
+
+                if (usernameStatus !== 'available') {
+                    alert('Please choose an available username');
+                    return;
+                }
+
+                try {
+                    setSubmitting(true);
+
+                    let avatarUrl = null;
+                    let bannerUrl = null;
+
+                    // Upload avatar if provided
+                    if (formData.avatar_file) {
+                        const avatarPath = `avatars/${user.id}-${Date.now()}.${formData.avatar_file.name.split('.').pop()}`;
+                        avatarUrl = await uploadFile(formData.avatar_file, 'Avatars', avatarPath);
+                    }
+
+                    // Upload banner if provided
+                    if (formData.banner_file) {
+                        const bannerPath = `banners/${user.id}-${Date.now()}.${formData.banner_file.name.split('.').pop()}`;
+                        bannerUrl = await uploadFile(formData.banner_file, 'profiles', bannerPath);
+                    }
+
+                    // Update profile in database
+                    const { error } = await window.supabase
+                        .from('profiles')
+                        .update({
+                            username: formData.username.trim(),
+                            full_name: formData.full_name.trim(),
+                            bio: formData.bio.trim() || null,
+                            avatar_url: avatarUrl,
+                            banner_url: bannerUrl,
+                            profile_completed: true
+                        })
+                        .eq('id', user.id);
+
+                    if (error) throw error;
+
+                    // 🎯 CALCULATE INITIAL RQS SCORE
+                    // This triggers the database function to calculate RQS based on profile completion
+                    console.log('✅ Profile completed, calculating initial RQS...');
+                    try {
+                        await window.calculateUserRQS(user.id);
+                        console.log('✅ Initial RQS calculated successfully');
+                    } catch (rqsError) {
+                        console.warn('⚠️ RQS calculation failed (non-critical):', rqsError);
+                        // Don't block onboarding if RQS fails - it will be calculated later
+                    }
+
+                    // 🎉 SEND WELCOME NOTIFICATION
+                    try {
+                        const firstName = formData.full_name.trim().split(' ')[0];
+                        if (window.notifyWelcome) {
+                            await window.notifyWelcome(user.id, firstName);
+                            console.log('✅ Welcome notification sent');
+                        }
+
+                        // Schedule first post encouragement (will check after 24 hours)
+                        if (window.checkFirstPostEncouragement) {
+                            // This will be checked by user on next login or by scheduled job
+                            console.log('📝 First post encouragement scheduled for later');
+                        }
+                    } catch (notifError) {
+                        console.warn('⚠️ Notification failed (non-critical):', notifError);
+                        // Don't block onboarding if notification fails
+                    }
+
+                    // Redirect to homepage
+                    window.navigateTo('HOMEPAGE_FINAL.HTML');
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    alert('Failed to complete profile. Please try again.');
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-white/20 border-t-[#00E676] rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-white/60">Loading...</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (step === 'terms') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="glass-panel rounded-3xl p-8 max-w-2xl w-full">
+                            <div className="step-indicator">
+                                <div className="step-dot active"></div>
+                                <div className="step-dot"></div>
+                            </div>
+
+                            <h1 className="text-3xl font-bold text-center mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                                Welcome to PlusOpinion
+                            </h1>
+                            <p className="text-white/60 text-center mb-8">
+                                Please review and accept our terms to continue
+                            </p>
+
+                            <div className="glass-panel rounded-2xl p-6 mb-6 max-h-96 overflow-y-auto">
+                                <h2 className="text-xl font-bold mb-4">Terms & Conditions</h2>
+
+                                <div className="space-y-6 text-sm text-white/80">
+                                    <p>By using PlusOpinion, you agree to the following terms:</p>
+
+                                    <div className="space-y-6">
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">1. Acceptance of Terms</h3>
+                                            <p className="leading-relaxed">
+                                                By accessing or using the PlusOpinion platform ("Platform"), you agree to be bound by these Terms and Conditions ("Terms"). If you do not agree, you must not use the Platform. Participation in our mandatory onboarding process constitutes explicit agreement to these Terms, including our Privacy Policy and Community Guidelines.
+                                            </p>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">2. User Eligibility & Account Roles</h3>
+                                            <div className="space-y-3 mt-2">
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                                    <h4 className="font-bold text-blue-400 mb-1">Individual Users</h4>
+                                                    <p className="text-xs">Must be at least 18 years of age. Accounts are intended for personal use to share genuine opinions and potentially qualify for monetization.</p>
+                                                </div>
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                                    <h4 className="font-bold text-blue-400 mb-1">Brands & Companies</h4>
+                                                    <p className="text-xs">Account creation is open to all legitimate business owners. Legitimate legal entities are preferred.</p>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">3. Reputation Quality Score (RQS™) & Anti-Gaming</h3>
+                                            <p className="leading-relaxed mb-2">
+                                                Your RQS (0-100) is a weighted metric derived from Consistency Score, Verification Credibility, Community Impact, and Legacy History.
+                                            </p>
+                                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl mt-2">
+                                                <h4 className="text-red-400 font-bold mb-1 text-xs uppercase">Strictly Prohibited</h4>
+                                                <p className="text-xs">
+                                                    Artificially inflating RQS, generating fake "Agrees," using bot farms, or operating multiple accounts to "game" the system will result in an immediate and permanent ban.
+                                                </p>
+                                            </div>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">4. Content Standards & Verification</h3>
+                                            <p className="leading-relaxed mb-2">
+                                                All opinions tagged as "Verified" must be accompanied by legitimate proof of purchase (Invoices, Receipts).
+                                            </p>
+                                            <div className="flex gap-3 p-3 border-l-2 border-blue-500 bg-blue-500/5 my-2">
+                                                <p className="text-xs italic">"You are solely responsible for your opinions. You represent and warrant that your content is based on a real experience and is factually accurate."</p>
+                                            </div>
+                                            <p className="text-xs">
+                                                <strong className="text-white">Audit Right:</strong> PlusOpinion reserves the right to audit any verified review and request secondary proof at any time.
+                                            </p>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">5. Partner Program (Monetization)</h3>
+                                            <p className="mb-2">
+                                                We operate a monetization model similar to premium content platforms. Verification requires a secure session with valid ID.
+                                            </p>
+                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 mt-2">
+                                                <h4 className="font-bold text-white mb-2 text-xs uppercase tracking-widest">Requirements</h4>
+                                                <ul className="grid grid-cols-2 gap-2 text-xs">
+                                                    <li className="bg-black/20 p-2 rounded">RQS: <span className="text-blue-400 font-bold">75+</span></li>
+                                                    <li className="bg-black/20 p-2 rounded">Interactions: <span className="text-blue-400 font-bold">500+</span></li>
+                                                    <li className="bg-black/20 p-2 rounded">Streak: <span className="text-blue-400 font-bold">4 Weeks</span></li>
+                                                    <li className="bg-black/20 p-2 rounded">Identity: <span className="text-blue-400 font-bold">Verified</span></li>
+                                                </ul>
+                                            </div>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">6. Intellectual Property</h3>
+                                            <p>
+                                                All Platform data is PlusOpinion property. Automated scraping or using Platform data to train competing AI models is strictly prohibited.
+                                            </p>
+                                        </section>
+
+                                        <section>
+                                            <h3 className="font-bold text-white mb-2">7. Governing Law</h3>
+                                            <p>
+                                                These Terms shall be governed by the laws of India. Disputes are subject to the exclusive jurisdiction of the courts in <strong className="text-white">New Delhi, India</strong>.
+                                            </p>
+                                        </section>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleAcceptTerms}
+                                disabled={submitting}
+                                className="btn-primary w-full"
+                            >
+                                {submitting ? 'Processing...' : 'I Accept the Terms & Conditions'}
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (step === 'profile') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4 py-12">
+                        <div className="glass-panel rounded-3xl p-8 max-w-2xl w-full">
+                            <div className="step-indicator">
+                                <div className="step-dot"></div>
+                                <div className="step-dot active"></div>
+                            </div>
+
+                            <h1 className="text-3xl font-bold text-center mb-2" style={{ fontFamily: 'Space Grotesk' }}>
+                                Complete Your Profile
+                            </h1>
+                            <p className="text-white/60 text-center mb-8">
+                                Tell us about yourself
+                            </p>
+
+                            <form onSubmit={handleProfileSubmit} className="space-y-6">
+                                {/* Full Name */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Full Name <span className="text-red-400">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.full_name}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                                        placeholder="Your full name"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Username */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Username <span className="text-red-400">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={formData.username}
+                                            onChange={handleUsernameChange}
+                                            placeholder="Choose a unique username"
+                                            required
+                                            minLength={3}
+                                            maxLength={30}
+                                        />
+                                        <div className="validation-icon">
+                                            {usernameStatus === 'checking' && (
+                                                <div className="w-5 h-5 border-2 border-white/20 border-t-[#00E676] rounded-full spinner"></div>
+                                            )}
+                                            {usernameStatus === 'available' && (
+                                                <svg className="w-5 h-5 text-[#00E676]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                            {usernameStatus === 'taken' && (
+                                                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {usernameStatus === 'taken' && (
+                                        <p className="text-red-500 text-sm mt-1">Username is already taken</p>
+                                    )}
+                                    {usernameStatus === 'available' && (
+                                        <p className="text-[#00E676] text-sm mt-1">Username is available!</p>
+                                    )}
+                                    <p className="text-white/40 text-xs mt-1">Lowercase letters, numbers, and underscores only</p>
+                                </div>
+
+                                {/* Bio */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Bio (Optional)
+                                    </label>
+                                    <textarea
+                                        value={formData.bio}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                                        placeholder="Tell us about yourself..."
+                                        rows={3}
+                                        maxLength={200}
+                                    />
+                                    <p className="text-white/40 text-xs mt-1">{formData.bio.length}/200 characters</p>
+                                </div>
+
+                                {/* Avatar Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Profile Picture (Optional)
+                                    </label>
+                                    <div className="avatar-preview">
+                                        {formData.avatar_preview ? (
+                                            <img src={formData.avatar_preview} alt="Avatar" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span>👤</span>
+                                        )}
+                                    </div>
+                                    <label className="file-upload-area block">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleAvatarChange}
+                                            className="hidden"
+                                        />
+                                        <div className="text-center">
+                                            <svg className="w-8 h-8 mx-auto mb-2 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <p className="text-sm text-white/60">Click to upload avatar</p>
+                                            <p className="text-xs text-white/40 mt-1">PNG, JPG up to 5MB</p>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {/* Banner Upload */}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Profile Banner (Optional)
+                                    </label>
+                                    <div className="banner-preview">
+                                        {formData.banner_preview ? (
+                                            <img src={formData.banner_preview} alt="Banner" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-white/40">🖼️</span>
+                                        )}
+                                    </div>
+                                    <label className="file-upload-area block">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleBannerChange}
+                                            className="hidden"
+                                        />
+                                        <div className="text-center">
+                                            <svg className="w-8 h-8 mx-auto mb-2 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p className="text-sm text-white/60">Click to upload banner</p>
+                                            <p className="text-xs text-white/40 mt-1">PNG, JPG up to 10MB (Recommended: 1500x500)</p>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={submitting || !formData.full_name.trim() || !formData.username.trim() || usernameStatus !== 'available'}
+                                    className="btn-primary w-full"
+                                >
+                                    {submitting ? 'Completing Setup...' : 'Complete Setup & Start Exploring'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            return null;
+        }
+
+        ReactDOM.render(<OnboardingApp />, document.getElementById('root'));
+    </script>
+</body>
+
+</html>
