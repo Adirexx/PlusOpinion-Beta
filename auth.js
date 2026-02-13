@@ -11,7 +11,7 @@ async function signUpUser(email, password, name) {
     email,
     password,
     options: {
-      emailRedirectTo: window.location.origin + '/HOMEPAGE_FINAL.HTML',
+      emailRedirectTo: window.location.origin + '/feed',
       data: {
         full_name: name
       }
