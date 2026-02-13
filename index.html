@@ -131,7 +131,7 @@
                     email,
                     password,
                     options: {
-                        emailRedirectTo: window.location.origin + '/HOMEPAGE_FINAL.HTML',
+                        emailRedirectTo: window.location.origin + '/feed',
                         data: { full_name: name }
                     }
                 });
@@ -156,22 +156,50 @@
                 return user;
             };
 
-            // Auth functions (signUpUser, signInUser, etc.) are now managed exclusively in auth.js
-            // This prevents conflicts and ensures consistent redirect behavior.
-
-            window.signOutUser = async function () {
-                console.log('🚪 signOutUser called');
-                await supabase.auth.signOut();
-                console.log('✅ Signed out');
+            window.signInUser = async function (email, password) {
+                console.log('🔑 signInUser called with:', email);
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    console.error('❌ Login error from Supabase:', error);
+                    throw error;
+                }
+                console.log('✅ Login successful:', data.user?.email);
+                return data.user;
             };
 
-            window.getCurrentUser = async function () {
-                const { data: sessionData } = await supabase.auth.getSession();
-                if (sessionData?.session?.user) return sessionData.session.user;
-                const { data } = await supabase.auth.getUser();
-                return data?.user || null;
+            window.signInWithProvider = async function (provider) {
+                console.log(`🔵 Initiating ${provider} login...`);
+                try {
+                    const { data, error } = await supabase.auth.signInWithOAuth({
+                        provider: provider,
+                        options: {
+                            // Fix: Uses the current domain (com or in) and redirects to /feed
+                            redirectTo: window.location.origin + '/feed'
+                        }
+                    });
+
+                    if (error) {
+                        console.error('❌ Supabase OAuth Error:', error);
+                        alert(`Login Error: ${error.message}`);
+                        throw error;
+                    }
+
+                    console.log('✅ OAuth initiated:', data);
+                    return data;
+                } catch (err) {
+                    console.error('❌ Unexpected OAuth Error:', err);
+                    alert(`Unexpected Login Error: ${err.message}`);
+                    throw err;
+                }
             };
 
+            window.resetPassword = async function (email) {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    // Fix: Redirects back to the same domain you are on
+                    redirectTo: window.location.origin + "/reset-password.html"
+                });
+                if (error) throw error;
+            };
 
             // Signal that auth is ready
             window.authReady = true;
