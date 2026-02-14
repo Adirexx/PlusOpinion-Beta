@@ -1557,20 +1557,23 @@
 
             const shareText = isProfile
                 ? `Check out @${user.username}'s profile on PlusOpinion`
-                : `Check out this opinion by @${post.username}`;
+                : `Check out this interaction by @${post.username}`;
 
             const handleCopy = async () => {
                 try {
-                    await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied to clipboard', icon: 'Link', isSuccess: true } }));
+                    const cleanText = isProfile
+                        ? `Check out @${user.username}'s profile on PlusOpinion:\n\n${user.bio || 'Check out my opinions and reviews!'}\n\nLink: ${shareUrl}`
+                        : `Check out this interaction on PlusOpinion:\n\n"${post.text ? post.text.substring(0, 100) + '...' : ''}"\n\nRead more at: ${shareUrl}`;
+                    await navigator.clipboard.writeText(cleanText);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link & Preview copied', icon: 'Link', isSuccess: true } }));
                     onClose();
                 } catch (err) { console.error(err); }
             };
 
             const handleWhatsApp = () => {
                 const waText = isProfile
-                    ? `*Check out @${user.username} on PlusOpinion*\n\nRead their opinions and reviews here: ${shareUrl}`
-                    : `*Check out this opinion by @${post.username}*\n\n"${post.text ? post.text.substring(0, 80) : ''}..."\n\nSee full opinion here: ${shareUrl}`;
+                    ? `🔥 *Check out @${user.username} on PlusOpinion*\n\nRead their opinions and reviews here: ${shareUrl}`
+                    : `🔥 *New Interaction on PlusOpinion!*\n\n"@${post.username}: ${post.text ? post.text.substring(0, 80) : ''}..."\n\nRead full POV here:\n${shareUrl}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
                 onClose();
             };
@@ -1578,7 +1581,7 @@
             const handleInstagram = async () => {
                 if (navigator.share) {
                     try {
-                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        await navigator.share({ title: 'Top Interaction', text: shareText, url: shareUrl });
                         onClose();
                     } catch (e) { }
                 } else {
@@ -1603,45 +1606,171 @@
             return (
                 <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
-                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden">
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col">
                         {/* Drag Bar */}
                         <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
 
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="text-white font-heading font-bold text-lg">{isProfile ? 'Share Profile' : 'Share Opinion'}</span>
-                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg">{isProfile ? 'Share Profile' : 'Share Interaction'}</span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors">
+                                <Icon icon="X" size={20} />
+                            </button>
                         </div>
 
-                        {/* Preview Card */}
-                        <div className="bg-[#1E1E1E] rounded-xl p-4 mb-6 border border-white/5 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-neon/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                            <div className="flex items-center gap-3 mb-3">
-                                <img src={(isProfile ? user.avatar_url : post.avatar) || DEFAULT_AVATAR} className="w-8 h-8 rounded-full object-cover" />
-                                <div>
-                                    <div className="text-white text-sm font-bold">{isProfile ? user.full_name : post.name}</div>
-                                    <div className="text-white/40 text-xs text-muted">@{target.username}</div>
-                                </div>
-                            </div>
+                        {/* Preview Card - EXACT PLATFORM REPLICA */}
+                        <div className="glass-panel rounded-2xl p-5 mb-6 border border-white/5 relative overflow-hidden group flex flex-col animate-fade-in shadow-2xl">
                             {!isProfile ? (
                                 <>
-                                    <div className="text-gray-300 text-sm mb-3 line-clamp-3 leading-relaxed font-light">
-                                        {post.text}
+                                    {/* Platform Logo - Top Right (Minimalist X-Style Etched Look) */}
+                                    <div className="absolute top-6 right-6 z-20 group/logo">
+                                        <img
+                                            src="icon-192.png"
+                                            className="w-10 h-10 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40"
+                                            style={{
+                                                filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
+                                                mixBlendMode: 'luminosity'
+                                            }}
+                                            alt="PlusOpinion Logo"
+                                        />
                                     </div>
-                                    {post.media && post.media_type === 'image' && (
-                                        <div className="w-full h-32 rounded-lg bg-black/40 overflow-hidden relative">
-                                            <img src={post.media} className="w-full h-full object-cover opacity-80" />
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex gap-3 w-full">
+                                            <div className="relative">
+                                                <img src={(post.avatar) || DEFAULT_AVATAR} className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
+                                                {post.verified && (
+                                                    <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-[#121212]">
+                                                        <Icon icon="Check" size={8} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-heading font-bold text-white text-sm truncate">{post.name}</span>
+                                                    <div className="rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0">
+                                                        <span className="font-heading font-bold text-[9px] text-white tracking-wide">RQS {target.rqs || 0}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs text-muted truncate">@{target.username}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center flex-wrap gap-2 mb-3 mt-1">
+                                        <div className="border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium whitespace-nowrap overflow-hidden max-w-full">
+                                            <span className="text-neon truncate">{post.category || 'Others'}</span>
+                                            <span className="mx-1.5 opacity-30">|</span>
+                                            <span className="truncate">plus opinion</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light line-clamp-3">{post.text}</p>
+
+                                    {post.media && (
+                                        <div className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 overflow-hidden">
+                                            {post.media_type === 'video' ? (
+                                                <div className="w-full h-32 flex items-center justify-center">
+                                                    <video src={post.media} className="w-full h-full object-cover opacity-60" />
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+                                                            <Icon icon="Video" size={20} className="text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <img src={post.media} className="w-full h-auto max-h-32 object-cover opacity-90" />
+                                            )}
                                         </div>
                                     )}
+
+                                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/5">
+                                        <div className="flex items-center gap-5">
+                                            <div className="flex items-center gap-1.5 text-muted">
+                                                <Icon icon="ThumbsUp" size={18} />
+                                                <span className="text-xs font-medium">{post.agrees || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-muted">
+                                                <Icon icon="MessageCircle" size={18} />
+                                                <span className="text-xs font-medium">{post.comments || 0}</span>
+                                            </div>
+                                        </div>
+
+                                        <span className="text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 flex items-center gap-1.5">
+                                            <div className="w-1 h-1 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
+                                            Verified Interaction
+                                        </span>
+                                    </div>
                                 </>
                             ) : (
-                                <div className="text-gray-300 text-sm mb-3 italic font-light">
-                                    {user.bio || 'Check out my opinions and reviews on PlusOpinion!'}
+                                <div className="mt-1 flex flex-col gap-6 relative overflow-hidden">
+                                    {/* Premium Layered Header */}
+                                    <div className="flex items-center gap-6 relative min-h-[110px]">
+                                        {/* Large Background Bleed Avatar */}
+                                        <div className="absolute -left-10 -top-10 w-48 h-48 rounded-full opacity-[0.07] blur-[40px] pointer-events-none">
+                                            <img src={user.avatar_url || DEFAULT_AVATAR} className="w-full h-full object-cover" />
+                                        </div>
+
+                                        {/* Foreground Focus Avatar */}
+                                        <div className="relative group shrink-0">
+                                            <div className="absolute -inset-1.5 bg-white/5 rounded-2xl blur-sm opacity-50"></div>
+                                            <div className="w-24 h-24 rounded-2xl border border-white/10 shadow-2xl overflow-hidden relative z-10 transition-transform duration-500 group-hover:scale-105">
+                                                <img src={user.avatar_url || DEFAULT_AVATAR} className="w-full h-full object-cover" alt="Profile" />
+                                            </div>
+                                        </div>
+
+                                        {/* Balanced Profile Details */}
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center relative z-10">
+                                            <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                                                <span className="font-heading font-extrabold text-white text-2xl tracking-tight truncate">{user.full_name}</span>
+                                                <div className="rqs-pill px-2.5 py-1 rounded-full flex items-center shadow-lg border border-white/5">
+                                                    <span className="font-heading font-black text-[9px] text-white tracking-[0.2em] uppercase">RQS {user.rqs || 0}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="text-sm font-medium text-white/50 tracking-wide flex items-center gap-2">
+                                                    <span>@{user.username}</span>
+                                                </div>
+                                                {user.location && (
+                                                    <div className="flex items-center gap-1.5 text-white/30 text-[11px] font-medium italic">
+                                                        <Icon icon="MapPin" size={12} className="opacity-50" />
+                                                        <span>{user.location}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Glass Bio Box */}
+                                    <div className="relative group z-10">
+                                        <div className="text-gray-300 text-sm leading-relaxed font-light italic bg-white/[0.04] backdrop-blur-xl p-5 rounded-2xl border border-white/[0.08] shadow-inner line-clamp-3">
+                                            {user.bio || 'Sharing opinions and reviews on PlusOpinion!'}
+                                        </div>
+                                    </div>
+
+                                    {/* High-End Footer Layout */}
+                                    <div className="flex items-center justify-between pt-6 mt-1 border-t border-white/5 relative z-10">
+                                        <button
+                                            className="px-8 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-[10px] font-black tracking-[0.25em] uppercase transition-all active:scale-95 shadow-xl flex items-center gap-2"
+                                            onClick={() => window.location.href = shareUrl}
+                                        >
+                                            Visit Profile
+                                        </button>
+                                        <div className="flex flex-col items-center gap-1.5 shrink-0">
+                                            <div className="w-10 h-10 z-20 group/logo flex items-center justify-center">
+                                                <img
+                                                    src="icon-192.png"
+                                                    className="w-8 h-8 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40"
+                                                    style={{
+                                                        filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
+                                                        mixBlendMode: 'luminosity'
+                                                    }}
+                                                    alt="PlusOpinion Logo"
+                                                />
+                                            </div>
+                                            <div className="text-[7px] text-white/20 font-black uppercase tracking-[0.25em] italic leading-tight">PLUSOPINION.COM</div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
-                            <div className="mt-3 flex items-center gap-2 text-[10px] text-neon uppercase tracking-wider font-bold">
-                                <Icon icon="Link" size={12} />
-                                {isProfile ? `plusopinion.com/u/${user.username}` : `plusopinion.com/p/${post.id.substring(0, 8)}...`}
-                            </div>
                         </div>
 
                         {/* Share Grid */}
@@ -1666,7 +1795,7 @@
                             </button>
                             <button onClick={handleMore} className="flex flex-col items-center gap-2 group">
                                 <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
-                                    <Icon icon="MoreHorizontal" size={24} className="text-blue-400" />
+                                    <Icon icon="Share" size={24} className="text-white" />
                                 </div>
                                 <span className="text-xs text-muted">More</span>
                             </button>
