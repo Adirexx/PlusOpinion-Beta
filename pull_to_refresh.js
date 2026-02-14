@@ -18,7 +18,8 @@ class PullToRefresh {
             pullDistance: 0,
             refreshing: false,
             canPull: false,
-            startY: 0
+            startY: 0,
+            startX: 0
         };
 
         this.refreshHandler = null;
@@ -104,8 +105,12 @@ class PullToRefresh {
         }
 
         if (scrollTop === 0 && !this.state.refreshing) {
-            this.state.canPull = true;
-            this.state.startY = e.touches[0].clientY;
+            // Only allow pull from upper half of the screen
+            if (e.touches[0].clientY < window.innerHeight / 2) {
+                this.state.canPull = true;
+                this.state.startY = e.touches[0].clientY;
+                this.state.startX = e.touches[0].clientX;
+            }
         }
     }
 
@@ -113,7 +118,15 @@ class PullToRefresh {
         if (!this.state.canPull || this.state.refreshing) return;
 
         const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
         const diff = currentY - this.state.startY;
+        const diffX = currentX - this.state.startX;
+
+        // Prevent activation during horizontal swipes (prioritize vertical movement)
+        if (Math.abs(diffX) > Math.abs(diff)) {
+            this.state.canPull = false;
+            return;
+        }
 
         if (diff > 0) {
             e.preventDefault();
