@@ -17,7 +17,7 @@
  */
 window.checkOnboardingStatus = async function () {
     try {
-        // 🚨 CRITICAL: Prevent redirect loop on authentication-related pages
+        // 🚨 CRITICAL: Check if we're on an auth page FIRST
         const currentPage = window.location.pathname;
         const isOnAuthPage = currentPage.includes('onboarding') ||
             currentPage === '/onboarding' ||
@@ -26,7 +26,13 @@ window.checkOnboardingStatus = async function () {
             currentPage.includes('change-password') ||
             currentPage === '/change-password';
 
-        // 1. Check if user is logged in
+        // If on auth pages, SKIP ALL AUTH CHECKS - let the page handle its own logic
+        if (isOnAuthPage) {
+            console.log('✅ On auth page - skipping auth guard checks');
+            return true; // Allow access without checks
+        }
+
+        // 1. Check if user is logged in (ONLY for non-auth pages)
         const user = await window.getCurrentUser();
 
         if (!user) {
@@ -45,19 +51,14 @@ window.checkOnboardingStatus = async function () {
 
         if (error) {
             console.error('❌ Error checking profile:', error);
-            // If profile doesn't exist, redirect to onboarding (ONLY if not on auth pages)
-            if (!isOnAuthPage) {
-                window.navigateTo('onboarding.html');
-            }
+            // If profile doesn't exist, redirect to onboarding
+            window.navigateTo('onboarding.html');
             return false;
         }
 
         if (!profile) {
             console.warn('⚠️ No profile found - redirecting to onboarding');
-            // Redirect only if not on auth pages
-            if (!isOnAuthPage) {
-                window.navigateTo('onboarding.html');
-            }
+            window.navigateTo('onboarding.html');
             return false;
         }
 
@@ -77,10 +78,7 @@ window.checkOnboardingStatus = async function () {
                 has_username: !!profile.username,
                 has_full_name: !!profile.full_name
             });
-            // Redirect only if not on auth pages
-            if (!isOnAuthPage) {
-                window.navigateTo('onboarding.html');
-            }
+            window.navigateTo('onboarding.html');
             return false;
         }
 
@@ -90,7 +88,8 @@ window.checkOnboardingStatus = async function () {
 
     } catch (err) {
         console.error('❌ Error in onboarding check:', err);
-        // On error, redirect to onboarding to be safe (ONLY if not on auth pages)
+
+        // Check if on auth page before redirecting on error
         const currentPage = window.location.pathname;
         const isOnAuthPage = currentPage.includes('onboarding') ||
             currentPage === '/onboarding' ||
@@ -98,6 +97,7 @@ window.checkOnboardingStatus = async function () {
             currentPage === '/reset-password' ||
             currentPage.includes('change-password') ||
             currentPage === '/change-password';
+
         if (!isOnAuthPage) {
             window.navigateTo('onboarding.html');
         }
