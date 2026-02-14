@@ -5,13 +5,24 @@ const supabase = window.supabase;
 /* ============================
    SIGN UP (Email + Pasword)
 ============================ */
+/* ============================
+   SIGN UP (Email + Pasword)
+============================ */
 async function signUpUser(email, password, name) {
+
+  // Fix: Environment-aware redirect
+  // Localhost needs physical file (no _redirects support)
+  // Production uses clean URL (/feed)
+  const isLocalhost = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+  const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+
   // 1. Create auth user
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: window.location.origin + '/feed',
+      emailRedirectTo: window.location.origin + redirectPath,
       data: {
         full_name: name
       }
@@ -81,7 +92,7 @@ async function signInUser(email, password, disableAutoRedirect = false) {
       // Only redirect if NOT disabled
       if (!disableAutoRedirect) {
         setTimeout(() => {
-          window.location.href = './onboarding.html';
+          window.navigateTo('onboarding.html');
         }, 100);
       }
     } else {
@@ -113,7 +124,7 @@ async function signInUser(email, password, disableAutoRedirect = false) {
 
     if (!disableAutoRedirect) {
       setTimeout(() => {
-        window.location.href = './onboarding.html';
+        window.navigateTo('onboarding.html');
       }, 100);
     }
   }
@@ -157,17 +168,28 @@ async function getCurrentUser() {
    PASSWORD RESET (Magic Link)
 ============================ */
 async function resetPassword(email) {
-  // Use production URL in production, localhost in development
-  // This ensures password reset links always redirect to the correct environment
-  const redirectUrl = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000/reset-password.html'
-    : 'https://plusopinion.com/reset-password.html';
+  // Fix: Environment-aware redirect
+  // Use production URL in production, localhost physical file in development
+  const isLocalhost = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  const redirectPath = isLocalhost ? '/reset-password.html' : '/reset-password';
+  const redirectUrl = window.location.origin + redirectPath;
+
+  console.log('🔐 Sending password reset email to:', email);
+  console.log('📧 Reset redirect URL:', redirectUrl);
+  console.log('🌍 Environment:', isLocalhost ? 'localhost' : 'production');
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectUrl
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error('❌ Password reset error:', error);
+    throw error;
+  }
+
+  console.log('✅ Password reset email sent successfully');
 }
 
 /* ============================
@@ -244,11 +266,16 @@ async function checkUsernameAvailable(username) {
 async function signInWithProvider(provider) {
 
   try {
+    // Fix: Environment-aware redirect
+    const isLocalhost = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
+    const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider,
       options: {
         // Automatically redirects to /feed on whatever domain the user is currently on
-        redirectTo: window.location.origin + '/feed'
+        redirectTo: window.location.origin + redirectPath
       }
     });
 
