@@ -127,11 +127,19 @@
             // === AUTH FUNCTIONS ===
             window.signUpUser = async function (email, password, name) {
                 console.log('📝 signUpUser called with:', email);
+
+                // Fix: Environment-aware redirect
+                // Localhost needs physical file (no _redirects support)
+                // Production uses clean URL (/feed)
+                const isLocalhost = window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1';
+                const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
-                        emailRedirectTo: window.location.origin + '/feed',
+                        emailRedirectTo: window.location.origin + redirectPath,
                         data: { full_name: name }
                     }
                 });
@@ -170,11 +178,15 @@
             window.signInWithProvider = async function (provider) {
                 console.log(`🔵 Initiating ${provider} login...`);
                 try {
+                    // Fix: Environment-aware redirect
+                    const isLocalhost = window.location.hostname === 'localhost' ||
+                        window.location.hostname === '127.0.0.1';
+                    const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider: provider,
                         options: {
-                            // Fix: Uses the current domain (com or in) and redirects to /feed
-                            redirectTo: window.location.origin + '/feed'
+                            redirectTo: window.location.origin + redirectPath
                         }
                     });
 
@@ -194,11 +206,26 @@
             };
 
             window.resetPassword = async function (email) {
+                // Fix: Environment-aware redirect
+                const isLocalhost = window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1';
+                const redirectPath = isLocalhost ? '/reset-password.html' : '/reset-password';
+                const redirectUrl = window.location.origin + redirectPath;
+
+                console.log('🔐 Sending password reset email to:', email);
+                console.log('📧 Reset redirect URL:', redirectUrl);
+                console.log('🌍 Environment:', isLocalhost ? 'localhost' : 'production');
+
                 const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    // Fix: Redirects back to the same domain you are on
-                    redirectTo: window.location.origin + "/reset-password.html"
+                    redirectTo: redirectUrl
                 });
-                if (error) throw error;
+
+                if (error) {
+                    console.error('❌ Password reset error:', error);
+                    throw error;
+                }
+
+                console.log('✅ Password reset email sent successfully');
             };
 
             // Signal that auth is ready
@@ -792,7 +819,7 @@
                 e.preventDefault();
                 if (code.trim().toUpperCase() === 'PLUSOPINION2024' || code.trim().toUpperCase() === 'AYREXX2025') {
                     // Redirect to actual app (session persistence handled by Supabase)
-                    window.location.href = 'onboarding.html';
+                    window.navigateTo('onboarding.html');
                 } else {
                     alert("Invalid Access Code. Access Blocked.");
                 }
@@ -1022,7 +1049,7 @@
                 if (code.trim().toUpperCase() === 'PLUSOPINION2024' || code.trim().toUpperCase() === 'AYREXX2025') {
                     // Code valid! Now redirect based on onboarding status
                     if (userOnboardingStatus) {
-                        window.location.href = './onboarding.html';
+                        window.navigateTo('onboarding.html');
                     } else {
                         window.navigateTo('HOMEPAGE_FINAL.HTML');
                     }
@@ -1252,7 +1279,7 @@
                         const user = await window.getCurrentUser();
                         if (user) {
                             // User is logged in, redirect to homepage (session already persisted by Supabase)
-                            window.location.replace('HOMEPAGE_FINAL.HTML');
+                            window.navigateTo('HOMEPAGE_FINAL.HTML');
                         }
                     } catch (error) {
                         console.log('No active session');
