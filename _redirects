@@ -23,8 +23,6 @@
 /privacy-policy /PRIVACY_POLICY.HTML 200
 /t&c /TERMS_AND_CONDITIONS.HTML 200
 
-# Maintenance page
-/maintenance /MAINTENANCE.HTML 200
 
 # Default root
 / /index.html 200
