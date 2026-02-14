@@ -23,7 +23,7 @@ window.checkOnboardingStatus = async function () {
         if (!user) {
             // Not logged in → redirect to landing page
             console.warn('⚠️ No user session - redirecting to login');
-            window.location.href = 'index.html';
+            window.navigateTo('index.html');
             return false;
         }
 
@@ -37,13 +37,13 @@ window.checkOnboardingStatus = async function () {
         if (error) {
             console.error('❌ Error checking profile:', error);
             // If profile doesn't exist, redirect to onboarding
-            window.location.href = 'onboarding.html';
+            window.navigateTo('onboarding.html');
             return false;
         }
 
         if (!profile) {
             console.warn('⚠️ No profile found - redirecting to onboarding');
-            window.location.href = 'onboarding.html';
+            window.navigateTo('onboarding.html');
             return false;
         }
 
@@ -63,7 +63,7 @@ window.checkOnboardingStatus = async function () {
                 has_username: !!profile.username,
                 has_full_name: !!profile.full_name
             });
-            window.location.href = 'onboarding.html';
+            window.navigateTo('onboarding.html');
             return false;
         }
 
@@ -74,7 +74,7 @@ window.checkOnboardingStatus = async function () {
     } catch (err) {
         console.error('❌ Error in onboarding check:', err);
         // On error, redirect to onboarding to be safe
-        window.location.href = 'onboarding.html';
+        window.navigateTo('onboarding.html');
         return false;
     }
 };
