@@ -1,0 +1,42 @@
+# Cache Control Headers
+
+# Service Worker - No cache (must always check for updates)
+/service-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Version file - No cache (for update detection)
+/version.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# HTML pages - No cache (for immediate updates)
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.HTML
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# JavaScript - Short cache with revalidation (5 minutes)
+/*.js
+  Cache-Control: public, max-age=300, must-revalidate
+
+# CSS - Short cache with revalidation (5 minutes)
+/*.css
+  Cache-Control: public, max-age=300, must-revalidate
+
+# Images - Longer cache (1 hour)
+/*.png
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/*.jpg
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/*.webp
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# Security Headers (all pages)
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
