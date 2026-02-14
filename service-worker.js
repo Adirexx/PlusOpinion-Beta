@@ -3,7 +3,7 @@
 // Updated at: API_FIX_TIMESTAMP
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_TIMESTAMP_PLACEHOLDER';
+  : 'BUILD_20250214_0442';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
