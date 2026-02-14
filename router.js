@@ -285,6 +285,24 @@ class RouteCleaner {
 window.RouteCleaner = new RouteCleaner();
 window.Router = new Router();
 
+/**
+ * Global navigation helper - Production Ready for Cloudflare Pages
+ * 
+ * Uses physical filenames for reliability.
+ * Cloudflare _redirects handles URL masking (shows clean URLs in browser).
+ * 
+ * @param {string} page - Physical filename to navigate to
+ */
+window.navigateTo = function (page) {
+    if (!page) {
+        console.error('❌ navigateTo() called without page parameter');
+        return;
+    }
+
+    // Navigate to physical file - Cloudflare _redirects shows clean URL
+    window.location.href = page;
+};
+
 // Automatically clean URL on load
 window.addEventListener('DOMContentLoaded', () => {
     window.RouteCleaner.cleanCurrentUrl();
