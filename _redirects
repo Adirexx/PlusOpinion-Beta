@@ -1,7 +1,8 @@
-/MAINTENANCE.HTML /MAINTENANCE.HTML 200
+# Icon assets
 /icon-192.png /icon-192.png 200
 /icon-512.png /icon-512.png 200
-/* /MAINTENANCE.HTML 302
+
+# Main application pages
 /feed /HOMEPAGE_FINAL.HTML 200
 /bookmarks /BOOKMARKS.HTML 200
 /categories /CATAGORYPAGE.HTML 200
@@ -10,9 +11,20 @@
 /notifications /NOTIFICATION%20PANEL.HTML 200
 /myprofile /PRIVATE%20OWNER%20PROFILE.HTML 200
 /profile /PUBLIC%20POV%20PROFILE.HTML 200
+
+# Authentication pages
 /onboarding /onboarding.html 200
 /reset-password /reset-password.html 200
 /change-password /change-password.html 200
+
+# Static/Legal pages
 /about /ABOUT.HTML 200
 /support /SUPPORT.HTML 200
 /privacy-policy /PRIVACY_POLICY.HTML 200
+/t&c /TERMS_AND_CONDITIONS.HTML 200
+
+# Maintenance page
+/maintenance /MAINTENANCE.HTML 200
+
+# Default root
+/ /index.html 200
