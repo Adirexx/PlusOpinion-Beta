@@ -1642,7 +1642,7 @@
 
                     {/* Drawer Panel (Slide from Left) */}
                     <div
-                        className={`fixed top-0 left-0 h-full z-50 w-[90%] md:w-[400px] bg-[#070A12]/95 backdrop-blur-2xl border-r border-white/5 shadow-2xl transform transition-transform duration-[350ms] cubic-bezier(0.19, 1, 0.22, 1) flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                        className={`fixed top-0 left-0 h-full z-50 w-[90%] md:w-[400px] bg-[#070A12]/95 backdrop-blur-2xl border-r border-white/5 shadow-2xl transform transition-transform duration-[350ms] cubic-bezier(0.19, 1, 0.22, 1) flex flex-col ptr-ignore ${isOpen ? 'translate-x-0' : '-translate-x-full'
                             }`}
                     >
                         <div className="absolute top-0 left-0 w-full h-96 bg-neon/10 rounded-full blur-[100px] -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
@@ -1758,6 +1758,16 @@
                     applyFilter(activeFilter);
                 }
             }, [isOpen, activeFilter, searchQuery]);
+
+            // Body Scroll Lock
+            useEffect(() => {
+                if (isOpen) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+                return () => { document.body.style.overflow = ''; };
+            }, [isOpen]);
 
             const loadInitialData = async () => {
                 try {
@@ -1903,7 +1913,7 @@
                     className={`fixed top-0 right-0 h-full z-50 w-full bg-[#020205] flex flex-col transition-transform duration-[350ms] cubic-bezier(0.19, 1, 0.22, 1) ${isOpen ? 'translate-x-0' : 'translate-x-full'
                         }`}
                 >
-                    <div className="pt-6 pb-2 px-4 flex items-center gap-3 border-b border-white/5 bg-[#020205]/95 backdrop-blur-md sticky top-0 z-20 shadow-xl">
+                    <div className="pt-6 pb-2 px-4 flex items-center gap-3 border-b border-white/5 bg-[#020205]/95 backdrop-blur-md sticky top-0 z-20 shadow-xl ptr-ignore">
                         <button onClick={() => { vibrate(5); onClose(); }} className="p-2 -ml-2 text-white/60 hover:text-white transition-colors">
                             <Icon icon="ChevronLeft" size={24} />
                         </button>
@@ -1925,7 +1935,7 @@
                     </div>
 
                     {/* Smart Filter Tabs */}
-                    <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-white/5 bg-[#020205]">
+                    <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-white/5 bg-[#020205] ptr-ignore">
                         {LENS_FILTERS.map(filter => (
                             <button
                                 key={filter.id}
