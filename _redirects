@@ -14,7 +14,6 @@
 
 # Authentication pages
 
-/change-password /change-password.html 200
 
 # Static/Legal pages
 /about /ABOUT.HTML 200
