@@ -1550,6 +1550,7 @@
             const [targetPosts, setTargetPosts] = useState([]);
             const [commentedPosts, setCommentedPosts] = useState([]);
             const [isLoading, setIsLoading] = useState(true);
+            const [userBadge, setUserBadge] = useState(null); // User Count Badge
             const hasInitialized = useRef(false);
 
             // Removed local formatTime helper (now global)
@@ -1623,6 +1624,9 @@
 
                             const profile = await window.getUserProfile(targetId);
                             setTargetUser(profile);
+
+                            // Fetch Badge Number
+                            window.getUserBadgeNumber(targetId).then(num => setUserBadge(num));
 
                             const posts = await window.getUserPosts(targetId);
                             setTargetPosts(posts || []);
@@ -2131,7 +2135,20 @@
                                 <span className="w-1 h-1 rounded-full bg-white/20"></span>
                                 <span className="flex items-center gap-1"><Icon icon="MapPin" size={12} /> {targetUser.location || 'Everywhere'}</span>
                             </div>
-                            <p className="text-sm text-gray-300 font-light leading-relaxed mb-4">{targetUser.bio || 'This user prefers to keep their bio a mystery.'}</p>
+                            <div className="flex items-start justify-between gap-4 mb-4">
+                                <p className="text-sm text-gray-300 font-light leading-relaxed flex-1">{targetUser.bio || 'This user prefers to keep their bio a mystery.'}</p>
+
+                                {/* Engraved User Badge */}
+                                {(userBadge !== null) && (
+                                    <div className="flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-xl bg-[#020205] border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),_0_1px_0_rgba(255,255,255,0.05)] group relative overflow-hidden" title={`User #${userBadge}`}>
+                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/[0.02] pointer-events-none"></div>
+                                        <span className="text-[8px] text-white/20 font-black uppercase tracking-widest leading-none mb-0.5">EST</span>
+                                        <span className="text-lg font-heading font-black text-white/30 tracking-tighter leading-none" style={{ textShadow: '0 -1px 0 rgba(0,0,0,1), 0 1px 0 rgba(255,255,255,0.05)' }}>
+                                            #{userBadge}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
 
                             {targetUser.website && (
                                 <div className="flex items-center gap-1.5 text-xs text-neon font-medium mb-5">
