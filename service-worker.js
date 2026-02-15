@@ -1,9 +1,9 @@
 // Dynamic version - will be replaced at build time
 // For localhost, use timestamp; for production, use build timestamp
-// Updated at: FEB15_AUTH_PAGES_FIX
+// Updated at: FEB15_COMPLETE_AUTH_FIX
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20250215_0452';
+  : 'BUILD_20250215_0516';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
