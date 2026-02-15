@@ -128,9 +128,15 @@
             window.signUpUser = async function (email, password, name) {
                 console.log('📝 signUpUser called with:', email);
 
-                const isLocalhost = window.location.hostname === 'localhost' ||
-                    window.location.hostname === '127.0.0.1';
-                const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+                const hostname = window.location.hostname;
+                const isLocalhost = hostname === 'localhost' ||
+                    hostname === '127.0.0.1' ||
+                    hostname === '0.0.0.0' ||
+                    hostname.startsWith('192.168.') ||
+                    hostname.startsWith('10.') ||
+                    hostname.endsWith('.local');
+                // FORCE .html extension (User Request)
+                const redirectPath = '/onboarding.html';
 
                 const { data, error } = await supabase.auth.signUp({
                     email,
@@ -166,9 +172,15 @@
                 console.log(`🔵 Initiating ${provider} login...`);
                 try {
                     // Fix: Environment-aware redirect
-                    const isLocalhost = window.location.hostname === 'localhost' ||
-                        window.location.hostname === '127.0.0.1';
-                    const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+                    const hostname = window.location.hostname;
+                    const isLocalhost = hostname === 'localhost' ||
+                        hostname === '127.0.0.1' ||
+                        hostname === '0.0.0.0' ||
+                        hostname.startsWith('192.168.') ||
+                        hostname.startsWith('10.') ||
+                        hostname.endsWith('.local');
+                    // FORCE .html extension (User Request)
+                    const redirectPath = '/onboarding.html';
 
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider: provider,
@@ -194,9 +206,15 @@
 
             window.resetPassword = async function (email) {
                 // Fix: Environment-aware redirect
-                const isLocalhost = window.location.hostname === 'localhost' ||
-                    window.location.hostname === '127.0.0.1';
-                const redirectPath = isLocalhost ? '/reset-password.html' : '/reset-password';
+                const hostname = window.location.hostname;
+                const isLocalhost = hostname === 'localhost' ||
+                    hostname === '127.0.0.1' ||
+                    hostname === '0.0.0.0' ||
+                    hostname.startsWith('192.168.') ||
+                    hostname.startsWith('10.') ||
+                    hostname.endsWith('.local');
+                // FORCE .html extension (User Request)
+                const redirectPath = '/reset-password.html';
                 const redirectUrl = window.location.origin + redirectPath;
 
                 console.log('🔐 Sending password reset email to:', email);
