@@ -200,8 +200,19 @@
 
             const checkUserStatus = async () => {
                 try {
-                    const currentUser = await window.getCurrentUser();
+                    // Try to get current user, with short retry for fresh signups
+                    let currentUser = await window.getCurrentUser();
+
+                    // If no user on first try, wait 1 second and try once more
+                    // (Handles case where session is still syncing after signup)
                     if (!currentUser) {
+                        console.log('⏳ No session found, retrying in 1s for fresh signup...');
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        currentUser = await window.getCurrentUser();
+                    }
+
+                    if (!currentUser) {
+                        console.log('❌ No session after retry, redirecting to login');
                         window.navigateTo('index.html');
                         return;
                     }
@@ -217,7 +228,7 @@
 
                     // If profile is already completed, redirect to homepage
                     if (profile?.profile_completed && profile?.terms_accepted) {
-                        console.log('Profile already completed, redirecting to homepage...');
+                        console.log('✅ Profile already completed, redirecting to homepage...');
                         window.navigateTo('HOMEPAGE_FINAL.HTML');
                         return;
                     }
@@ -236,7 +247,7 @@
                         setStep('terms');
                     }
                 } catch (error) {
-                    console.error('Error checking user status:', error);
+                    console.error('❌ Error checking user status:', error);
                     window.navigateTo('index.html');
                 } finally {
                     setLoading(false);
