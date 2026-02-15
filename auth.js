@@ -13,8 +13,6 @@
    SIGN UP (Email + Password)
 ============================ */
 async function signUpUser(email, password, name) {
-  hostname.startsWith('10.') ||
-    hostname.endsWith('.local');
   const redirectPath = '/onboarding.html'; // FORCE .html extension
 
   const { data, error } = await window.supabase.auth.signUp({
@@ -114,7 +112,8 @@ async function resetPassword(email) {
     hostname.startsWith('192.168.') ||
     hostname.startsWith('10.') ||
     hostname.endsWith('.local');
-  const redirectPath = isLocalhost ? '/reset-password.html' : '/reset-password';
+  // FORCE .html extension
+  const redirectPath = '/reset-password.html';
 
   const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + redirectPath
@@ -181,8 +180,6 @@ async function checkUsernameAvailable(username) {
    GOOGLE / OAUTH SIGN IN
 ============================ */
 async function signInWithProvider(provider) {
-  hostname.startsWith('10.') ||
-    hostname.endsWith('.local');
   const redirectPath = '/onboarding.html'; // FORCE .html extension
 
   const { data, error } = await window.supabase.auth.signInWithOAuth({
