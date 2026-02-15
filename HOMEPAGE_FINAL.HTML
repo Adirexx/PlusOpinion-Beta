@@ -1626,10 +1626,15 @@
             useEffect(() => {
                 if (isOpen) {
                     document.body.style.overflow = 'hidden';
+                    if (window.PullToRefresh) window.PullToRefresh.setEnabled(false);
                 } else {
                     document.body.style.overflow = '';
+                    if (window.PullToRefresh) window.PullToRefresh.setEnabled(true);
                 }
-                return () => { document.body.style.overflow = ''; };
+                return () => {
+                    document.body.style.overflow = '';
+                    if (window.PullToRefresh) window.PullToRefresh.setEnabled(true);
+                };
             }, [isOpen]);
 
             return (
