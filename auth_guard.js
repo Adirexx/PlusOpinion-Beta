@@ -1,113 +1,62 @@
 /**
- * Authentication Guard for PlusOpinion
+ * Auth Guard - Simple Onboarding Enforcement
  * 
- * This module provides universal onboarding status checking.
- * Ensures NO user can access the platform without completing:
- * 1. Terms & Conditions acceptance
- * 2. Profile setup (username, full name, bio, avatar)
- * 
- * Usage: Import this file on any protected page
+ * Logic:
+ * - On auth pages (onboarding, reset-password, change-password): skip all checks
+ * - No user logged in: redirect to index.html
+ * - User logged in but onboarding incomplete: redirect to onboarding.html
+ * - User logged in and onboarding complete: allow access
  */
 
-/**
- * Check if user has completed full onboarding
- * Redirects to appropriate page if not
- * 
- * @returns {Promise<boolean>} true if onboarding complete, false if redirected
- */
 window.checkOnboardingStatus = async function () {
     try {
-        // 🚨 CRITICAL: Check if we're on an auth page FIRST
-        const currentPage = window.location.pathname;
-        const isOnAuthPage = currentPage.includes('onboarding') ||
-            currentPage === '/onboarding' ||
-            currentPage.includes('reset-password') ||
-            currentPage === '/reset-password' ||
-            currentPage.includes('change-password') ||
-            currentPage === '/change-password';
-
-        // If on auth pages, SKIP ALL AUTH CHECKS - let the page handle its own logic
-        if (isOnAuthPage) {
-            console.log('✅ On auth page - skipping auth guard checks');
-            return true; // Allow access without checks
+        // Skip checks on auth pages - let them handle their own logic
+        const path = window.location.pathname.toLowerCase();
+        if (path.includes('onboarding') || path.includes('reset-password') || path.includes('change-password') || path.includes('index')) {
+            return true;
         }
 
-        // 1. Check if user is logged in (ONLY for non-auth pages)
+        // Check if user is logged in
         const user = await window.getCurrentUser();
-
         if (!user) {
-            // Not logged in → redirect to landing page
-            console.warn('⚠️ No user session - redirecting to login');
             window.navigateTo('index.html');
             return false;
         }
 
-        // 2. Check onboarding status in database
+        // Check if onboarding is complete
         const { data: profile, error } = await window.supabase
             .from('profiles')
             .select('terms_accepted, profile_completed, username, full_name')
             .eq('id', user.id)
             .single();
 
-        if (error) {
-            console.error('❌ Error checking profile:', error);
-            // If profile doesn't exist, redirect to onboarding
+        if (error || !profile) {
             window.navigateTo('onboarding.html');
             return false;
         }
 
-        if (!profile) {
-            console.warn('⚠️ No profile found - redirecting to onboarding');
-            window.navigateTo('onboarding.html');
-            return false;
-        }
-
-        // 3. Check if onboarding is complete
-        const onboardingComplete = profile.terms_accepted === true
+        const isComplete = profile.terms_accepted === true
             && profile.profile_completed === true
-            && profile.username !== null
-            && profile.username !== ''
-            && profile.full_name !== null
-            && profile.full_name !== '';
+            && profile.username
+            && profile.full_name;
 
-        if (!onboardingComplete) {
-            console.warn('⚠️ Onboarding incomplete - redirecting to onboarding');
-            console.log('Onboarding status:', {
-                terms_accepted: profile.terms_accepted,
-                profile_completed: profile.profile_completed,
-                has_username: !!profile.username,
-                has_full_name: !!profile.full_name
-            });
+        if (!isComplete) {
             window.navigateTo('onboarding.html');
             return false;
         }
 
-        // ✅ All checks passed - onboarding is complete
-        console.log('✅ Onboarding complete - access granted');
         return true;
 
     } catch (err) {
-        console.error('❌ Error in onboarding check:', err);
-
-        // Check if on auth page before redirecting on error
-        const currentPage = window.location.pathname;
-        const isOnAuthPage = currentPage.includes('onboarding') ||
-            currentPage === '/onboarding' ||
-            currentPage.includes('reset-password') ||
-            currentPage === '/reset-password' ||
-            currentPage.includes('change-password') ||
-            currentPage === '/change-password';
-
-        if (!isOnAuthPage) {
-            window.navigateTo('onboarding.html');
-        }
+        console.error('Auth guard error:', err);
+        // On error, redirect to login - don't create loops
+        window.navigateTo('index.html');
         return false;
     }
 };
 
 /**
- * Check if user has accepted terms (for onboarding page flow)
- * @returns {Promise<boolean>}
+ * Check if user has accepted terms
  */
 window.hasAcceptedTerms = async function () {
     try {
@@ -122,36 +71,33 @@ window.hasAcceptedTerms = async function () {
 
         return profile?.terms_accepted === true;
     } catch (err) {
-        console.error('Error checking terms acceptance:', err);
         return false;
     }
 };
 
 /**
- * Mark terms as accepted
- * @param {string} userId 
- * @returns {Promise<boolean>}
+ * Accept terms for current user
  */
-window.acceptTerms = async function (userId) {
+window.acceptTerms = async function () {
     try {
+        const user = await window.getCurrentUser();
+        if (!user) return false;
+
         const { error } = await window.supabase
             .from('profiles')
             .update({ terms_accepted: true })
-            .eq('id', userId);
+            .eq('id', user.id);
 
         if (error) throw error;
-
-        // Terms accepted for user
         return true;
     } catch (err) {
-        console.error('❌ Error accepting terms:', err);
+        console.error('Error accepting terms:', err);
         return false;
     }
 };
 
 /**
- * Get my profile data
- * @returns {Promise<Object>}
+ * Get current user's profile
  */
 window.getMyProfile = async function () {
     try {
@@ -167,9 +113,8 @@ window.getMyProfile = async function () {
         if (error) throw error;
         return profile;
     } catch (err) {
-        console.error('Error getting profile:', err);
         return null;
     }
 };
 
-console.log('✅ Auth Guard loaded - onboarding enforcement active');
+console.log('✅ Auth Guard loaded');
