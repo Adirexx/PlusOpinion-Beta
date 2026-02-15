@@ -94,14 +94,31 @@ class PullToRefresh {
     }
 
     handleTouchStart(e) {
+        const target = e.target;
+
+        // 1. GLOBAL REJECT: Never trigger if touching an ignored element (or its children)
+        if (target.closest('.ptr-ignore')) {
+            return;
+        }
+
         const windowScrollTop = window.scrollY || document.documentElement.scrollTop;
         const bodyScrollTop = document.body.scrollTop;
         let scrollTop = windowScrollTop || bodyScrollTop;
 
-        const target = e.target;
         let scrollableParent = target.closest('.overflow-y-auto, .overflow-auto, [style*="overflow-y"], [style*="overflow:"]');
         if (scrollableParent) {
             scrollTop = scrollableParent.scrollTop;
+        }
+
+        // 2. CONTEXT-AWARE CHECK: If body is locked (Side Panel Open), be stricter
+        const isBodyLocked = document.body.style.overflow === 'hidden';
+
+        if (isBodyLocked) {
+            // If body is locked, we ONLY allow PTR if we are clearly inside a scrollable container
+            // AND that container is at the top.
+            if (!scrollableParent) {
+                return; // Touching a fixed header or non-scrollable area overlay -> IGNORE
+            }
         }
 
         if (scrollTop === 0 && !this.state.refreshing) {
