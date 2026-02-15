@@ -128,9 +128,6 @@
             window.signUpUser = async function (email, password, name) {
                 console.log('📝 signUpUser called with:', email);
 
-                // Fix: Environment-aware redirect
-                // Localhost needs physical file (no _redirects support)
-                // Production uses clean URL (/feed)
                 const isLocalhost = window.location.hostname === 'localhost' ||
                     window.location.hostname === '127.0.0.1';
                 const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
@@ -143,25 +140,15 @@
                         data: { full_name: name }
                     }
                 });
+
                 if (error) {
                     console.error('❌ Signup error from Supabase:', error);
                     throw error;
                 }
-                console.log('✅ Signup response:', data);
 
-                const user = data.user;
-                if (user) {
-                    try {
-                        await supabase.from("profiles").insert({
-                            id: user.id,
-                            email: user.email,
-                            full_name: name
-                        });
-                    } catch (e) {
-                        console.warn('Profile creation skipped:', e);
-                    }
-                }
-                return user;
+                console.log('✅ Signup response:', data);
+                // Profile creation is handled by database trigger 'on_auth_user_created'
+                return data;
             };
 
             window.signInUser = async function (email, password) {
@@ -791,8 +778,15 @@
 
                     // Sign up user with Supabase
                     console.log('Attempting to sign up user:', formData.email);
-                    const user = await window.signUpUser(formData.email, formData.password, formData.name);
-                    console.log('Signup successful, user:', user);
+                    const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                    console.log('Signup successful result:', signupData);
+
+                    // Check if email confirmation is required (session: null)
+                    if (!signupData.session) {
+                        setError('Account created! Please check your email to verify your account before logging in.');
+                        setLoading(false);
+                        return;
+                    }
 
                     // Also send notification to admin via Formspree
                     fetch("https://formspree.io/f/xkowzkjz", {
@@ -805,7 +799,7 @@
                         })
                     }).catch(err => console.error('Formspree error:', err));
 
-                    // Move to beta code step
+                    // Move to beta code step only if we have a session
                     setLoading(false);
                     setStep(2);
                 } catch (error) {
@@ -1027,13 +1021,28 @@
                     await window.authReadyPromise;
 
                     // Sign in user with Supabase (session automatically persisted to localStorage)
-                    // PASS TRUE TO DISABLE AUTO REDIRECT
-                    const user = await window.signInUser(formData.email, formData.password, true);
+                    const user = await window.signInUser(formData.email, formData.password);
 
-                    // Store onboarding status for next step
-                    setUserOnboardingStatus(user.onboardingRequired);
+                    // ✅ Check onboarding status from database
+                    const { data: profile, error } = await window.supabase
+                        .from('profiles')
+                        .select('profile_completed, terms_accepted')
+                        .eq('id', user.id)
+                        .single();
 
-                    // Move to Access Code step instead of redirecting immediately
+                    if (error) {
+                        console.error('Error checking profile:', error);
+                        // If error fetching profile, assume onboarding needed
+                        setUserOnboardingStatus(true);
+                    } else {
+                        // Check if onboarding is complete
+                        const onboardingComplete = profile?.profile_completed === true &&
+                            profile?.terms_accepted === true;
+                        setUserOnboardingStatus(!onboardingComplete); // true if NOT complete
+                        console.log('Onboarding status:', onboardingComplete ? 'COMPLETE' : 'INCOMPLETE');
+                    }
+
+                    // Move to Access Code step
                     setLoading(false);
                     setStep(2);
 
