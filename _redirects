@@ -14,7 +14,6 @@
 
 # Authentication pages
 
-/reset-password /reset-password.html 200
 /change-password /change-password.html 200
 
 # Static/Legal pages
