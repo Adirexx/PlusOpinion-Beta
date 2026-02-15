@@ -103,13 +103,9 @@
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
     <script src="./pwa_installer.js" defer></script>
 
+    <!-- Professional Update & Maintenance System -->
+    <script src="./updater.js"></script>
     <script>
-        if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js");
-            });
-        }
-
         // Check for active Supabase session instead of sessionStorage
         // This enables persistent login across browser restarts
         async function checkAuthSession() {
@@ -1727,7 +1723,7 @@
 
                                 <div className="mt-6 text-center">
                                     <span className="text-[10px] text-muted font-mono tracking-widest uppercase">
-                                        PlusOpinion Beta • v0.1.2
+                                        PlusOpinion Beta • <span className="app-version"></span>
                                     </span>
                                 </div>
                             </div>
@@ -3933,6 +3929,10 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
+    </style>
+    </div>
+    <!-- TEST_UPDATE_TOY_END -->
 </body>
+
 
 </html>
