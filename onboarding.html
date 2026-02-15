@@ -239,92 +239,7 @@
                 return () => { mounted = false; };
             }, []);
 
-            // Wait for supabase client to be actually initialized
-            const waitForSupabase = () => new Promise((resolve) => {
-                const check = () => {
-                    if (window.supabase && window.supabase.auth && window.supabase.from) {
-                        resolve(true);
-                    } else {
-                        setTimeout(check, 200);
-                    }
-                };
-                check();
-                // Safety timeout - resolve after 8 seconds regardless
-                setTimeout(() => resolve(false), 8000);
-            });
 
-            const checkUserStatus = async () => {
-                try {
-                    // Start with terms visible so UI isn't empty
-                    setStep('terms');
-
-                    // Step 1: Wait for Supabase client
-                    const supabaseReady = await waitForSupabase();
-                    if (!supabaseReady) {
-                        console.warn('Supabase not ready yet, but showing UI anyway');
-                        setLoading(false);
-                        return;
-                    }
-
-                    // Step 2: Try to get user session (retry silently)
-                    let currentUser = null;
-                    for (let i = 0; i < 5; i++) {
-                        const user = await window.getCurrentUser?.();
-                        if (user) {
-                            currentUser = user;
-                            break;
-                        }
-                        await new Promise(r => setTimeout(r, 1500));
-                    }
-
-                    if (!currentUser) {
-                        console.warn('No session found after retries - redirecting to login');
-                        // Provide clear context to the user
-                        alert("Session not found. Please log in again to continue onboarding.");
-                        window.navigateTo('index.html');
-                        setLoading(false);
-                        return;
-                    }
-
-                    setUser(currentUser);
-
-                    // Step 3: Check profile
-                    const { data: profile } = await window.supabase
-                        .from('profiles')
-                        .select('profile_completed, terms_accepted')
-                        .eq('id', currentUser.id)
-                        .single();
-
-                    // Already done? 
-                    if (profile?.profile_completed && profile?.terms_accepted) {
-                        window.navigateTo('HOMEPAGE_FINAL.HTML');
-                        return;
-                    }
-
-
-                    // Pre-fill name from metadata (Google uses 'full_name' or 'name')
-                    const fullName = currentUser.user_metadata?.full_name ||
-                        currentUser.user_metadata?.name ||
-                        '';
-
-                    if (fullName) {
-                        setFormData(prev => ({
-                            ...prev,
-                            full_name: fullName
-                        }));
-                    }
-
-                    // Show correct step
-                    setStep(profile?.terms_accepted ? 'profile' : 'terms');
-
-                } catch (error) {
-                    console.error('Onboarding check error:', error);
-                    // On error, just show terms - don't block
-                    setStep('terms');
-                } finally {
-                    setLoading(false);
-                }
-            };
 
 
             const handleAuthenticatedUser = async (currentUser) => {
@@ -334,13 +249,19 @@
                     setUser(currentUser);
 
                     // Check profile
+                    // Check profile with stricter validation (matching auth_guard)
                     const { data: profile } = await window.supabase
                         .from('profiles')
-                        .select('profile_completed, terms_accepted')
+                        .select('profile_completed, terms_accepted, username, full_name')
                         .eq('id', currentUser.id)
                         .single();
 
-                    if (profile?.profile_completed && profile?.terms_accepted) {
+                    const isComplete = profile?.profile_completed === true
+                        && profile?.terms_accepted === true
+                        && profile?.username
+                        && profile?.full_name;
+
+                    if (isComplete) {
                         window.navigateTo('HOMEPAGE_FINAL.HTML');
                         return;
                     }
