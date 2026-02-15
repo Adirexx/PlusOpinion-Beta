@@ -262,9 +262,18 @@
                         return;
                     }
 
-                    // Pre-fill name
-                    const fullName = currentUser.user_metadata?.full_name || '';
-                    if (fullName) setFormData(prev => ({ ...prev, full_name: fullName }));
+
+                    // Pre-fill name from metadata (Google uses 'full_name' or 'name')
+                    const fullName = currentUser.user_metadata?.full_name ||
+                        currentUser.user_metadata?.name ||
+                        '';
+
+                    if (fullName) {
+                        setFormData(prev => ({
+                            ...prev,
+                            full_name: fullName
+                        }));
+                    }
 
                     // Show correct step
                     setStep(profile?.terms_accepted ? 'profile' : 'terms');
