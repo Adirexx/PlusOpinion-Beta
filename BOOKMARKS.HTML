@@ -101,13 +101,10 @@
     <!-- Framer Motion (Optional - dependency removed from logic to prevent crash) -->
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
-    <script>
-        if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js");
-            });
-        }
+    <!-- Professional Update & Maintenance System -->
+    <script src="./updater.js"></script>
 
+    <script>
         // Check for active Supabase session instead of sessionStorage
         // This enables persistent login across browser restarts
         async function checkAuthSession() {
@@ -3630,6 +3627,10 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
+    </style>
+    </div>
+    <!-- TEST_UPDATE_TOY_END -->
 </body>
+
 
 </html>
