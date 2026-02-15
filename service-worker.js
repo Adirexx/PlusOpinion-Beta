@@ -3,7 +3,7 @@
 // Updated at: FEB15_COMPLETE_AUTH_FIX
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20250215_0516';
+  : 'BUILD_20250216_0045';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
@@ -99,6 +99,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(event.request));
     return;
   }
+
+
 
   // Network-first for HTML pages (always get latest version)
   if (event.request.destination === 'document' || url.pathname.endsWith('.html')) {
