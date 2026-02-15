@@ -45,7 +45,8 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("./service-worker.js"); }); }</script>
+    <!-- Professional Update & Maintenance System -->
+    <script src="./updater.js"></script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <!-- Visual Tokens & Global CSS -->
@@ -1536,6 +1537,10 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
+    </style>
+    </div>
+    <!-- TEST_UPDATE_TOY_END -->
 </body>
+
 
 </html>
