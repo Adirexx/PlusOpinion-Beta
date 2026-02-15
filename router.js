@@ -218,7 +218,7 @@ class RouteCleaner {
             '/PRIVATE OWNER PROFILE.HTML': '/myprofile',
             '/PUBLIC POV PROFILE.HTML': '/profile',
             // '/onboarding.html': '/onboarding', // Disabled to force .html loading
-            '/reset-password.html': '/reset-password',
+            // '/reset-password.html': '/reset-password', // Disabled to force .html loading
             '/change-password.html': '/change-password',
             '/ABOUT.HTML': '/about',
             '/SUPPORT.HTML': '/support',
