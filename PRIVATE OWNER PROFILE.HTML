@@ -2254,7 +2254,11 @@
                         setProfileData(profileObj);
 
                         // Fetch Badge Number
-                        window.getUserBadgeNumber(profile.id).then(num => setUserBadge(num));
+                        if (typeof window.getUserBadgeNumber === 'function') {
+                            window.getUserBadgeNumber(profile.id).then(num => setUserBadge(num));
+                        } else {
+                            console.warn('getUserBadgeNumber not available locally');
+                        }
 
                         // SAVE TO CACHE (no TTL - invalidate on profile update)
                         if (window.StateManager) {
