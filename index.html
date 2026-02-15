@@ -46,35 +46,8 @@
     <!-- Google Analytics will be loaded by cookie-consent.js after user consent -->
 
     <!-- Service Worker Registration & Auto-Update Detection -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./service-worker.js').then(function (registration) {
-                console.log('✅ Service Worker registered');
-
-                // Check for updates every 5 minutes
-                setInterval(function () {
-                    registration.update();
-                }, 300000);
-
-                // Listen for new service worker (new version available)
-                registration.addEventListener('updatefound', function () {
-                    var newWorker = registration.installing;
-
-                    newWorker.addEventListener('statechange', function () {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New version available - prompt user
-                            if (confirm('🎉 A new version of PlusOpinion is available! Reload to update?')) {
-                                newWorker.postMessage({ action: 'skipWaiting' });
-                                window.location.reload();
-                            }
-                        }
-                    });
-                });
-            }).catch(function (error) {
-                console.error('❌ Service Worker registration failed:', error);
-            });
-        }
-    </script>
+    <!-- Professional Update & Maintenance System -->
+    <script src="./updater.js"></script>
 
 
     <!-- 1. Tailwind CSS -->
@@ -109,143 +82,13 @@
         console.log('🔄 Auth promise created, waiting for module to load...');
     </script>
 
-    <!-- Supabase Client & Auth Functions -->
-    <script type="module">
-        try {
-            // Use the Supabase UMD global that's already loaded via script tag
-            // The ESM import from jsDelivr was failing with bundling errors on mobile
-            const { createClient } = window.supabase;
-
-            const SUPABASE_URL = "https://ogqyemyrxogpnwitumsr.supabase.co";
-            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM";
-
-            const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-            // Expose supabase globally
-            window.supabase = supabase;
-
-            // === AUTH FUNCTIONS ===
-            window.signUpUser = async function (email, password, name) {
-                console.log('📝 signUpUser called with:', email);
-
-                const hostname = window.location.hostname;
-                const isLocalhost = hostname === 'localhost' ||
-                    hostname === '127.0.0.1' ||
-                    hostname === '0.0.0.0' ||
-                    hostname.startsWith('192.168.') ||
-                    hostname.startsWith('10.') ||
-                    hostname.endsWith('.local');
-                // FORCE .html extension (User Request)
-                const redirectPath = '/onboarding.html';
-
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        emailRedirectTo: window.location.origin + redirectPath,
-                        data: { full_name: name }
-                    }
-                });
-
-                if (error) {
-                    console.error('❌ Signup error from Supabase:', error);
-                    throw error;
-                }
-
-                console.log('✅ Signup response:', data);
-                // Profile creation is handled by database trigger 'on_auth_user_created'
-                return data;
-            };
-
-            window.signInUser = async function (email, password) {
-                console.log('🔑 signInUser called with:', email);
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) {
-                    console.error('❌ Login error from Supabase:', error);
-                    throw error;
-                }
-                console.log('✅ Login successful:', data.user?.email);
-                return data.user;
-            };
-
-            window.signInWithProvider = async function (provider) {
-                console.log(`🔵 Initiating ${provider} login...`);
-                try {
-                    // Fix: Environment-aware redirect
-                    const hostname = window.location.hostname;
-                    const isLocalhost = hostname === 'localhost' ||
-                        hostname === '127.0.0.1' ||
-                        hostname === '0.0.0.0' ||
-                        hostname.startsWith('192.168.') ||
-                        hostname.startsWith('10.') ||
-                        hostname.endsWith('.local');
-                    // FORCE .html extension (User Request)
-                    const redirectPath = '/onboarding.html';
-
-                    const { data, error } = await supabase.auth.signInWithOAuth({
-                        provider: provider,
-                        options: {
-                            redirectTo: window.location.origin + redirectPath
-                        }
-                    });
-
-                    if (error) {
-                        console.error('❌ Supabase OAuth Error:', error);
-                        alert(`Login Error: ${error.message}`);
-                        throw error;
-                    }
-
-                    console.log('✅ OAuth initiated:', data);
-                    return data;
-                } catch (err) {
-                    console.error('❌ Unexpected OAuth Error:', err);
-                    alert(`Unexpected Login Error: ${err.message}`);
-                    throw err;
-                }
-            };
-
-            window.resetPassword = async function (email) {
-                // Fix: Environment-aware redirect
-                const hostname = window.location.hostname;
-                const isLocalhost = hostname === 'localhost' ||
-                    hostname === '127.0.0.1' ||
-                    hostname === '0.0.0.0' ||
-                    hostname.startsWith('192.168.') ||
-                    hostname.startsWith('10.') ||
-                    hostname.endsWith('.local');
-                // FORCE .html extension (User Request)
-                const redirectPath = '/reset-password.html';
-                const redirectUrl = window.location.origin + redirectPath;
-
-                console.log('🔐 Sending password reset email to:', email);
-                console.log('📧 Reset redirect URL:', redirectUrl);
-                console.log('🌍 Environment:', isLocalhost ? 'localhost' : 'production');
-
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: redirectUrl
-                });
-
-                if (error) {
-                    console.error('❌ Password reset error:', error);
-                    throw error;
-                }
-
-                console.log('✅ Password reset email sent successfully');
-            };
-
-            // Signal that auth is ready
-            window.authReady = true;
-            window._resolveAuthReady();
-            console.log('✅ Auth functions loaded and ready!');
-
-        } catch (moduleError) {
-            console.error('❌ Failed to load Supabase module:', moduleError);
-            // Try to reject the promise if it hasn't been resolved yet
-            if (!window.authReady && window._resolveAuthReady) {
-                // We can't reject from here, but we can at least log
-                console.error('Auth will not work. Please refresh the page.');
-            }
-        }
+    <!-- Centralized Auth Infrastructure -->
+    <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./auth.js"></script>
+    <script>
+        window.authReadyPromise.then(() => {
+            console.log('✅ Global Auth module linked and ready');
+        });
     </script>
 
     <!-- 3. Babel -->
@@ -1266,13 +1109,17 @@
                 // Check if user is already logged in with Supabase
                 const checkSession = async () => {
                     try {
+                        // Wait for auth module to be ready
+                        await window.authReadyPromise;
+
                         const user = await window.getCurrentUser();
                         if (user) {
-                            // User is logged in, redirect to homepage (session already persisted by Supabase)
+                            console.log('User already logged in, redirecting...');
+                            // User is logged in, redirect to homepage
                             window.navigateTo('HOMEPAGE_FINAL.HTML');
                         }
                     } catch (error) {
-                        console.log('No active session');
+                        console.log('Session check error or no session');
                     }
                 };
 
@@ -1566,8 +1413,9 @@
                             </div>
 
                             {/* Copyright */}
-                            <div className="text-center md:text-left text-xs text-slate-600 border-t border-white/5 pt-6">
-                                © {new Date().getFullYear()} PlusOpinion, Inc. All rights reserved.
+                            <div className="text-center md:text-left text-xs text-slate-600 border-t border-white/5 pt-6 flex justify-between items-center">
+                                <span>© {new Date().getFullYear()} PlusOpinion, Inc. All rights reserved.</span>
+                                <span className="app-version opacity-50 font-mono"></span>
                             </div>
                         </div>
                     </footer>
@@ -1813,6 +1661,10 @@
     <!-- Cookie Consent Manager -->
     <script src="./cookie-consent.js"></script>
 
+    </style>
+    </div>
+    <!-- TEST_UPDATE_TOY_END -->
 </body>
+
 
 </html>
