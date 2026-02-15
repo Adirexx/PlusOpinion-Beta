@@ -197,7 +197,46 @@
             let usernameCheckTimeout;
 
             useEffect(() => {
-                checkUserStatus();
+                let mounted = true;
+
+                const initAuth = async () => {
+                    // Start with terms visible
+                    setStep('terms');
+
+                    // Wait for Supabase client
+                    let attempts = 0;
+                    while ((!window.supabase || !window.supabase.auth) && attempts < 50) {
+                        await new Promise(r => setTimeout(r, 100));
+                        attempts++;
+                    }
+
+                    if (!window.supabase) {
+                        console.warn('Supabase not initialized');
+                        return;
+                    }
+
+                    // Setup listener - Handles hash tokens and session recovery
+                    const { data: { subscription } } = window.supabase.auth.onAuthStateChange(async (event, session) => {
+                        if (!mounted) return;
+
+                        if (session?.user) {
+                            handleAuthenticatedUser(session.user);
+                        }
+                    });
+
+                    // Fallback: If no session after 3s, prompt login
+                    setTimeout(async () => {
+                        if (!mounted) return;
+                        const { data: { session } } = await window.supabase.auth.getSession();
+                        if (!session) {
+                            window.navigateTo('index.html');
+                        }
+                    }, 3000);
+                };
+
+                initAuth();
+
+                return () => { mounted = false; };
             }, []);
 
             // Wait for supabase client to be actually initialized
