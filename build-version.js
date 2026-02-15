@@ -9,8 +9,21 @@ console.log(`🔨 Building PlusOpinion version: ${timestamp}`);
 console.log(`📦 Build number: ${buildNumber}`);
 
 // Update version.json
+let major = false;
+let maintenance = false;
+
+try {
+    const existing = JSON.parse(fs.readFileSync(path.join(__dirname, 'version.json'), 'utf8'));
+    major = existing.major || false;
+    maintenance = existing.maintenance || false;
+} catch (e) {
+    // Default values if file doesn't exist
+}
+
 const versionData = {
     version: timestamp,
+    major: major,
+    maintenance: maintenance,
     build: buildNumber,
     timestamp: new Date().toISOString()
 };
