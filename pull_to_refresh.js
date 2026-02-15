@@ -110,14 +110,16 @@ class PullToRefresh {
             scrollTop = scrollableParent.scrollTop;
         }
 
-        // 2. CONTEXT-AWARE CHECK: If body is locked (Side Panel Open), be stricter
+        // 2. CONTEXT-AWARE SMART CHECK
         const isBodyLocked = document.body.style.overflow === 'hidden';
 
         if (isBodyLocked) {
-            // If body is locked, we ONLY allow PTR if we are clearly inside a scrollable container
-            // AND that container is at the top.
-            if (!scrollableParent) {
-                return; // Touching a fixed header or non-scrollable area overlay -> IGNORE
+            // STRICT MODE: If body is locked (Side Panel Open), we default to DISABLED.
+            // We ONLY allow PTR if:
+            // a) We are inside a scrollable container
+            // b) AND that container triggers "ptr-enabled" opt-in
+            if (!scrollableParent || !scrollableParent.closest('.ptr-enabled')) {
+                return; // Block PTR everywhere in side panels unless explicitly allowed
             }
         }
 
