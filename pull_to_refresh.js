@@ -22,6 +22,7 @@ class PullToRefresh {
             startX: 0
         };
 
+        this.enabled = true; // Global toggle
         this.refreshHandler = null;
         this.indicator = null;
     }
@@ -93,7 +94,14 @@ class PullToRefresh {
         document.head.appendChild(style);
     }
 
+    setEnabled(enabled) {
+        this.enabled = enabled;
+        console.log(`🔄 PullToRefresh ${enabled ? 'enabled' : 'disabled'}`);
+        if (!enabled) this.resetIndicator();
+    }
+
     handleTouchStart(e) {
+        if (!this.enabled) return;
         const target = e.target;
 
         // 1. GLOBAL REJECT: Never trigger if touching an ignored element (or its children)
@@ -141,17 +149,30 @@ class PullToRefresh {
         const diff = currentY - this.state.startY;
         const diffX = currentX - this.state.startX;
 
-        // Prevent activation during horizontal swipes (prioritize vertical movement)
-        if (Math.abs(diffX) > Math.abs(diff)) {
+        // Sharp vertical pull check:
+        // 1. Prioritize vertical movement over horizontal
+        // 2. Require a sharper vertical angle (vertical diff must be > 3x horizontal diff)
+        // 3. FULL PERFECTION: Increased sharpness from 2x to 3x
+        if (Math.abs(diff) < Math.abs(diffX) * 3) {
             this.state.canPull = false;
             return;
         }
 
+        // 4. FULL PERFECTION: Add 30px threshold to prevent accidental triggers on small pulls
+        if (diff < 30) {
+            if (this.state.pulling) {
+                this.state.pulling = false;
+                this.resetIndicator();
+            }
+            return;
+        }
+
         if (diff > 0) {
-            e.preventDefault();
+            // Only prevent default after meeting threshold and confirming verticality
+            if (e.cancelable) e.preventDefault();
 
             const pullDistance = Math.min(
-                diff / this.options.resistance,
+                (diff - 30) / this.options.resistance,
                 this.options.maxPull
             );
 
