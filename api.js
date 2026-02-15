@@ -12,6 +12,34 @@
 // getCurrentUser is now defined globally in auth.js for consistency and silence
 // window.getCurrentUser = async function () { ... } 
 
+/**
+ * Get user's engraved specific number (Badge)
+ * Logic: Rank by created_at ascending + 4 (So 1st user gets #5)
+ */
+window.getUserBadgeNumber = async function (userId) {
+    if (!userId) return null;
+
+    // 1. Get user's created_at
+    const { data: userProfile, error: profileError } = await window.supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('id', userId)
+        .single();
+
+    if (profileError || !userProfile) return null;
+
+    // 2. Count users created BEFORE this user (Rank - 1)
+    const { count, error: countError } = await window.supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .lte('created_at', userProfile.created_at);
+
+    if (countError) return null;
+
+    // 3. Return Rank + 4
+    return count + 4;
+};
+
 
 // ============================================
 // POSTS API
