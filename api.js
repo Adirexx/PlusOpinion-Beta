@@ -9,14 +9,9 @@
 /**
  * Get current authenticated user
  */
-window.getCurrentUser = async function () {
-    const { data: { user }, error } = await window.supabase.auth.getUser();
-    if (error) {
-        console.error('Error getting current user:', error);
-        return null;
-    }
-    return user;
-};
+// getCurrentUser is now defined globally in auth.js for consistency and silence
+// window.getCurrentUser = async function () { ... } 
+
 
 // ============================================
 // POSTS API
