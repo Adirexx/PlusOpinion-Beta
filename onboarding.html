@@ -27,6 +27,8 @@
     <script type="module" src="./notifications.js"></script>
     <script src="./rqs_calculator.js"></script>
     <script src="./router.js"></script>
+    <script src="./auth.js"></script>
+    <script src="./auth_guard.js"></script>
     <script>
         if (window.RouteCleaner) window.RouteCleaner.cleanCurrentUrl();
     </script>
@@ -176,11 +178,11 @@
         const { useState, useEffect } = React;
 
         function OnboardingApp() {
-            const [loading, setLoading] = useState(true);
-            const [step, setStep] = useState('terms'); // 'terms' or 'profile'
+            const [loading, setLoading] = useState(false);
+            const [step, setStep] = useState('terms');
             const [user, setUser] = useState(null);
             const [submitting, setSubmitting] = useState(false);
-            const [usernameStatus, setUsernameStatus] = useState(''); // '', 'checking', 'available', 'taken'
+            const [usernameStatus, setUsernameStatus] = useState('');
 
             const [formData, setFormData] = useState({
                 full_name: '',
@@ -198,57 +200,79 @@
                 checkUserStatus();
             }, []);
 
+            // Wait for supabase client to be actually initialized
+            const waitForSupabase = () => new Promise((resolve) => {
+                const check = () => {
+                    if (window.supabase && window.supabase.auth && window.supabase.from) {
+                        resolve(true);
+                    } else {
+                        setTimeout(check, 200);
+                    }
+                };
+                check();
+                // Safety timeout - resolve after 8 seconds regardless
+                setTimeout(() => resolve(false), 8000);
+            });
+
             const checkUserStatus = async () => {
                 try {
-                    // Try to get current user, with short retry for fresh signups
-                    let currentUser = await window.getCurrentUser();
+                    // Start with terms visible so UI isn't empty
+                    setStep('terms');
 
-                    // If no user on first try, wait 1 second and try once more
-                    // (Handles case where session is still syncing after signup)
-                    if (!currentUser) {
-                        console.log('⏳ No session found, retrying in 1s for fresh signup...');
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        currentUser = await window.getCurrentUser();
+                    // Step 1: Wait for Supabase client
+                    const supabaseReady = await waitForSupabase();
+                    if (!supabaseReady) {
+                        console.warn('Supabase not ready yet, but showing UI anyway');
+                        setLoading(false);
+                        return;
+                    }
+
+                    // Step 2: Try to get user session (retry silently)
+                    let currentUser = null;
+                    for (let i = 0; i < 5; i++) {
+                        const user = await window.getCurrentUser?.();
+                        if (user) {
+                            currentUser = user;
+                            break;
+                        }
+                        await new Promise(r => setTimeout(r, 1500));
                     }
 
                     if (!currentUser) {
-                        console.log('❌ No session after retry, redirecting to login');
+                        console.warn('No session found after retries - redirecting to login');
+                        // Provide clear context to the user
+                        alert("Session not found. Please log in again to continue onboarding.");
                         window.navigateTo('index.html');
+                        setLoading(false);
                         return;
                     }
 
                     setUser(currentUser);
 
-                    // Check if profile is already completed
+                    // Step 3: Check profile
                     const { data: profile } = await window.supabase
                         .from('profiles')
                         .select('profile_completed, terms_accepted')
                         .eq('id', currentUser.id)
                         .single();
 
-                    // If profile is already completed, redirect to homepage
+                    // Already done? 
                     if (profile?.profile_completed && profile?.terms_accepted) {
-                        console.log('✅ Profile already completed, redirecting to homepage...');
                         window.navigateTo('HOMEPAGE_FINAL.HTML');
                         return;
                     }
 
-                    // Pre-fill full name from signup
+                    // Pre-fill name
                     const fullName = currentUser.user_metadata?.full_name || '';
-                    if (fullName) {
-                        setFormData(prev => ({ ...prev, full_name: fullName }));
-                    }
+                    if (fullName) setFormData(prev => ({ ...prev, full_name: fullName }));
 
-                    // Check if user has accepted terms
-                    const hasAccepted = await window.hasAcceptedTerms();
-                    if (hasAccepted) {
-                        setStep('profile');
-                    } else {
-                        setStep('terms');
-                    }
+                    // Show correct step
+                    setStep(profile?.terms_accepted ? 'profile' : 'terms');
+
                 } catch (error) {
-                    console.error('❌ Error checking user status:', error);
-                    window.navigateTo('index.html');
+                    console.error('Onboarding check error:', error);
+                    // On error, just show terms - don't block
+                    setStep('terms');
                 } finally {
                     setLoading(false);
                 }
@@ -259,14 +283,26 @@
                 try {
                     setSubmitting(true);
 
-                    // Call the acceptTerms function which now properly returns true/false
-                    await window.acceptTerms();
+                    // 1. Verify user still has a valid session
+                    const currentUser = await window.getCurrentUser();
+                    if (!currentUser) {
+                        alert("Session expired. Please refresh the page and log in again.");
+                        setSubmitting(false);
+                        return;
+                    }
 
-                    console.log('✅ Terms accepted, moving to profile setup');
-                    setStep('profile');
+                    // 2. Call the acceptTerms function
+                    const success = await window.acceptTerms();
+
+                    if (success) {
+                        console.log('✅ Terms accepted, moving to profile setup');
+                        setStep('profile');
+                    } else {
+                        throw new Error("Failed to update terms in database");
+                    }
                 } catch (error) {
                     console.error('Error accepting terms:', error);
-                    alert('Failed to accept terms. Please try again.');
+                    alert('Failed to accept terms. Please ensure you are logged in and try again.');
                 } finally {
                     setSubmitting(false);
                 }
@@ -395,14 +431,14 @@
 
                     // Upload avatar if provided
                     if (formData.avatar_file) {
-                        const avatarPath = `avatars/${user.id}-${Date.now()}.${formData.avatar_file.name.split('.').pop()}`;
-                        avatarUrl = await uploadFile(formData.avatar_file, 'Avatars', avatarPath);
+                        const avatarPath = `${user.id}/${Date.now()}.${formData.avatar_file.name.split('.').pop()}`;
+                        avatarUrl = await uploadFile(formData.avatar_file, 'avatars', avatarPath);
                     }
 
                     // Upload banner if provided
                     if (formData.banner_file) {
-                        const bannerPath = `banners/${user.id}-${Date.now()}.${formData.banner_file.name.split('.').pop()}`;
-                        bannerUrl = await uploadFile(formData.banner_file, 'profiles', bannerPath);
+                        const bannerPath = `${user.id}/${Date.now()}.${formData.banner_file.name.split('.').pop()}`;
+                        bannerUrl = await uploadFile(formData.banner_file, 'banners', bannerPath);
                     }
 
                     // Update profile in database
@@ -584,6 +620,7 @@
                     </div>
                 );
             }
+
 
             if (step === 'profile') {
                 return (
