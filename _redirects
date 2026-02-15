@@ -13,7 +13,7 @@
 /profile /PUBLIC%20POV%20PROFILE.HTML 200
 
 # Authentication pages
-/onboarding /onboarding.html 200
+
 /reset-password /reset-password.html 200
 /change-password /change-password.html 200
 
