@@ -1626,7 +1626,11 @@
                             setTargetUser(profile);
 
                             // Fetch Badge Number
-                            window.getUserBadgeNumber(targetId).then(num => setUserBadge(num));
+                            if (typeof window.getUserBadgeNumber === 'function') {
+                                window.getUserBadgeNumber(targetId).then(num => setUserBadge(num));
+                            } else {
+                                console.warn('getUserBadgeNumber not available locally');
+                            }
 
                             const posts = await window.getUserPosts(targetId);
                             setTargetPosts(posts || []);
