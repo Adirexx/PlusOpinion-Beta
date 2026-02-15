@@ -13,9 +13,9 @@
    SIGN UP (Email + Password)
 ============================ */
 async function signUpUser(email, password, name) {
-  const isLocalhost = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
-  const redirectPath = isLocalhost ? '/onboarding.html' : '/onboarding';
+  hostname.startsWith('10.') ||
+    hostname.endsWith('.local');
+  const redirectPath = '/onboarding.html'; // FORCE .html extension
 
   const { data, error } = await window.supabase.auth.signUp({
     email,
@@ -107,8 +107,13 @@ async function getCurrentUser() {
    PASSWORD RESET
 ============================ */
 async function resetPassword(email) {
-  const isLocalhost = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '0.0.0.0' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    hostname.endsWith('.local');
   const redirectPath = isLocalhost ? '/reset-password.html' : '/reset-password';
 
   const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
@@ -176,9 +181,9 @@ async function checkUsernameAvailable(username) {
    GOOGLE / OAUTH SIGN IN
 ============================ */
 async function signInWithProvider(provider) {
-  const isLocalhost = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
-  const redirectPath = isLocalhost ? '/onboarding.html' : '/onboarding';
+  hostname.startsWith('10.') ||
+    hostname.endsWith('.local');
+  const redirectPath = '/onboarding.html'; // FORCE .html extension
 
   const { data, error } = await window.supabase.auth.signInWithOAuth({
     provider: provider,
