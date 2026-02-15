@@ -1,6 +1,6 @@
 {
-    "version": "1.0.5",
-    "build": "production",
-    "timestamp": "2026-02-15T05:16:00Z",
-    "buildNumber": 6
+    "version": "2.0.0",
+    "major": false,
+    "maintenance": false,
+    "timestamp": "2026-02-16T05:10:00Z"
 }
