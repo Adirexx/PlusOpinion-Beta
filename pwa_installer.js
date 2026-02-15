@@ -44,7 +44,7 @@ function showInstallPromotion() {
     toast.id = 'pwa-install-toast';
     // Using fixed positioning and high z-index
     // Tailwind classes matching the design system
-    toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-sm bg-[#1A1C2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-4 transition-all duration-500 ease-out transform translate-y-20 opacity-0';
+    toast.className = 'fixed bottom-[75px] left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-sm bg-[#1A1C2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-4 transition-all duration-500 ease-out transform translate-y-20 opacity-0';
 
     toast.innerHTML = `
         <div class="w-12 h-12 bg-neon/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-white/5">
