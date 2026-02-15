@@ -13,32 +13,25 @@
    SIGN UP (Email + Password)
 ============================ */
 async function signUpUser(email, password, name) {
+  const isLocalhost = window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+  const redirectPath = isLocalhost ? '/onboarding.html' : '/onboarding';
+
   const { data, error } = await window.supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: window.location.origin + redirectPath,
       data: { full_name: name }
     }
   });
 
   if (error) throw error;
 
-  const user = data.user;
+  // Profile creation is handled by database trigger 'on_auth_user_created'
+  // No need to manually create profile here
 
-  // Create profile row for the new user
-  if (user) {
-    try {
-      await window.supabase.from("profiles").insert({
-        id: user.id,
-        email: user.email,
-        full_name: name
-      });
-    } catch (profileError) {
-      console.warn('Profile creation skipped:', profileError);
-    }
-  }
-
-  return user;
+  return data;
 }
 
 /* ============================
@@ -185,7 +178,7 @@ async function checkUsernameAvailable(username) {
 async function signInWithProvider(provider) {
   const isLocalhost = window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
-  const redirectPath = isLocalhost ? '/HOMEPAGE_FINAL.HTML' : '/feed';
+  const redirectPath = isLocalhost ? '/onboarding.html' : '/onboarding';
 
   const { data, error } = await window.supabase.auth.signInWithOAuth({
     provider: provider,
