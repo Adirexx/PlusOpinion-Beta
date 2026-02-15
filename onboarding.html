@@ -327,6 +327,40 @@
             };
 
 
+            const handleAuthenticatedUser = async (currentUser) => {
+                if (!currentUser) return;
+
+                try {
+                    setUser(currentUser);
+
+                    // Check profile
+                    const { data: profile } = await window.supabase
+                        .from('profiles')
+                        .select('profile_completed, terms_accepted')
+                        .eq('id', currentUser.id)
+                        .single();
+
+                    if (profile?.profile_completed && profile?.terms_accepted) {
+                        window.navigateTo('HOMEPAGE_FINAL.HTML');
+                        return;
+                    }
+
+                    // Pre-fill name
+                    const fullName = currentUser.user_metadata?.full_name ||
+                        currentUser.user_metadata?.name || '';
+
+                    if (fullName) {
+                        setFormData(prev => ({ ...prev, full_name: fullName }));
+                    }
+
+                    setStep(profile?.terms_accepted ? 'profile' : 'terms');
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
             const handleAcceptTerms = async () => {
                 try {
                     setSubmitting(true);
