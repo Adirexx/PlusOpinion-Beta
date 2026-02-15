@@ -217,7 +217,7 @@ class RouteCleaner {
             '/NOTIFICATION PANEL.HTML': '/notifications',
             '/PRIVATE OWNER PROFILE.HTML': '/myprofile',
             '/PUBLIC POV PROFILE.HTML': '/profile',
-            '/onboarding.html': '/onboarding',
+            // '/onboarding.html': '/onboarding', // Disabled to force .html loading
             '/reset-password.html': '/reset-password',
             '/change-password.html': '/change-password',
             '/ABOUT.HTML': '/about',
@@ -236,8 +236,16 @@ class RouteCleaner {
      * Clean current URL without reloading
      */
     cleanCurrentUrl() {
-        // Skip on localhost to prevent 404s on refresh
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Skip on localhost/development to prevent 404s on refresh
+        const hostname = window.location.hostname;
+        const isLocalhost = hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '0.0.0.0' ||
+            hostname.startsWith('192.168.') ||
+            hostname.startsWith('10.') ||
+            hostname.endsWith('.local');
+
+        if (isLocalhost) {
             console.log('🏗️ Development mode: Skipping URL masking');
             return;
         }
