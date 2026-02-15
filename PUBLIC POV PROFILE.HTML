@@ -24,6 +24,7 @@
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./auth.js"></script>
     <script type="module" src="./api.js"></script>
 
     <!-- SPA Core Infrastructure -->
@@ -909,7 +910,7 @@
         };
 
         // --- OPINION CARD (PUBLIC VIEW) ---
-        const Post = ({ post, index, onShare, onReport, userProfile, onBookmark, savedPosts, onRemove, targetUserId }) => {
+        const Post = ({ post, index, onShare, onReport, userProfile, onBookmark, savedPosts, onRemove, targetUserId, onImageClick }) => {
             const [isLiked, setIsLiked] = useState(false);
             const [localLikes, setLocalLikes] = useState(post.agrees || 0);
             const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -1243,16 +1244,22 @@
 
                     {
                         post.media && (
-                            <div className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 img-magnify-wrapper group cursor-zoom-in overflow-hidden">
+                            <div
+                                className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 img-magnify-wrapper group cursor-zoom-in overflow-hidden"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onImageClick) onImageClick(post.media, post.media_type);
+                                }}
+                            >
                                 {post.media_type === 'video' ? (
                                     <video
                                         src={post.media}
                                         className="w-full max-h-[500px] object-contain bg-black"
-                                        controls
+                                        controls={false} // Hide controls in preview, show in full view or custom controls
                                         playsInline
                                         loop
                                         muted
-                                        onClick={(e) => e.stopPropagation()}
+
                                     />
                                 ) : (
                                     <img src={post.media} alt="Post media" loading="lazy" className="w-full h-auto max-h-[500px] object-contain bg-black img-magnify" />
@@ -1341,6 +1348,23 @@
                         </div>
                     )}
                 </div >
+            );
+        };
+
+        // --- IMAGE VIEWER COMPONENT ---
+        const ImageViewer = ({ src, type, onClose }) => {
+            if (!src) return null;
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in" onClick={onClose}>
+                    <button className="absolute top-5 right-5 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 z-50">
+                        <Icon icon="X" size={24} />
+                    </button>
+                    {type === 'video' ? (
+                        <video src={src} className="max-w-full max-h-full object-contain p-2 animate-pop" controls autoPlay onClick={(e) => e.stopPropagation()} />
+                    ) : (
+                        <img src={src} className="max-w-full max-h-full object-contain p-2 animate-pop" onClick={(e) => e.stopPropagation()} />
+                    )}
+                </div>
             );
         };
 
@@ -1517,6 +1541,9 @@
             const [mutedBrands, setMutedBrands] = useState(new Set());
             const [mutedCategories, setMutedCategories] = useState(new Set());
             const [reportPostId, setReportPostId] = useState(null);
+
+            // Image Viewer State
+            const [viewingImage, setViewingImage] = useState(null);
 
             // Target Profile State
             const [targetUser, setTargetUser] = useState(null);
@@ -2016,6 +2043,9 @@
                         user={shareUserData}
                     />
 
+                    {/* FULLSCREEN IMAGE VIEWER */}
+                    <ImageViewer src={viewingImage?.src} type={viewingImage?.type} onClose={() => setViewingImage(null)} />
+
                     <ReportModal
                         isOpen={isReportModalOpen}
                         onClose={() => { setIsReportModalOpen(false); setReportPostId(null); }}
@@ -2179,40 +2209,46 @@
                         >
                             {contentTab === 'opinions' && (
                                 <div className="animate-enter">
-                                    {targetPosts.map((post, i) => (
-                                        <Post
-                                            key={post.id}
-                                            targetUserId={targetUser.id}
-                                            post={{
-                                                ...post,
-                                                isHidden: hiddenPostIds.has(String(post.id)),
-                                                name: post.profiles?.full_name || 'User',
-                                                username: post.profiles?.username || 'user',
-                                                avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
-                                                rqs: post.profiles?.rqs_score || 0,
-                                                verified: post.is_verified_purchase,
-                                                category: post.category,
-                                                product: post.product_name || post.brand_name || 'Product',
-                                                text: post.text_content,
-                                                media: post.media_url || post.media || post.image_url || ((post.images && post.images.length > 0) ? post.images[0] : null),
-                                                media_type: post.media_type || 'image',
-                                                time: formatTime(post.created_at),
-                                                agrees: post.agrees_count || 0,
-                                                comments: post.comments_count || 0,
-                                                seenBy: post.brand_name
-                                            }}
-                                            onShare={handleShare}
-                                            onReport={handleReport}
-                                            userProfile={userProfile}
-                                            onBookmark={toggleBookmark}
-                                            savedPosts={savedPosts}
-                                            onRemove={handleRemove}
-                                        />
-                                    ))}
-                                    {targetPosts.length === 0 && (
-                                        <div className="text-center py-12 text-muted/40 tracking-widest font-heading">
-                                            NO OPINIONS YET
+                                    {targetPosts.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-10 opacity-60">
+                                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                                                <Icon icon="Feather" size={32} className="text-white/40" />
+                                            </div>
+                                            <p className="text-white font-heading font-medium">No opinions yet</p>
+                                            <p className="text-xs text-muted mt-1">This user hasn't posted anything.</p>
                                         </div>
+                                    ) : (
+                                        targetPosts.map((post, i) => (
+                                            <Post
+                                                key={post.id}
+                                                targetUserId={targetUser.id}
+                                                post={{
+                                                    ...post,
+                                                    isHidden: hiddenPostIds.has(String(post.id)),
+                                                    name: post.profiles?.full_name || 'User',
+                                                    username: post.profiles?.username || 'user',
+                                                    avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
+                                                    rqs: post.profiles?.rqs_score || 0,
+                                                    verified: post.is_verified_purchase,
+                                                    category: post.category,
+                                                    product: post.product_name || post.brand_name || 'Product',
+                                                    text: post.text_content,
+                                                    media: post.media_url || post.media || post.image_url || ((post.images && post.images.length > 0) ? post.images[0] : null),
+                                                    media_type: post.media_type || 'image',
+                                                    time: formatTime(post.created_at),
+                                                    agrees: post.agrees_count || 0,
+                                                    comments: post.comments_count || 0,
+                                                    seenBy: post.brand_name
+                                                }}
+                                                onShare={handleShare}
+                                                onReport={handleReport}
+                                                userProfile={userProfile}
+                                                onBookmark={toggleBookmark}
+                                                savedPosts={savedPosts}
+                                                onRemove={handleRemove}
+                                                onImageClick={(src, type) => setViewingImage({ src, type })}
+                                            />
+                                        ))
                                     )}
                                 </div>
                             )}
@@ -2252,6 +2288,7 @@
                                                 onBookmark={toggleBookmark}
                                                 savedPosts={savedPosts}
                                                 onRemove={handleRemove}
+                                                onImageClick={(src, type) => setViewingImage({ src, type })}
                                             />
                                         ))
                                     )}
