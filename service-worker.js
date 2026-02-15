@@ -3,7 +3,7 @@
 // Updated at: FEB15_COMPLETE_AUTH_FIX
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20250216_0045';
+  : 'BUILD_20260216_PROD_FINAL';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
@@ -55,15 +55,24 @@ const FILES_TO_CACHE = [
   "./manifest.json"
 ];
 
-// Install event - cache files
+// Install event - cache files with robust error handling
 self.addEventListener("install", (event) => {
   console.log(`[SW] Installing version ${VERSION}`);
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(FILES_TO_CACHE);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Loop through files and add them individually to pinpoint errors
+      for (const file of FILES_TO_CACHE) {
+        try {
+          await cache.add(file);
+          // console.log(`[SW] Cached: ${file}`);
+        } catch (err) {
+          console.error(`[SW] Failed to cache: ${file}`, err);
+          // In production, you might want to throw or ignore
+        }
+      }
     })
   );
-  self.skipWaiting(); // Activate immediately
+  self.skipWaiting();
 });
 
 // Activate event - delete old caches
