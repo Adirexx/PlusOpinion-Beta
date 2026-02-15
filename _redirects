@@ -1,3 +1,23 @@
+# === MAINTENANCE MODE START ===
+# 1. Allow static assets and maintenance page
+/MAINTENANCE.HTML /MAINTENANCE.HTML 200
+/*.js /*.js 200
+/*.css /*.css 200
+/*.png /*.png 200
+/*.jpg /*.jpg 200
+/*.jpeg /*.jpeg 200
+/*.gif /*.gif 200
+/*.svg /*.svg 200
+/*.ico /*.ico 200
+/*.json /*.json 200
+/*.woff /*.woff 200
+/*.woff2 /*.woff2 200
+
+# 2. Redirect EVERYTHING else to Maintenance Page
+/* /MAINTENANCE.HTML 302
+# === MAINTENANCE MODE END ===
+
+# (Original rules below are effectively shadowed when maintenance mode is active)
 # Icon assets
 /icon-192.png /icon-192.png 200
 /icon-512.png /icon-512.png 200
@@ -13,7 +33,9 @@
 /profile /PUBLIC%20POV%20PROFILE.HTML 200
 
 # Authentication pages
-
+/onboarding /onboarding.html 200
+/reset-password /reset-password.html 200
+/change-password /change-password.html 200
 
 # Static/Legal pages
 /about /ABOUT.HTML 200
@@ -21,6 +43,8 @@
 /privacy-policy /PRIVACY_POLICY.HTML 200
 /t&c /TERMS_AND_CONDITIONS.HTML 200
 
+# Maintenance page
+/maintenance /MAINTENANCE.HTML 200
 
 # Default root
 / /index.html 200
