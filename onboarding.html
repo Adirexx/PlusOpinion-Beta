@@ -436,13 +436,13 @@
                     // Upload avatar if provided
                     if (formData.avatar_file) {
                         const avatarPath = `${user.id}/${Date.now()}.${formData.avatar_file.name.split('.').pop()}`;
-                        avatarUrl = await uploadFile(formData.avatar_file, 'avatars', avatarPath);
+                        avatarUrl = await uploadFile(formData.avatar_file, 'Avatars', avatarPath);
                     }
 
                     // Upload banner if provided
                     if (formData.banner_file) {
-                        const bannerPath = `${user.id}/${Date.now()}.${formData.banner_file.name.split('.').pop()}`;
-                        bannerUrl = await uploadFile(formData.banner_file, 'banners', bannerPath);
+                        const bannerPath = `banners/${user.id}/${Date.now()}.${formData.banner_file.name.split('.').pop()}`;
+                        bannerUrl = await uploadFile(formData.banner_file, 'profiles', bannerPath);
                     }
 
                     // Update profile in database
