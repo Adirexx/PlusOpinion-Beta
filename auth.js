@@ -154,11 +154,11 @@ async function uploadAvatar(userId, file) {
   const fileName = `${userId}/avatar.${fileExt}`;
 
   const { error: uploadError } = await window.supabase.storage
-    .from('avatars')
+    .from('Avatars')
     .upload(fileName, file, { upsert: true });
   if (uploadError) throw uploadError;
 
-  const { data } = window.supabase.storage.from('avatars').getPublicUrl(fileName);
+  const { data } = window.supabase.storage.from('Avatars').getPublicUrl(fileName);
   await updateUserProfile(userId, { avatar_url: data.publicUrl });
   return data.publicUrl;
 }
