@@ -780,7 +780,7 @@
                                             <p className="text-[10px] text-muted">Posts & Comments Given</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_consistency}/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_consistency}/20</span>
                                 </div>
                                 <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -790,7 +790,7 @@
                                             <p className="text-[10px] text-muted">Verified Product Reviews</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_verification}/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_verification}/40</span>
                                 </div>
                                 <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -800,7 +800,7 @@
                                             <p className="text-[10px] text-muted">Agrees & Comments Rec.</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_impact}/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_impact}/30</span>
                                 </div>
                                 <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -810,7 +810,7 @@
                                             <p className="text-[10px] text-muted">Account Age & Profile</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_legacy_score || 0}/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_legacy_score || 0}/10</span>
                                 </div>
                             </div>
                         </div>
@@ -1831,6 +1831,34 @@
                 }
             };
 
+            const [offset, setOffset] = useState(0);
+            const [hasMore, setHasMore] = useState(true);
+            const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+            // Fetch more brand interactions
+            const loadMoreBrands = async (currentOffset = 0, reset = false) => {
+                if (isLoadingMore && !reset) return;
+                try {
+                    if (reset) {
+                        setOffset(0);
+                        setHasMore(true);
+                    } else {
+                        setIsLoadingMore(true);
+                    }
+
+                    const interactions = await window.getMyBrandInteractions({ limit: 10, offset: reset ? 0 : currentOffset });
+                    setBrandInteractions(prev => reset ? interactions : [...prev, ...interactions]);
+                    setHasMore(interactions.length === 10);
+
+                    if (!reset) setOffset(currentOffset + 10);
+                    else setOffset(10);
+                } catch (e) {
+                    console.error("Failed to load more brands", e);
+                } finally {
+                    setIsLoadingMore(false);
+                }
+            };
+
             // Load user data from database
             useEffect(() => {
                 const loadData = async () => {
@@ -1980,7 +2008,8 @@
             // HOMEPAGE STYLE SCROLL LOGIC
             const handleScroll = (e) => {
                 // Support checking scrollTop on target or parent (ViewWrapper)
-                const currentY = e.target.scrollTop || window.scrollY;
+                const { scrollTop, clientHeight, scrollHeight } = e.target;
+                const currentY = scrollTop || window.scrollY;
                 const isScrollingDown = currentY > lastY.current;
 
                 // Nav Logic (Hide on scroll down > 50, show on scroll up)
@@ -1991,6 +2020,13 @@
                 }
 
                 lastY.current = currentY;
+
+                // Infinite Scroll Trigger for brands view or similar
+                if (view === 'brands' && scrollHeight - scrollTop - clientHeight < 400) {
+                    if (!isLoadingMore && hasMore) {
+                        loadMoreBrands(offset);
+                    }
+                }
             };
 
             const renderContent = () => {
