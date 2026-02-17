@@ -1386,21 +1386,11 @@
                     <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{post.text}</p>
 
                     {post.media && (
-                        <div className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 group cursor-pointer overflow-hidden" onClick={() => onImageClick(post.media, post.media_type)}>
-                            {post.media_type === 'video' ? (
-                                <video
-                                    src={post.media}
-                                    className="w-full max-h-[500px] object-contain bg-black"
-                                    controls
-                                    playsInline
-                                    loop
-                                    muted
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            ) : (
-                                <img src={post.media} alt="Post media" loading="lazy" className="w-full h-auto max-h-[500px] object-contain bg-black" />
-                            )}
-                        </div>
+                        <ZoomableMedia
+                            src={post.media}
+                            type={post.media_type}
+                            onImageClick={onImageClick}
+                        />
                     )}
 
                     <div className="flex items-end justify-between pt-3 mt-1 relative">
@@ -1516,17 +1506,201 @@
             );
         };
 
+        // PREMIUM ZOOMABLE MEDIA COMPONENT (Instagram Style)
+        const ZoomableMedia = ({ src, type, onImageClick }) => {
+            const [scale, setScale] = useState(1);
+            const [origin, setOrigin] = useState({ x: 0, y: 0 });
+            const [isPinching, setIsPinching] = useState(false);
+            const containerRef = useRef(null);
+            const initialDist = useRef(null);
+
+            const handleTouchStart = (e) => {
+                if (e.touches.length === 2) {
+                    setIsPinching(true);
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+                    initialDist.current = dist;
+
+                    // Calculate mid point for origin
+                    const midX = (touch1.pageX + touch2.pageX) / 2;
+                    const midY = (touch1.pageY + touch2.pageY) / 2;
+                    const rect = containerRef.current.getBoundingClientRect();
+                    setOrigin({
+                        x: ((midX - rect.left) / rect.width) * 100,
+                        y: ((midY - rect.top) / rect.height) * 100
+                    });
+                }
+            };
+
+            const handleTouchMove = (e) => {
+                if (e.touches.length === 2 && isPinching) {
+                    e.preventDefault(); // Prevent scroll while pinching
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+                    const newScale = Math.min(Math.max(dist / initialDist.current, 1), 4);
+                    setScale(newScale);
+                }
+            };
+
+            const handleTouchEnd = () => {
+                setIsPinching(false);
+                setScale(1);
+                initialDist.current = null;
+            };
+
+            return (
+                <div
+                    ref={containerRef}
+                    className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 group cursor-pointer overflow-hidden touch-none"
+                    onClick={() => !isPinching && onImageClick(src, type)}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    style={{ zIndex: isPinching ? 50 : 1 }}
+                >
+                    <div
+                        className={`w-full h-full transition-all duration-700 ease-out ${!isPinching ? 'group-hover:scale-110' : ''}`}
+                        style={{
+                            transform: isPinching ? `scale(${scale})` : undefined,
+                            transformOrigin: `${origin.x}% ${origin.y}%`
+                        }}
+                    >
+                        {type === 'video' ? (
+                            <video
+                                src={src}
+                                className="w-full max-h-[500px] object-contain bg-black pointer-events-none"
+                                playsInline
+                                loop
+                                muted
+                                autoPlay
+                            />
+                        ) : (
+                            <img
+                                src={src}
+                                alt="Post media"
+                                loading="lazy"
+                                className="w-full h-auto max-h-[500px] object-contain bg-black pointer-events-none"
+                            />
+                        )}
+                    </div>
+                    {isPinching && (
+                        <div className="absolute inset-x-0 bottom-4 flex justify-center pointer-events-none">
+                            <span className="bg-black/60 backdrop-blur-md text-[10px] text-white/90 px-3 py-1 rounded-full font-bold tracking-widest uppercase animate-pulse">
+                                Zooming
+                            </span>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         const ImageViewer = ({ src, type, onClose }) => {
             if (!src) return null;
+            const [scale, setScale] = useState(1);
+            const [position, setPosition] = useState({ x: 0, y: 0 });
+            const [isPinching, setIsPinching] = useState(false);
+            const imageRef = useRef(null);
+            const lastTouch = useRef({ x: 0, y: 0 });
+            const initialDist = useRef(null);
+            const lastScale = useRef(1);
+
+            const handleTouchStart = (e) => {
+                if (e.touches.length === 2) {
+                    setIsPinching(true);
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    initialDist.current = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+                    lastScale.current = scale;
+                } else if (e.touches.length === 1 && scale > 1) {
+                    lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+                }
+            };
+
+            const handleTouchMove = (e) => {
+                if (e.touches.length === 2 && isPinching) {
+                    e.preventDefault();
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+                    const newScale = Math.min(Math.max((dist / initialDist.current) * lastScale.current, 1), 5);
+                    setScale(newScale);
+                } else if (e.touches.length === 1 && scale > 1) {
+                    const newX = e.touches[0].pageX - lastTouch.current.x;
+                    const newY = e.touches[0].pageY - lastTouch.current.y;
+
+                    // Limit panning boundaries based on scale
+                    const limitX = (scale - 1) * (window.innerWidth / 2);
+                    const limitY = (scale - 1) * (window.innerHeight / 2);
+
+                    setPosition({
+                        x: Math.min(Math.max(newX, -limitX), limitX),
+                        y: Math.min(Math.max(newY, -limitY), limitY)
+                    });
+                }
+            };
+
+            const handleTouchEnd = () => {
+                setIsPinching(false);
+                if (scale <= 1) {
+                    setPosition({ x: 0, y: 0 });
+                }
+            };
+
+            const handleDoubleTap = (e) => {
+                e.stopPropagation();
+                if (scale > 1) {
+                    setScale(1);
+                    setPosition({ x: 0, y: 0 });
+                } else {
+                    setScale(2.5);
+                }
+            };
+
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in" onClick={onClose}>
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in overflow-hidden touch-none"
+                    onClick={onClose}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <button className="absolute top-5 right-5 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 z-50">
                         <Icon icon="X" size={24} />
                     </button>
-                    {type === 'video' ? (
-                        <video src={src} className="max-w-full max-h-full object-contain p-2 animate-pop" controls autoPlay onClick={(e) => e.stopPropagation()} />
-                    ) : (
-                        <img src={src} className="max-w-full max-h-full object-contain p-2 animate-pop" onClick={(e) => e.stopPropagation()} />
+
+                    <div
+                        className="w-full h-full flex items-center justify-center transition-transform duration-100 ease-out"
+                        style={{
+                            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
+                        }}
+                        onDoubleClick={handleDoubleTap}
+                    >
+                        {type === 'video' ? (
+                            <video
+                                src={src}
+                                className="max-w-full max-h-full object-contain p-2"
+                                controls={scale === 1}
+                                autoPlay
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <img
+                                src={src}
+                                className="max-w-full max-h-full object-contain p-2 select-none"
+                                onClick={(e) => e.stopPropagation()}
+                                draggable="false"
+                            />
+                        )}
+                    </div>
+
+                    {scale > 1 && (
+                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none">
+                            <span className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-white/50 border border-white/10 uppercase tracking-widest">
+                                {Math.round(scale * 100)}% ZOOM
+                            </span>
+                        </div>
                     )}
                 </div>
             );
@@ -2989,13 +3163,13 @@
 
 
             // --- DATA STATE ---
-            // --- DATA STATE ---
             const [posts, setPosts] = useState([]);
             const [isLoadingPosts, setIsLoadingPosts] = useState(true);
-            const [postComments, setPostComments] = useState({}); // {postId: ["comment1", "comment2"] }
+            const [postComments, setPostComments] = useState({});
             const [offset, setOffset] = useState(0);
             const [hasMore, setHasMore] = useState(true);
             const [isLoadingMore, setIsLoadingMore] = useState(false);
+            const [seenIds, setSeenIds] = useState(new Set()); // CRITICAL: For deduplication in random shuffle
             const [savedPosts, setSavedPosts] = useState(new Set());
             const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
             const [hiddenItems, setHiddenItems] = useState({ posts: [], brands: [], categories: [] });
@@ -3059,31 +3233,28 @@
             const [showOnboardingModal, setShowOnboardingModal] = useState(false); // Onboarding popup
 
 
-            // Load posts helper (moved up and stable)
+            // Load posts helper (Professional Batch Loading + Smart Shuffle)
             const loadPosts = async (currentOffset = 0, reset = false) => {
+                if (isLoadingMore) return; // Guard against rapid fire
+
                 try {
                     if (reset) {
                         setIsLoadingPosts(true);
                         setOffset(0);
+                        setSeenIds(new Set()); // Reset seen IDs on refresh for a fresh shuffle
                     } else {
                         setIsLoadingMore(true);
                     }
 
-                    // Cache key for this specific feed request
-                    const cacheKey = `feed_posts_${feedFilters.category || 'all'}_${currentOffset}`;
-
-                    // CACHE-FIRST: Try to load from cache first
-                    if (window.StateManager && !reset) {
-                        const cachedData = await window.StateManager.get(cacheKey);
-                        if (cachedData) {
-                            console.log('📦 Loading posts from cache:', cacheKey);
-                            setPosts(prev => currentOffset === 0 ? cachedData : [...prev, ...cachedData]);
-                            if (!reset) setOffset(currentOffset + 10);
+                    // CACHE-FIRST (Only for initial load, bypass for shuffle to keep it fresh)
+                    if (window.StateManager && !reset && currentOffset === 0 && !feedFilters.category) {
+                        const cachedData = await window.StateManager.get('home_feed_initial');
+                        if (cachedData && posts.length === 0) {
+                            setPosts(cachedData.posts);
+                            setSeenIds(new Set(cachedData.seenIds));
+                            setOffset(cachedData.nextOffset);
                             setIsLoadingPosts(false);
-                            setIsLoadingMore(false);
-
-                            // Still fetch fresh data in background to update cache
-                            // but don't show loading state
+                            return;
                         }
                     }
 
@@ -3101,14 +3272,16 @@
                         }
                     } catch (e) { console.warn("Failed to fetch hidden items", e); }
 
-                    const feedData = await window.getFeed({
+                    // FETCH FROM API (Passing seenIds for deduplication + Weighted Shuffle)
+                    const finalBatch = await window.getFeed({
                         limit: 10,
-                        offset: currentOffset,
-                        category_id: feedFilters.category // Pass category filter
+                        offset: reset ? 0 : currentOffset,
+                        category_id: feedFilters.category,
+                        excludeIds: Array.from(reset ? new Set() : seenIds), // Exclude what we already have
+                        shuffle: true // ENABLE THE 7:3 RECENCY BIAS ALGORITHM
                     });
 
-
-                    if (feedData.length < 10) {
+                    if (finalBatch.length === 0) {
                         setHasMore(false);
                     } else {
                         setHasMore(true);
@@ -3117,8 +3290,7 @@
                     if (hiddenIds.size > 0) setHiddenPostIds(hiddenIds);
 
                     // APPLY FILTER
-                    const filteredData = feedData.filter(post => {
-                        // We no longer filter out hidden posts here, but we DO filter muted brands/categories
+                    const filteredData = finalBatch.filter(post => {
                         if (mutedBrands.has(post.seen_by_brand || 'None')) return false;
                         if (mutedCategories.has(post.category)) return false;
                         return true;
@@ -3144,13 +3316,29 @@
                         seenBy: post.seen_by_brand
                     }));
 
-                    // SAVE TO CACHE
-                    if (window.StateManager) {
-                        await window.StateManager.set(cacheKey, transformedPosts, { ttl: 5 * 60 * 1000 }); // 5 min cache
-                        console.log('💾 Saved posts to cache:', cacheKey);
-                    }
+                    // SHUFFLE the transformed posts for the "Smart" feel (only in batches)
+                    const shuffledBatch = [...transformedPosts].sort(() => Math.random() - 0.5);
 
-                    setPosts(prev => reset ? transformedPosts : [...prev, ...transformedPosts]);
+                    // SAVE TO STATE
+                    setPosts(prev => {
+                        const newPosts = reset ? shuffledBatch : [...prev, ...shuffledBatch];
+                        // Update seen IDs
+                        const nextSeen = new Set(reset ? [] : seenIds);
+                        shuffledBatch.forEach(p => nextSeen.add(p.id));
+                        setSeenIds(nextSeen);
+
+                        // Cache initial set for performance
+                        if (reset && window.StateManager) {
+                            window.StateManager.set('home_feed_initial', {
+                                posts: shuffledBatch,
+                                seenIds: Array.from(nextSeen),
+                                nextOffset: 10
+                            }, { ttl: 5 * 60 * 1000 });
+                        }
+
+                        return newPosts;
+                    });
+
                     if (!reset) setOffset(currentOffset + 10);
 
                 } catch (error) {
@@ -3176,7 +3364,6 @@
                                     name: fullPost.profiles?.full_name || 'User',
                                     username: fullPost.profiles?.username || 'user',
                                     avatar: fullPost.profiles?.avatar_url || '',
-                                    rqs: fullPost.profiles?.rqs_score || 0,
                                     rqs: fullPost.profiles?.rqs_score || 0,
                                     verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified || (fullPost.is_verified_purchase === null && !!fullPost.media_url), // Support explicit flag + legacy fallback
                                     category: fullPost.category,
@@ -3391,7 +3578,14 @@
                     if (isUpdate) {
                         setPosts(prev => prev.map(p => p.id === uiPost.id ? { ...p, ...uiPost } : p));
                     } else {
+                        // NEW POST PRIORITY: Add to top
                         setPosts(prev => [uiPost, ...prev]);
+                        // Add to seenIds to prevent duplication when shuffling batches
+                        setSeenIds(prev => {
+                            const next = new Set(prev);
+                            next.add(newPost.id);
+                            return next;
+                        });
                     }
 
                     setIsOverlayOpen(false);
@@ -3771,6 +3965,7 @@
                                                     userProfile={userProfile}
                                                     savedPosts={savedPosts}
                                                     comments={postComments[post.id] || []}
+                                                    onImageClick={(src, type) => setViewingImage({ src, type })}
                                                 />
                                             </div>
                                         ))}
