@@ -1,9 +1,9 @@
 // Dynamic version - will be replaced at build time
 // For localhost, use timestamp; for production, use build timestamp
-// Updated at: FEB15_COMPLETE_AUTH_FIX
+// Updated at: FEB18_MAJOR_UPDATE_V2.5
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260216_PROD_FINAL';
+  : 'BUILD_20260218_MAJOR_V2.5';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
@@ -21,6 +21,7 @@ const FILES_TO_CACHE = [
   "./MY SPACE FINAL(COMPANIES).HTML",
   "./NOTIFICATION PANEL.HTML",
   "./reset-password.html",
+  "./change-password.html",
 
   // Core Scripts
   "./runtime.js",
