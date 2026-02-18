@@ -157,7 +157,6 @@ window.getFeed = async function (options = {}) {
         // Smart keyword stem: strip trailing 's' to match singular/plural variations
         // "others" -> "other" will match both "Other" and "Others"
         const keyword = category_id.toLowerCase().replace(/s$/, '');
-
         if (actualCategoryId && actualCategoryId !== category_id) {
             // Found a UUID match - search by BOTH UUID AND text keyword (stem-based)
             query = query.or(`category_id.eq.${actualCategoryId},category.ilike.%${keyword}%`);
@@ -165,6 +164,12 @@ window.getFeed = async function (options = {}) {
             // No UUID found - use stem-based keyword matching on category text field
             query = query.ilike('category', `%${keyword}%`);
         }
+    }
+
+    // --- ID EXCLUSION (To prevent duplicates in random/shuffled feeds) ---
+    if (options.excludeIds && Array.isArray(options.excludeIds) && options.excludeIds.length > 0) {
+        // PostgREST syntax for NOT IN
+        query = query.not('id', 'in', `(${options.excludeIds.join(',')})`);
     }
 
     // --- BLOCKED USERS FILTER ---
@@ -184,6 +189,45 @@ window.getFeed = async function (options = {}) {
     if (actualSubCategoryId) query = query.eq('sub_category_id', actualSubCategoryId);
     if (brand_id) query = query.ilike('brand_name', `%${brand_id}%`);
     if (verifiedOnly) query = query.eq('is_verified_purchase', true);
+
+    // --- SHUFFLE MODE (7:3 Recency Bias for Beta) ---
+    if (options.shuffle) {
+        // Fetch a pool of 50 most recent candidates after filters/exclusion
+        const { data: pool, error: poolError } = await query
+            .order('created_at', { ascending: false })
+            .range(0, 49);
+
+        if (poolError) throw poolError;
+        if (!pool || pool.length === 0) return [];
+
+        // Bucket Logic: 
+        // Hot (Top 15 - Newest)
+        // Cold (Next 35 - Depth)
+        const hotPool = pool.slice(0, 15);
+        const coldPool = pool.slice(15);
+
+        // Selection: 70% Hot, 30% Cold
+        let selection = [];
+        const hotTarget = Math.ceil(limit * 0.7);
+        const coldTarget = limit - hotTarget;
+
+        // Shuffle buckets and pick
+        const shuffledHot = [...hotPool].sort(() => Math.random() - 0.5);
+        const shuffledCold = [...coldPool].sort(() => Math.random() - 0.5);
+
+        selection.push(...shuffledHot.slice(0, hotTarget));
+        selection.push(...shuffledCold.slice(0, coldTarget));
+
+        // If pools were small, fill remaining slots from what's left
+        if (selection.length < limit && pool.length > selection.length) {
+            const seenIds = new Set(selection.map(p => p.id));
+            const remaining = pool.filter(p => !seenIds.has(p.id));
+            selection.push(...remaining.slice(0, limit - selection.length));
+        }
+
+        // Final randomized mix of the batch
+        return selection.sort(() => Math.random() - 0.5);
+    }
 
     const { data, error } = await query
         .order('created_at', { ascending: false })
@@ -984,7 +1028,8 @@ window.getMyEarnings = async function () {
 /**
  * Get user brand interactions (Real-time)
  */
-window.getMyBrandInteractions = async function () {
+window.getMyBrandInteractions = async function (options = {}) {
+    const { limit = 20, offset = 0 } = options;
     const user = await window.getCurrentUser();
     if (!user) return [];
 
@@ -994,7 +1039,8 @@ window.getMyBrandInteractions = async function () {
         .select('id, brand_name, text_content, media_url, seen_by_brand, seen_by_brand_at, created_at')
         .eq('user_id', user.id)
         .not('seen_by_brand', 'is', null)
-        .order('seen_by_brand_at', { ascending: false });
+        .order('seen_by_brand_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
     if (error) {
         console.error("Error fetching brand interactions:", error);
@@ -1393,9 +1439,10 @@ window.getUserProfileByUsername = async function (username) {
 };
 
 /**
- * Get a user's posts
+ * Get a user's posts with pagination
  */
-window.getUserPosts = async function (userId, limit = 20) {
+window.getUserPosts = async function (userId, options = {}) {
+    const { limit = 20, offset = 0 } = options;
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase client not initialized');
 
     const { data, error } = await window.supabase
@@ -1415,16 +1462,17 @@ window.getUserPosts = async function (userId, limit = 20) {
         .eq('is_deleted', false)
         .eq('is_draft', false)
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data;
 };
 
 /**
- * Get posts that a specific user has commented on (for public profile view)
+ * Get posts that a specific user has commented on with pagination
  */
-window.getUserCommentedPosts = async function (userId, limit = 20) {
+window.getUserCommentedPosts = async function (userId, options = {}) {
+    const { limit = 20, offset = 0 } = options;
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase client not initialized');
 
     // 1. Get all unique post IDs from user's comments
@@ -1459,7 +1507,8 @@ window.getUserCommentedPosts = async function (userId, limit = 20) {
         .in('id', postIds)
         .eq('is_deleted', false)
         .eq('is_draft', false)
-        .limit(limit);
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
     if (postsError) throw postsError;
     return posts;
@@ -1469,7 +1518,8 @@ window.getUserCommentedPosts = async function (userId, limit = 20) {
 /**
  * Get current user's posts
  */
-window.getMyPosts = async function (limit = 20) {
+window.getMyPosts = async function (options = {}) {
+    const { limit = 20, offset = 0 } = options;
     const user = await window.getCurrentUser();
     if (!user) throw new Error('Must be logged in');
 
@@ -1490,7 +1540,7 @@ window.getMyPosts = async function (limit = 20) {
         .eq('is_deleted', false)
         .eq('is_draft', false)
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data;
@@ -2011,7 +2061,8 @@ window.isBookmarked = async function (postId) {
 /**
  * Get user's bookmarked posts
  */
-window.getBookmarks = async function () {
+window.getBookmarks = async function (options = {}) {
+    const { limit = 20, offset = 0 } = options;
     const user = await window.getCurrentUser();
     if (!user) throw new Error('Must be logged in');
 
@@ -2033,7 +2084,8 @@ window.getBookmarks = async function () {
             )
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
     if (error) throw error;
 
