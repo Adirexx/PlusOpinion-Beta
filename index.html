@@ -34,20 +34,20 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
-    <link rel="icon" href="./icon-192.png">
-    <link rel="icon" href="./icon-512.png">
+    <link rel="icon" href="/icon-192.png">
+    <link rel="icon" href="/icon-512.png">
 
     <!-- Preload critical scripts for faster mobile loading -->
-    <link rel="modulepreload" href="./supabase.js">
-    <link rel="modulepreload" href="./auth.js">
+    <link rel="modulepreload" href="/supabase.js">
+    <link rel="modulepreload" href="/auth.js">
 
     <!-- Google Analytics will be loaded by cookie-consent.js after user consent -->
 
     <!-- Service Worker Registration & Auto-Update Detection -->
     <!-- Professional Update & Maintenance System -->
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
 
 
     <!-- 1. Tailwind CSS -->
@@ -83,8 +83,8 @@
     </script>
 
     <!-- Centralized Auth Infrastructure -->
-    <script type="module" src="./supabase.js"></script>
-    <script type="module" src="./auth.js"></script>
+    <script type="module" src="/supabase.js"></script>
+    <script type="module" src="/auth.js"></script>
     <script>
         window.authReadyPromise.then(() => {
             console.log('✅ Global Auth module linked and ready');
@@ -94,7 +94,7 @@
     <!-- 3. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="./pwa_installer.js" defer></script>
+    <script src="/pwa_installer.js" defer></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -699,7 +699,7 @@
                         playsInline
                         className="absolute inset-0 w-full h-full object-cover opacity-30"
                     >
-                        <source src="./bg-video.mp4" type="video/mp4" />
+                        <source src="/bg-video.mp4" type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
                     <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
@@ -922,7 +922,7 @@
                         playsInline
                         className="absolute inset-0 w-full h-full object-cover opacity-30"
                     >
-                        <source src="./bg-video.mp4" type="video/mp4" />
+                        <source src="/bg-video.mp4" type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
                     <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
@@ -1044,7 +1044,7 @@
                         playsInline
                         className="absolute inset-0 w-full h-full object-cover opacity-30"
                     >
-                        <source src="./bg-video.mp4" type="video/mp4" />
+                        <source src="/bg-video.mp4" type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
                     <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
@@ -1180,7 +1180,7 @@
                             className="absolute inset-0 w-full h-full object-cover opacity-35"
                             style={{ filter: 'brightness(0.4) contrast(1.2)' }}
                         >
-                            <source src="./bg-video.mp4" type="video/mp4" />
+                            <source src="/bg-video.mp4" type="video/mp4" />
                         </video>
                         {/* Gradient overlay */}
                         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black"></div>
@@ -1651,15 +1651,15 @@
         }
     </style>
 
-    <script src="./router.js"></script>
+    <script src="/router.js"></script>
     <script>
         // Professional URL Masking
         if (window.RouteCleaner) window.RouteCleaner.cleanCurrentUrl();
     </script>
-    <script src="./pull_to_refresh.js"></script>
+    <script src="/pull_to_refresh.js"></script>
 
     <!-- Cookie Consent Manager -->
-    <script src="./cookie-consent.js"></script>
+    <script src="/cookie-consent.js"></script>
 
 </body>
 
