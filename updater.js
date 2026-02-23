@@ -10,7 +10,7 @@
 
 (function () {
     const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
-    const VERSION_FILE = './version.json';
+    const VERSION_FILE = '/version.json';
     let currentVersion = localStorage.getItem('plusopinion_v_id');
     console.log('📦 Initial Local Version:', currentVersion);
     let swRegistration = null;
@@ -20,7 +20,7 @@
     // 1. REGISTER SERVICE WORKER
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
+            navigator.serviceWorker.register('/service-worker.js')
                 .then(reg => {
                     swRegistration = reg;
                     console.log('✅ SW Registered');
