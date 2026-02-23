@@ -129,6 +129,10 @@
         {
             "source": "/post/:id",
             "destination": "/api/post-preview?id=:id"
+        },
+        {
+            "source": "/profile/:username",
+            "destination": "/api/profile-preview?username=:username"
         }
     ]
 }
