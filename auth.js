@@ -9,6 +9,10 @@
 // Note: window.supabase is the initialized client (set by supabase.js)
 // We reference it via window.supabase directly (not cached) to handle async module loading
 
+// Create authReadyPromise so any inline script can await window.authReadyPromise
+window.authReadyPromise = new Promise(resolve => {
+  window._resolveAuthReady = resolve;
+});
 /* ============================
    SIGN UP (Email + Password)
 ============================ */
@@ -125,6 +129,26 @@ async function resetPassword(email) {
 /* ============================
    GET / UPDATE PROFILE
 ============================ */
+async function getUserProfileByUsername(username) {
+  if (!username) return null;
+  const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+
+  try {
+    const { data, error } = await window.supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', cleanUsername)
+      .single();
+
+    if (error || !data) return null;
+    return data;
+  } catch (err) {
+    console.error('Exception fetching profile by username:', err);
+    return null;
+  }
+}
+window.getUserProfileByUsername = getUserProfileByUsername;
+
 async function getUserProfile(userId) {
   const { data, error } = await window.supabase
     .from('profiles')
