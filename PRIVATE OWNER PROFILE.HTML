@@ -14,9 +14,9 @@
         rel="stylesheet">
 
     <!-- Global Design System -->
-    <link rel="stylesheet" href="./global.css">
+    <link rel="stylesheet" href="/global.css">
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
 
     <!-- Favicon for browser tabs -->
@@ -26,25 +26,25 @@
 
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js"></script>
-    <script type="module" src="./auth.js"></script>
+    <script type="module" src="/supabase.js"></script>
+    <script type="module" src="/auth.js"></script>
 
     <!-- SPA Core Infrastructure -->
-    <script type="module" src="./state_manager.js"></script>
-    <script type="module" src="./router.js"></script>
-    <script type="module" src="./pull_to_refresh.js"></script>
-    <script type="module" src="./navigation_preloader.js"></script>
+    <script type="module" src="/state_manager.js"></script>
+    <script type="module" src="/router.js"></script>
+    <script type="module" src="/pull_to_refresh.js"></script>
+    <script type="module" src="/navigation_preloader.js"></script>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./runtime.js"></script>
-    <script type="module" src="./api.js"></script>
-    <script type="module" src="./notifications.js"></script>
+    <script src="/runtime.js"></script>
+    <script type="module" src="/api.js"></script>
+    <script type="module" src="/notifications.js"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Professional Update & Maintenance System -->
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
 
     <!-- Visual Tokens & Global CSS -->
     <style>
@@ -331,14 +331,6 @@
         }
     </style>
 
-    <script>
-        import { supabase } from "./supabase.js";
-
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            // Automatic redirect removed to allow Guest Lock UI
-            // if (!session) { window.location.href = "index.html"; return; }
-        });
-    </script>
 
     <script>
         tailwind.config = {
