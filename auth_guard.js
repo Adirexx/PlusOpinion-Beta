@@ -12,7 +12,10 @@ window.checkOnboardingStatus = async function () {
     try {
         // Skip checks on auth pages - let them handle their own logic
         const path = window.location.pathname.toLowerCase();
-        if (path.includes('onboarding') || path.includes('reset-password') || path.includes('change-password') || path.includes('index')) {
+        const searchParams = new URLSearchParams(window.location.search);
+        const isPostDeepLink = searchParams.has('post');
+
+        if (path.includes('onboarding') || path.includes('reset-password') || path.includes('change-password') || path.includes('index') || (isPostDeepLink && (path.includes('feed') || path.includes('homepage_final')))) {
             return true;
         }
 
