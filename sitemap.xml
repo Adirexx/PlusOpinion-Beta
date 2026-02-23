@@ -27,10 +27,26 @@
     
     <!-- Public Profile Pages - Medium Priority -->
     <url>
-        <loc>https://plusopinion.com/PUBLIC POV PROFILE.HTML</loc>
+        <loc>https://plusopinion.com/PUBLIC%20POV%20PROFILE.HTML</loc>
         <lastmod>2026-02-13</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
+    </url>
+    
+    <!-- Support Page - Medium Priority -->
+    <url>
+        <loc>https://plusopinion.com/SUPPORT.HTML</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    
+    <!-- About Page - Medium Priority -->
+    <url>
+        <loc>https://plusopinion.com/ABOUT.HTML</loc>
+        <lastmod>2026-02-13</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
     </url>
     
     <!-- Note: Private pages (MY SPACE, PRIVATE OWNER PROFILE, NOTIFICATION PANEL, reset-password) 
