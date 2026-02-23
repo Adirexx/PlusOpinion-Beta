@@ -5,14 +5,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- SEO Meta Tags -->
+    <!-- SEO meta tags and Search Engine Verifications -->
     <meta name="google-site-verification" content="y7kqaEmvNd_Z7UVBmX3bIbsa15mfOxLzNqA25tJ8zCA" />
+
     <title>PlusOpinion - The Future of Consumer Intelligence</title>
     <meta name="description"
         content="Join PlusOpinion, the revolutionary platform transforming consumer feedback. Share authentic product reviews, earn rewards, and discover honest opinions from verified users.">
     <meta name="keywords"
         content="consumer intelligence, product reviews, authentic feedback, verified reviews, earn rewards, opinion platform, consumer network, product ratings, review community">
     <meta name="author" content="PlusOpinion">
+
+    <!-- JSON-LD Structured Data for Rich Snippets (Sitelinks & Organization) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PlusOpinion",
+      "url": "https://plusopinion.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://plusopinion.com/CATAGORYPAGE.HTML?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "PlusOpinion",
+      "url": "https://plusopinion.com/",
+      "logo": "https://plusopinion.com/icon-512.png",
+      "sameAs": [
+        "https://twitter.com/plusopinion",
+        "https://instagram.com/plusopinion",
+        "https://www.linkedin.com/company/plusopinion"
+      ]
+    }
+    </script>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
