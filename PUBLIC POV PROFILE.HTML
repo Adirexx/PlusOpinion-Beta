@@ -2895,7 +2895,7 @@
                         if (signupData.error) throw signupData.error;
 
                         if (signupData?.session) {
-                            window.location.href = 'ONBOARDING.HTML';
+                            window.location.href = 'onboarding.html';
                         } else {
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
@@ -2906,7 +2906,7 @@
                         const user = await window.signInUser(formData.email, formData.password);
                         if (user) {
                             if (user.onboardingRequired) {
-                                window.location.href = 'ONBOARDING.HTML';
+                                window.location.href = 'onboarding.html';
                             } else {
                                 window.location.reload();
                             }
