@@ -14,9 +14,9 @@
         rel="stylesheet">
 
     <!-- Global Design System -->
-    <link rel="stylesheet" href="./global.css">
+    <link rel="stylesheet" href="/global.css">
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
 
     <!-- Favicon for browser tabs -->
@@ -26,27 +26,27 @@
 
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js?v=2.0"></script>
-    <script type="module" src="./auth.js?v=2.0"></script>
+    <script type="module" src="/supabase.js?v=2.0"></script>
+    <script type="module" src="/auth.js?v=2.0"></script>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./runtime.js?v=2.0"></script>
-    <script type="module" src="./api.js?v=3.0"></script>
-    <script type="module" src="./notifications.js?v=2.0"></script>
+    <script src="/runtime.js?v=2.0"></script>
+    <script type="module" src="/api.js?v=3.0"></script>
+    <script type="module" src="/notifications.js?v=2.0"></script>
 
     <!-- SPA Core Infrastructure -->
-    <script type="module" src="./state_manager.js"></script>
-    <script type="module" src="./router.js"></script>
-    <script src="./spa_router.js"></script>
-    <script type="module" src="./pull_to_refresh.js"></script>
-    <script type="module" src="./navigation_preloader.js"></script>
+    <script type="module" src="/state_manager.js"></script>
+    <script type="module" src="/router.js"></script>
+    <script src="/spa_router.js"></script>
+    <script type="module" src="/pull_to_refresh.js"></script>
+    <script type="module" src="/navigation_preloader.js"></script>
 
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Professional Update & Maintenance System -->
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <!-- Visual Tokens & Global CSS -->
@@ -250,14 +250,6 @@
         }
     </style>
 
-    <script type="module">
-        import { supabase } from "./supabase.js";
-
-        supabase.auth.onAuthStateChange((event, session) => {
-            // Automatic redirect removed to allow Guest Lock UI
-            // if (!session) { window.location.href = "index.html"; }
-        });
-    </script>
 
     <script>
         tailwind.config = {
