@@ -135,6 +135,16 @@ async function handleProfilePreview(username, url, userAgent) {
 }
 
 function generateHtmlResponse(title, description, image, canonicalUrl, appUrl, isBot, type) {
+    // WhatsApp drops images larger than ~300KB.
+    if (!image || image.includes('icon-512.png')) {
+        image = 'https://plusopinion.com/seo-preview.jpg';
+    } else if (image.includes('supabase.co')) {
+        // Supabase Image Transformations require a paid Pro tier.
+        // Instead, we route the image through a highly reliable, free image resizing CDN (wsrv.nl)
+        // to guarantee it is compressed below 300KB and formatted as a strict JPEG for WhatsApp.
+        image = `https://wsrv.nl/?url=${encodeURIComponent(image)}&w=600&h=600&fit=cover&output=jpg&q=70`;
+    }
+
     let html = '';
     if (isBot) {
         html = `<!DOCTYPE html>
@@ -143,14 +153,19 @@ function generateHtmlResponse(title, description, image, canonicalUrl, appUrl, i
     <meta charset="UTF-8">
     <title>${title}</title>
     <meta name="description" content="${description}">
+    
+    <!-- OpenGraph Required -->
     <meta property="og:type" content="${type}">
     <meta property="og:site_name" content="PlusOpinion">
     <meta property="og:url" content="${canonicalUrl}">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
-    <meta property="og:image" content="${image}">
-    <meta property="og:image:width" content="600">
-    <meta property="og:image:height" content="600">
+    <meta property="og:image" itemprop="image" content="${image}">
+    
+    <!-- Removed strict og:image:width/height as WhatsApp rejects mismatched dimensions -->
+    <meta property="og:image:alt" content="PlusOpinion Preview">
+    
+    <!-- Twitter/X -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${title}">
     <meta name="twitter:description" content="${description}">
