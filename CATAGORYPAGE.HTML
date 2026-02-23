@@ -26,10 +26,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
-    <link rel="icon" href="./icon-192.png">
-    <link rel="icon" href="./icon-512.png">
+    <link rel="icon" href="/icon-192.png">
+    <link rel="icon" href="/icon-512.png">
 
 
     <!-- Fonts -->
@@ -40,15 +40,15 @@
         rel="stylesheet">
 
     <!-- Global Design System -->
-    <link rel="stylesheet" href="./global.css">
+    <link rel="stylesheet" href="/global.css">
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <script src="./runtime.js"></script>
+    <script src="/runtime.js"></script>
     <script src="api.js?v=3.2"></script>
     <!-- Categories will be dynamically generated from user posts and tags -->
 
@@ -56,7 +56,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Professional Update & Maintenance System -->
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <!-- Visual Tokens (MATCHING HOMEPAGE_FINAL.HTML) -->
@@ -275,28 +275,19 @@
 
     <!-- Core Logic Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js?v=2.0"></script>
-    <script type="module" src="./auth.js?v=2.0"></script>
-    <script type="module" src="./api.js?v=2.0"></script>
+    <script type="module" src="/supabase.js?v=2.0"></script>
+    <script type="module" src="/auth.js?v=2.0"></script>
+    <script type="module" src="/api.js?v=2.0"></script>
 
     <!-- SPA Core Infrastructure -->
-    <script src="./state_manager.js"></script>
-    <script src="./router.js"></script>
-    <script src="./spa_router.js"></script>
-    <script src="./pull_to_refresh.js?v=2.0"></script>
-    <script src="./navigation_preloader.js"></script>
+    <script src="/state_manager.js"></script>
+    <script src="/router.js"></script>
+    <script src="/spa_router.js"></script>
+    <script src="/pull_to_refresh.js?v=2.0"></script>
+    <script src="/navigation_preloader.js"></script>
 
-    <script type="module" src="./notifications.js?v=2.0"></script>
+    <script type="module" src="/notifications.js?v=2.0"></script>
 
-    <script type="module">
-        import { supabase } from "./supabase.js";
-
-        supabase.auth.onAuthStateChange((event, session) => {
-            if (!session) {
-                window.location.href = "index.html";
-            }
-        });
-    </script>
 
     <script>
         tailwind.config = {
@@ -333,7 +324,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    setShowAuthModal(true);
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -728,6 +719,10 @@
 
 
         const App = () => {
+            const [isGuest, setIsGuest] = useState(false);
+            const [showAuthModal, setShowAuthModal] = useState(false);
+            const [userProfile, setUserProfile] = useState(null);
+
             // Removed local selectedCategory state as we redirect immediately
             const activeTab = 'categories';
             const [categories, setCategories] = useState([]);
@@ -763,6 +758,18 @@
                 let isMounted = true;
                 const loadAllData = async () => {
                     if (!isMounted) return;
+
+                    // Auth Check
+                    const user = await window.getCurrentUser();
+                    if (!user) {
+                        setIsGuest(true);
+                        setShowAuthModal(true);
+                        setLoading(false);
+                        return;
+                    }
+                    setIsGuest(false);
+                    const profile = await window.getMyProfile();
+                    setUserProfile(profile);
 
                     const cacheKey = 'categories_data';
 
@@ -916,6 +923,12 @@
                     {/* 4. Bottom Nav - FIXED */}
                     <BottomNav activeTab={activeTab} isVisible={navVisible} />
 
+                    <AuthModal
+                        isOpen={showAuthModal}
+                        onClose={() => setShowAuthModal(false)}
+                        isClosable={!isGuest}
+                    />
+
                 </div>
             );
         };
@@ -954,6 +967,215 @@
             );
         };
 
+        // AUTH MODAL (Login/Signup) - Mirrored from HOMEPAGE_FINAL
+        const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+            const [mode, setMode] = useState('login'); // 'login' or 'signup'
+            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            if (!isOpen) return null;
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+                vibrate(10);
+
+                if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+                    setError("Passwords don't match");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await window.authReadyPromise;
+                    if (mode === 'signup') {
+                        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                        if (signupData.error) throw signupData.error;
+
+                        if (signupData?.session) {
+                            window.location.href = 'ONBOARDING.HTML';
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+                            }));
+                            onClose();
+                        }
+                    } else {
+                        const user = await window.signInUser(formData.email, formData.password);
+                        if (user) {
+                            if (user.onboardingRequired) {
+                                window.location.href = 'ONBOARDING.HTML';
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    setError(err.message || 'Authentication failed');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleGoogleLogin = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    await window.signInWithProvider('google');
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const handleForgotPassword = async () => {
+                if (!formData.email) {
+                    setError("Please enter your email first");
+                    return;
+                }
+                setLoading(true);
+                try {
+                    await window.resetPassword(formData.email);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+                    }));
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => isClosable && onClose()}></div>
+                    <div className="w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10" onClick={e => e.stopPropagation()}>
+                        {isClosable && (
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                                <Icon icon="X" size={24} />
+                            </button>
+                        )}
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
+                                {mode === 'login' ? 'Welcome Back' : 'Sign Up'}
+                            </h2>
+                            <p className="text-slate-400 text-sm">
+                                {mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name</label>
+                                    <input
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        type="text"
+                                        placeholder="John Doe"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address</label>
+                                <input
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password</label>
+                                <input
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password</label>
+                                    <input
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+                                >
+                                    Forgot Password?
+                                </button>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? 'PROCESSING...' : (mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT')}
+                                <Icon icon="ArrowRight" size={18} />
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase">OR</span>
+                                <div className="flex-grow border-t border-slate-700"></div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleLogin}
+                                className="w-full flex items-center justify-center gap-2 bg-[#1a1f2e] hover:bg-[#252a3b] text-white py-3 rounded-xl font-semibold text-sm transition-all border border-slate-700"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" /></svg>
+                                Continue with Google
+                            </button>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm text-slate-400">
+                            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button
+                                onClick={() => { vibrate(5); setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
+                                className="text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform"
+                            >
+                                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Mount the app
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
@@ -961,9 +1183,6 @@
     <script>
         window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
     </script>
-    </style>
-    </div>
-    <!-- TEST_UPDATE_TOY_END -->
 </body>
 
 
