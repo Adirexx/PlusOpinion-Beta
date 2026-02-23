@@ -71,10 +71,10 @@ class NavigationPreloader {
     preloadResources(pageHref) {
         // Preload common resources that all pages need
         const resources = [
-            './api.js',
-            './supabase.js',
-            './state_manager.js',
-            './pull_to_refresh.js'
+            '/api.js',
+            '/supabase.js',
+            '/state_manager.js',
+            '/pull_to_refresh.js'
         ];
 
         resources.forEach(resource => {
@@ -102,9 +102,9 @@ window.NavigationPreloader = new NavigationPreloader();
 setTimeout(() => {
     // Preload most common navigation targets
     const commonPages = [
-        'HOMEPAGE_FINAL.HTML',
-        'BOOKMARKS.HTML',
-        'NOTIFICATION PANEL.HTML'
+        '/HOMEPAGE_FINAL.HTML',
+        '/BOOKMARKS.HTML',
+        '/NOTIFICATION%20PANEL.HTML'
     ];
 
     commonPages.forEach(page => {
