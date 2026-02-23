@@ -125,6 +125,10 @@
         {
             "source": "/t&c",
             "destination": "/TERMS_AND_CONDITIONS.HTML"
+        },
+        {
+            "source": "/post/:id",
+            "destination": "/api/post-preview?id=:id"
         }
     ]
 }
