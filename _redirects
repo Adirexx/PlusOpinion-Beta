@@ -1,4 +1,6 @@
-# v2.9.0 - Professional Social Previews
+# ============================
+# PlusOpinion - Cloudflare Pages Redirects
+# v2.8.0 - Deep Links First Order
 # ============================
 
 # --- Static Assets (serve directly, never redirect) ---
@@ -8,14 +10,13 @@
 /robots.txt /robots.txt 200
 /sitemap.xml /sitemap.xml 200
 
-# --- DEEP LINK ROUTES (Social Previews via API) ---
+# --- DEEP LINK ROUTES (must come first!) ---
 # Shared profiles: plusopinion.com/profile/username
 /profile /PUBLIC%20POV%20PROFILE.HTML 200
-/profile/ /PUBLIC%20POV%20PROFILE.HTML 200
-/profile/* /api/profile-preview?username=:splat 200
+/profile/* /PUBLIC%20POV%20PROFILE.HTML 200
 
 # Shared posts: plusopinion.com/post/id
-/post/* /api/post-preview?id=:splat 200
+/post/* /HOMEPAGE_FINAL.HTML 200
 
 # --- MAIN APP PAGES ---
 /feed /HOMEPAGE_FINAL.HTML 200
@@ -27,6 +28,7 @@
 /myprofile /PRIVATE%20OWNER%20PROFILE.HTML 200
 
 # --- AUTH PAGES ---
+
 
 # --- STATIC / LEGAL PAGES ---
 /about /ABOUT.HTML 200
