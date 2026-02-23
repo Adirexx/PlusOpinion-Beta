@@ -102,9 +102,9 @@ window.NavigationPreloader = new NavigationPreloader();
 setTimeout(() => {
     // Preload most common navigation targets
     const commonPages = [
-        '/HOMEPAGE_FINAL.HTML',
-        '/BOOKMARKS.HTML',
-        '/NOTIFICATION%20PANEL.HTML'
+        '/feed',
+        '/bookmarks',
+        '/notifications'
     ];
 
     commonPages.forEach(page => {
