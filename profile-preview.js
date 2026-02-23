@@ -81,7 +81,9 @@ export default async function handler(req, res) {
 
         const image = profile.avatar_url || 'https://plusopinion.com/icon-512.png';
         const canonicalUrl = `https://plusopinion.com/profile/${username}`;
-        const appUrl = `/PUBLIC%20POV%20PROFILE.HTML?username=${encodeURIComponent(username)}`;
+        // Use the clean /profile path so Cloudflare _redirects maps it correctly to the physical file.
+        // IMPORTANT: Do NOT use the physical filename with spaces - Cloudflare may fail to serve it directly.
+        const appUrl = `/profile?username=${encodeURIComponent(username)}`;
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60');
