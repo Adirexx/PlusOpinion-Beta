@@ -14,11 +14,7 @@ window.checkOnboardingStatus = async function () {
         const path = window.location.pathname.toLowerCase();
         const searchParams = new URLSearchParams(window.location.search);
         const isPostDeepLink = searchParams.has('post') || path.startsWith('/post/');
-        // Profile deep-link: clean URL /profile/:username OR the physical file /public pov profile.html?username=
-        const isProfileDeepLink = path.startsWith('/profile/')
-            || path.includes('public%20pov%20profile')
-            || path.includes('public pov profile')
-            || searchParams.has('username');
+        const isProfileDeepLink = path.startsWith('/profile/');
 
         if (path.includes('onboarding') ||
             path.includes('reset-password') ||
