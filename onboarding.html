@@ -14,7 +14,7 @@
         rel="stylesheet">
 
     <!-- Global Design System -->
-    <link rel="stylesheet" href="./global.css">
+    <link rel="stylesheet" href="/global.css">
 
     <!-- Favicon for browser tabs -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
@@ -22,17 +22,17 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
 
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js"></script>
-    <script type="module" src="./api.js"></script>
-    <script type="module" src="./notifications.js"></script>
-    <script src="./rqs_calculator.js"></script>
-    <script src="./router.js"></script>
-    <script src="./auth.js"></script>
-    <script src="./auth_guard.js"></script>
+    <script type="module" src="/supabase.js"></script>
+    <script type="module" src="/api.js"></script>
+    <script type="module" src="/notifications.js"></script>
+    <script src="/rqs_calculator.js"></script>
+    <script src="/router.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/auth_guard.js"></script>
     <script>
         if (window.RouteCleaner) window.RouteCleaner.cleanCurrentUrl();
     </script>
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
 
     <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -204,9 +204,9 @@
                     // Start with terms visible
                     setStep('terms');
 
-                    // Wait for Supabase client
+                    // Wait for Supabase client (module scripts load after regular scripts)
                     let attempts = 0;
-                    while ((!window.supabase || !window.supabase.auth) && attempts < 50) {
+                    while ((!window.supabase || !window.supabase.auth) && attempts < 80) {
                         await new Promise(r => setTimeout(r, 100));
                         attempts++;
                     }
@@ -216,7 +216,7 @@
                         return;
                     }
 
-                    // Setup listener - Handles hash tokens and session recovery
+                    // Setup listener - Handles hash tokens (OAuth callbacks) and session recovery
                     const { data: { subscription } } = window.supabase.auth.onAuthStateChange(async (event, session) => {
                         if (!mounted) return;
 
@@ -225,14 +225,22 @@
                         }
                     });
 
-                    // Fallback: If no session after 3s, prompt login
+                    // Also check for an existing session immediately (for returning users)
+                    const { data: { session: existingSession } } = await window.supabase.auth.getSession();
+                    if (existingSession?.user && mounted) {
+                        handleAuthenticatedUser(existingSession.user);
+                    }
+
+                    // Fallback: Give 8s for hash-based OAuth sessions to resolve, then redirect if still no session
                     setTimeout(async () => {
                         if (!mounted) return;
+                        // If user state is already set by onAuthStateChange, don't redirect
                         const { data: { session } } = await window.supabase.auth.getSession();
                         if (!session) {
+                            console.warn('No session found after 8s, redirecting to login');
                             window.navigateTo('index.html');
                         }
-                    }, 3000);
+                    }, 8000);
                 };
 
                 initAuth();
@@ -287,26 +295,39 @@
                 try {
                     setSubmitting(true);
 
-                    // 1. Verify user still has a valid session
-                    const currentUser = await window.getCurrentUser();
+                    // 1. Get user from React state (set by onAuthStateChange), or fall back to live session
+                    let currentUser = user;
                     if (!currentUser) {
-                        alert("Session expired. Please refresh the page and log in again.");
+                        // Fallback: query supabase directly (bypasses module timing issues)
+                        const { data: { session } } = await window.supabase.auth.getSession();
+                        currentUser = session?.user || null;
+                    }
+
+                    if (!currentUser) {
+                        alert("Session expired. Please refresh the page and try again.");
                         setSubmitting(false);
                         return;
                     }
 
-                    // 2. Call the acceptTerms function
-                    const success = await window.acceptTerms();
+                    // 2. Directly update terms_accepted in database (robust, no window.acceptTerms dependency)
+                    const { error } = await window.supabase
+                        .from('profiles')
+                        .update({
+                            terms_accepted: true,
+                            terms_accepted_at: new Date().toISOString()
+                        })
+                        .eq('id', currentUser.id);
 
-                    if (success) {
-                        console.log('✅ Terms accepted, moving to profile setup');
-                        setStep('profile');
-                    } else {
-                        throw new Error("Failed to update terms in database");
-                    }
+                    if (error) throw error;
+
+                    // 3. Make sure our user state is set before moving on
+                    if (!user) setUser(currentUser);
+
+                    console.log('✅ Terms accepted, moving to profile setup');
+                    setStep('profile');
                 } catch (error) {
                     console.error('Error accepting terms:', error);
-                    alert('Failed to accept terms. Please ensure you are logged in and try again.');
+                    alert('Failed to accept terms. Please try again.');
                 } finally {
                     setSubmitting(false);
                 }
