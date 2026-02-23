@@ -29,5 +29,5 @@ function initializeSupabase() {
   return supabase;
 }
 
-// Initialize when script loads
-export const supabase = initializeSupabase();
+// Initialize when script loads (sets window.supabase globally — no export needed)
+initializeSupabase();
