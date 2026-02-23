@@ -1093,7 +1093,7 @@ window.trackShare = async function (postId) {
 
 
 /**
- * Get comments for a post
+ * Get comments for a post - returns threaded structure: top-level + replies
  */
 window.getComments = async function (postId) {
     const { data, error } = await window.supabase
@@ -1114,11 +1114,30 @@ window.getComments = async function (postId) {
         .order('created_at', { ascending: true });
 
     if (error) throw error;
-    return data;
+
+    // Build threaded structure: top-level comments with nested replies
+    const topLevel = [];
+    const repliesMap = {};
+
+    (data || []).forEach(c => {
+        if (!c.parent_comment_id) {
+            topLevel.push({ ...c, replies: [] });
+        } else {
+            if (!repliesMap[c.parent_comment_id]) repliesMap[c.parent_comment_id] = [];
+            repliesMap[c.parent_comment_id].push(c);
+        }
+    });
+
+    // Attach replies to their parent
+    topLevel.forEach(c => {
+        c.replies = repliesMap[c.id] || [];
+    });
+
+    return topLevel;
 };
 
 /**
- * Create a comment
+ * Create a top-level comment on a post
  */
 window.createComment = async function (postId, text) {
     const user = await window.getCurrentUser();
@@ -1139,7 +1158,8 @@ window.createComment = async function (postId, text) {
         username,
         avatar_url,
         rqs_score
-      )
+      ),
+      likes:comment_likes(count)
     `)
         .single();
 
@@ -1152,14 +1172,232 @@ window.createComment = async function (postId, text) {
         );
     }
 
+    // Fire mention notifications for @tagged users in text
+    window._fireMentionNotifications(user.id, postId, text);
+
+    return { ...data, replies: [] };
+};
+
+/**
+ * Create a reply to an existing comment
+ */
+window.createReply = async function (postId, parentCommentId, text) {
+    const user = await window.getCurrentUser();
+    if (!user) throw new Error('Must be logged in to reply');
+
+    const { data, error } = await window.supabase
+        .from('comments')
+        .insert({
+            post_id: postId,
+            user_id: user.id,
+            text_content: text,
+            parent_comment_id: parentCommentId
+        })
+        .select(`
+      *,
+      profiles:user_id (
+        id,
+        full_name,
+        username,
+        avatar_url,
+        rqs_score
+      ),
+      likes:comment_likes(count)
+    `)
+        .single();
+
+    if (error) throw error;
+
+    // Notify the original commenter (if not replying to yourself)
+    if (data) {
+        try {
+            // Get parent comment author — use maybeSingle to avoid 406 if not found
+            const { data: parentComment } = await window.supabase
+                .from('comments')
+                .select('user_id')
+                .eq('id', parentCommentId)
+                .maybeSingle();
+
+            if (parentComment && parentComment.user_id !== user.id) {
+                window.notifyCommentReplied(parentCommentId, parentComment.user_id, user.id, postId, text)
+                    .catch(err => console.error('Reply notification failed:', err));
+            }
+        } catch (e) {
+            // Non-critical — skip notification silently
+        }
+
+        // Also notify post author
+        if (window.notifyPostCommented) {
+            window.notifyPostCommented(postId, user.id, text, true).catch(() => { });
+        }
+    }
+
+    // Fire mention notifications
+    window._fireMentionNotifications(user.id, postId, text);
+
     return data;
+};
+
+/**
+ * Search users by username prefix for @mention autocomplete
+ */
+window.searchUsersForMention = async function (query) {
+    if (!query || query.length < 1) return [];
+    const cleanQuery = query.replace(/^@/, '').toLowerCase();
+
+    const { data, error } = await window.supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url, rqs_score')
+        .ilike('username', `${cleanQuery}%`)
+        .limit(6);
+
+    if (error) return [];
+    return data || [];
+};
+
+/**
+ * Send notification when a comment reply is posted
+ * Uses the existing send_notification SECURITY DEFINER RPC to bypass client-side RLS
+ */
+window.notifyCommentReplied = async function (commentId, recipientId, actorId, postId, replyText) {
+    try {
+        const { data: actor } = await window.supabase
+            .from('profiles')
+            .select('full_name, username, avatar_url')
+            .eq('id', actorId)
+            .maybeSingle();
+
+        if (!actor) return;
+
+        // Fetch the parent comment text so recipient has context
+        const { data: parentComment } = await window.supabase
+            .from('comments')
+            .select('text_content')
+            .eq('id', commentId)
+            .maybeSingle();
+
+        const parentPreview = parentComment?.text_content?.substring(0, 80);
+        const replyPreview = replyText?.substring(0, 80);
+
+        // Use SECURITY DEFINER RPC so we can insert for another user (bypasses RLS)
+        await window.supabase.rpc('send_notification', {
+            user_id: recipientId,
+            type: 'comment_replied',
+            title: 'New Reply',
+            message: `@${actor.username} replied to your comment`,
+            related_post_id: postId,
+            related_user_id: actorId,
+            icon: 'MessageCircle',
+            category: 'social',
+            priority: 'normal',
+            action_url: `HOMEPAGE_FINAL.HTML?post=${postId}&section=comments&comment=${commentId}`,
+            metadata: {
+                actor_name: actor.full_name || actor.username,
+                actor_username: actor.username,
+                actor_avatar: actor.avatar_url,
+                comment_preview: parentPreview,   // the comment that was replied to
+                reply_text: replyPreview,          // the reply text itself
+                comment_id: commentId
+            }
+        });
+    } catch (e) {
+        console.error('notifyCommentReplied failed', e);
+    }
+};
+
+
+/**
+ * Send notification when a user is @mentioned
+ * Uses the existing send_notification SECURITY DEFINER RPC to bypass client-side RLS
+ */
+window.notifyMentioned = async function (mentionedUserId, actorId, postId, text) {
+    try {
+        if (mentionedUserId === actorId) return; // Don't notify yourself
+
+        const { data: actor } = await window.supabase
+            .from('profiles')
+            .select('full_name, username, avatar_url')
+            .eq('id', actorId)
+            .maybeSingle();
+
+        if (!actor) return;
+
+        // Fetch the post context so recipient knows which post it relates to
+        const { data: post } = await window.supabase
+            .from('posts')
+            .select('text_content, product_name, item_name, category')
+            .eq('id', postId)
+            .maybeSingle();
+
+        const postContext = post?.product_name || post?.item_name || '';
+        const postPreview = post?.text_content?.substring(0, 80);
+        const mentionSnippet = text?.substring(0, 100);
+
+        // Use SECURITY DEFINER RPC so we can insert for another user (bypasses RLS)
+        await window.supabase.rpc('send_notification', {
+            user_id: mentionedUserId,
+            type: 'mention',           // matches the panel's type handler
+            title: 'New Mention',
+            message: `@${actor.username} mentioned you in a comment`,
+            related_post_id: postId,
+            related_user_id: actorId,
+            icon: 'AtSign',
+            category: 'social',
+            priority: 'normal',
+            action_url: `HOMEPAGE_FINAL.HTML?post=${postId}&section=comments`,
+            metadata: {
+                actor_name: actor.full_name || actor.username,
+                actor_username: actor.username,
+                actor_avatar: actor.avatar_url,
+                comment_text: mentionSnippet,      // the comment containing the mention
+                post_preview: postPreview,          // the post the comment is on
+                product_name: postContext,          // product/item name for context
+                category: post?.category
+            }
+        });
+    } catch (e) {
+        console.error('notifyMentioned failed', e);
+    }
+};
+
+
+/**
+ * Internal: Parse @mentions from text and fire notifications
+ */
+window._fireMentionNotifications = async function (actorId, postId, text) {
+    try {
+        const mentionRegex = /@([a-zA-Z0-9_\.]+)/g;
+        const mentions = [];
+        let match;
+        while ((match = mentionRegex.exec(text)) !== null) {
+            mentions.push(match[1].toLowerCase());
+        }
+        if (mentions.length === 0) return;
+
+        // Deduplicate
+        const uniqueMentions = [...new Set(mentions)];
+
+        // Look up each username
+        const { data: users } = await window.supabase
+            .from('profiles')
+            .select('id, username')
+            .in('username', uniqueMentions);
+
+        if (!users) return;
+
+        for (const u of users) {
+            window.notifyMentioned(u.id, actorId, postId, text).catch(() => { });
+        }
+    } catch (e) {
+        console.error('_fireMentionNotifications failed', e);
+    }
 };
 
 /**
  * Delete a comment
  */
 window.deleteComment = async function (commentId) {
-    const { data: comment } = await window.supabase
+    const { data: comment, error } = await window.supabase
         .from('comments')
         .update({
             is_deleted: true,
