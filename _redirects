@@ -21,7 +21,7 @@
 /support /SUPPORT.HTML 200
 /privacy-policy /PRIVACY_POLICY.HTML 200
 /t&c /TERMS_AND_CONDITIONS.HTML 200
-/post/:id /api/post-preview?id=:id 200
+/post/* /HOMEPAGE_FINAL.HTML 200
 
 # Maintenance page
 /maintenance /MAINTENANCE.HTML 200
