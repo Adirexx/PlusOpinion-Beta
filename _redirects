@@ -1,9 +1,24 @@
-# (Original rules below are effectively shadowed when maintenance mode is active)
-# Icon assets
+# ============================
+# PlusOpinion - Cloudflare Pages Redirects
+# v2.8.0 - Deep Links First Order
+# ============================
+
+# --- Static Assets (serve directly, never redirect) ---
 /icon-192.png /icon-192.png 200
 /icon-512.png /icon-512.png 200
+/manifest.json /manifest.json 200
+/robots.txt /robots.txt 200
+/sitemap.xml /sitemap.xml 200
 
-# Main application pages
+# --- DEEP LINK ROUTES (must come first!) ---
+# Shared profiles: plusopinion.com/profile/username
+/profile /PUBLIC%20POV%20PROFILE.HTML 200
+/profile/* /PUBLIC%20POV%20PROFILE.HTML 200
+
+# Shared posts: plusopinion.com/post/id
+/post/* /HOMEPAGE_FINAL.HTML 200
+
+# --- MAIN APP PAGES ---
 /feed /HOMEPAGE_FINAL.HTML 200
 /bookmarks /BOOKMARKS.HTML 200
 /categories /CATAGORYPAGE.HTML 200
@@ -11,20 +26,16 @@
 /workspace /MY%20SPACE%20FINAL(COMPANIES).HTML 200
 /notifications /NOTIFICATION%20PANEL.HTML 200
 /myprofile /PRIVATE%20OWNER%20PROFILE.HTML 200
-/profile /PUBLIC%20POV%20PROFILE.HTML 200
-/profile/* /PUBLIC%20POV%20PROFILE.HTML 200
 
-# Authentication pages
+# --- AUTH PAGES ---
 
-# Static/Legal pages
+
+# --- STATIC / LEGAL PAGES ---
 /about /ABOUT.HTML 200
 /support /SUPPORT.HTML 200
 /privacy-policy /PRIVACY_POLICY.HTML 200
 /t&c /TERMS_AND_CONDITIONS.HTML 200
-/post/* /HOMEPAGE_FINAL.HTML 200
-
-# Maintenance page
 /maintenance /MAINTENANCE.HTML 200
 
-# Default root
+# --- ROOT ---
 / /index.html 200
