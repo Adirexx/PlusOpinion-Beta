@@ -12,6 +12,7 @@
 /notifications /NOTIFICATION%20PANEL.HTML 200
 /myprofile /PRIVATE%20OWNER%20PROFILE.HTML 200
 /profile /PUBLIC%20POV%20PROFILE.HTML 200
+/profile/* /PUBLIC%20POV%20PROFILE.HTML 200
 
 # Authentication pages
 
@@ -20,6 +21,7 @@
 /support /SUPPORT.HTML 200
 /privacy-policy /PRIVACY_POLICY.HTML 200
 /t&c /TERMS_AND_CONDITIONS.HTML 200
+/post/:id /api/post-preview?id=:id 200
 
 # Maintenance page
 /maintenance /MAINTENANCE.HTML 200
