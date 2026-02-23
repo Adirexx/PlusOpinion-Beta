@@ -114,13 +114,16 @@
             }
 
             const { data: { session } } = await window.supabase.auth.getSession();
+            // Redirect removed to allow Guest Lock UI
+            /*
             if (!session) {
                 window.location.replace('index.html');
                 return;
             }
+            */
 
             // CRITICAL: Check if profile is completed
-            await checkProfileCompletion(session);
+            if (session) await checkProfileCompletion(session);
         }
 
         // Global flag for onboarding requirement
@@ -582,12 +585,9 @@
     </style>
 
     <script>
-        import { supabase } from "./supabase.js";
-
         supabase.auth.onAuthStateChange((event, session) => {
-            if (!session) {
-                window.location.href = "index.html";
-            }
+            // Automatic redirect removed to allow Guest Lock UI
+            // if (!session) { window.location.href = "index.html"; }
         });
     </script>
 
@@ -931,72 +931,181 @@
 
 
 
-        const CommentItem = ({ comment }) => {
-            const [isLiked, setIsLiked] = useState(false);
-            const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+        // --- Clickable @mention renderer ---
+        const renderTextWithMentions = (text) => {
+            if (!text) return text;
+            const parts = text.split(/(@[\w.]+)/g);
+            return parts.map((part, i) => {
+                if (/@[\w.]+/.test(part)) {
+                    const username = part.slice(1);
+                    return (
+                        <span
+                            key={i}
+                            className="text-neon font-semibold cursor-pointer hover:underline"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                vibrate(5);
+                                window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+                            }}
+                        >
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            });
+        };
+
+        // --- Mention Autocomplete ---
+        const MentionAutocomplete = ({ query, onSelect, direction = 'up', coords }) => {
+            const [users, setUsers] = useState([]);
+            const [loading, setLoading] = useState(false);
 
             useEffect(() => {
-                const checkLike = async () => {
-                    if (window.hasLikedComment) {
-                        try {
-                            const liked = await window.hasLikedComment(comment.id);
-                            setIsLiked(liked);
-                        } catch (e) { }
+                if (!query || query.length < 1) { setUsers([]); return; }
+                setLoading(true);
+                const timer = setTimeout(async () => {
+                    try {
+                        const results = await window.searchUsersForMention(query);
+                        setUsers(results);
+                    } catch (e) {
+                        setUsers([]);
+                    } finally {
+                        setLoading(false);
                     }
-                };
-                checkLike();
-            }, [comment.id]);
+                }, 250);
+                return () => clearTimeout(timer);
+            }, [query]);
 
-            const handleLike = async () => {
-                vibrate(5);
-                const newStatus = !isLiked;
-                setIsLiked(newStatus);
-                setLikesCount(prev => newStatus ? prev + 1 : prev - 1);
+            if (!query || (users.length === 0 && !loading)) return null;
 
-                try {
-                    if (newStatus) {
-                        await window.likeComment(comment.id);
-                    } else {
-                        await window.unlikeComment(comment.id);
-                    }
-                } catch (e) {
-                    console.error('Comment like failed', e);
-                    setIsLiked(!newStatus);
-                    setLikesCount(prev => !newStatus ? prev + 1 : prev - 1);
-                }
-            };
+            const positionClass = direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2';
+            const style = coords ? {
+                position: 'absolute',
+                top: `${coords.top + 25}px`,
+                left: `${coords.left}px`,
+                width: '220px',
+                zIndex: 100
+            } : {};
 
             return (
-                <div className={`flex gap-3 text-sm animate-fade-in ${comment.isPending ? 'opacity-50' : ''} group`}>
-                    <div className="flex-shrink-0">
-                        <div className="flex-shrink-0">
-                            <Avatar
-                                src={comment.avatar}
-                                className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
-                                fallbackSize={12}
-                                onClick={() => { vibrate(); window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
-                            />
-                        </div>
+                <div
+                    style={style}
+                    className={`${coords ? '' : 'absolute ' + positionClass + ' left-0 right-0'} bg-[#1A1C2E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in`}
+                >
+                    {loading && <div className="px-3 py-2 text-xs text-muted">Searching...</div>}
+                    {users.map(u => (
+                        <button
+                            key={u.id}
+                            onMouseDown={(e) => { e.preventDefault(); onSelect(u); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+                        >
+                            <Avatar src={u.avatar_url} className="w-7 h-7 rounded-full border border-white/10 object-cover flex-shrink-0" fallbackSize={13} />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-white text-xs font-semibold truncate">{u.full_name}</div>
+                                <div className="text-muted text-[10px] truncate">@{u.username}</div>
+                            </div>
+                            <span className="text-[9px] text-neon/60 font-bold shrink-0">RQS {u.rqs_score}</span>
+                        </button>
+                    ))}
+                </div>
+            );
+        };
+
+        // --- Reply item ---
+        const ReplyItem = ({ reply, onReply }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [likesCount, setLikesCount] = useState(reply.likes?.[0]?.count || 0);
+            useEffect(() => {
+                if (window.hasLikedComment) window.hasLikedComment(reply.id).then(setIsLiked).catch(() => { });
+            }, [reply.id]);
+            const handleLike = async () => {
+                vibrate(5);
+                const next = !isLiked;
+                setIsLiked(next);
+                setLikesCount(p => next ? p + 1 : p - 1);
+                try {
+                    next ? await window.likeComment(reply.id) : await window.unlikeComment(reply.id);
+                } catch (e) { setIsLiked(!next); setLikesCount(p => !next ? p + 1 : p - 1); }
+            };
+            return (
+                <div className={`flex gap-2 text-sm mt-2 ${reply.isPending ? 'opacity-50' : ''}`}>
+                    <div className="ml-5 flex-shrink-0">
+                        <Avatar src={reply.avatar} className="w-5 h-5 rounded-full border border-white/10 object-cover cursor-pointer" fallbackSize={10}
+                            onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }} />
                     </div>
                     <div className="flex-1">
                         <div className="flex items-baseline justify-between">
                             <div className="flex items-baseline gap-2">
-                                <span
-                                    className="font-bold text-white text-xs cursor-pointer hover:text-neon transition-colors"
-                                    onClick={() => { vibrate(); window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
-                                >
+                                <span className="font-bold text-white text-[11px] cursor-pointer hover:text-neon transition-colors"
+                                    onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }}>
+                                    {reply.user}
+                                </span>
+                                <span className="text-[9px] text-muted">{reply.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => onReply && onReply(reply)} className="text-[9px] text-muted hover:text-white transition-colors">Reply</button>
+                                <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                    <Icon icon="ThumbsUp" size={10} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
+                                    {likesCount > 0 && <span className="text-[9px]">{likesCount}</span>}
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-gray-300 text-[11px] leading-relaxed mt-0.5">{renderTextWithMentions(reply.text)}</p>
+                    </div>
+                </div>
+            );
+        };
+
+
+        const CommentItem = ({ comment, onReply }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+
+            useEffect(() => {
+                if (window.hasLikedComment) window.hasLikedComment(comment.id).then(setIsLiked).catch(() => { });
+            }, [comment.id]);
+
+            const handleLike = async () => {
+                vibrate(5);
+                const next = !isLiked;
+                setIsLiked(next);
+                setLikesCount(p => next ? p + 1 : p - 1);
+                try {
+                    next ? await window.likeComment(comment.id) : await window.unlikeComment(comment.id);
+                } catch (e) { setIsLiked(!next); setLikesCount(p => !next ? p + 1 : p - 1); }
+            };
+
+            return (
+                <div className={`flex gap-3 text-sm animate-fade-in ${comment.isPending ? 'opacity-50' : ''}`}>
+                    <div className="flex-shrink-0">
+                        <Avatar src={comment.avatar} className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer" fallbackSize={12}
+                            onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }} />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span className="font-bold text-white text-xs cursor-pointer hover:text-neon transition-colors"
+                                    onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}>
                                     {comment.user}
                                 </span>
                                 <span className="text-[10px] text-muted">{comment.time}</span>
                             </div>
-                            <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
-                                <Icon icon="ThumbsUp" size={12} className={`stroke-[1.5px] ${isLiked ? "fill-white" : ""}`} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
-                                {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => onReply && onReply(comment)} className="text-[10px] text-muted hover:text-white transition-colors">Reply</button>
+                                <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                    <Icon icon="ThumbsUp" size={12} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
+                                    {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
+                                </button>
+                            </div>
                         </div>
-                        <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{comment.text}</p>
+                        <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{renderTextWithMentions(comment.text)}</p>
+                        {/* Nested replies */}
+                        {(comment.replies || []).map(r => (
+                            <ReplyItem key={r.id} reply={r} onReply={onReply} />
+                        ))}
                     </div>
-                </div >
+                </div>
             );
         };
 
@@ -1013,10 +1122,15 @@
             const isSaved = savedPosts?.has(String(post.id));
             const [isLoadingComments, setIsLoadingComments] = useState(false);
             const [localCommentCount, setLocalCommentCount] = useState(post.comments);
+            const [replyingTo, setReplyingTo] = useState(null);
+            const [mentionQuery, setMentionQuery] = useState(null);
+            const commentInputRef = useRef(null);
+            const commentsFetchedRef = useRef(false);
 
             // Portal menu positioning
             const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
             const moreButtonRef = useRef(null);
+
 
             useEffect(() => {
                 if (showMoreMenu && moreButtonRef.current) {
@@ -1092,30 +1206,29 @@
                 }
             };
 
+            const transformComment = (c) => ({
+                id: c.id,
+                user_id: c.user_id,
+                user: c.profiles?.full_name || 'User',
+                username: c.profiles?.username || '',
+                avatar: c.profiles?.avatar_url || '',
+                text: c.text_content,
+                time: formatTime(c.created_at),
+                parent_comment_id: c.parent_comment_id || null,
+                likes: c.likes,
+                replies: (c.replies || []).map(r => transformComment(r))
+            });
+
             const toggleComments = async () => {
                 vibrate(5);
                 const shouldShow = !showComments;
                 setShowComments(shouldShow);
-
-                if (shouldShow && localComments.length === 0 && post.comments > 0) {
+                if (shouldShow && !commentsFetchedRef.current) {
                     setIsLoadingComments(true);
                     try {
                         const fetchedComments = await window.getComments(post.id);
-
-                        // Transform comments to UI format
-                        const transformedComments = fetchedComments.map(c => ({
-                            id: c.id,
-                            user_id: c.user_id,
-                            user: c.profiles?.full_name || 'User',
-                            avatar: c.profiles?.avatar_url || '',
-                            text: c.text_content,
-                            time: formatTime(c.created_at)
-                        }));
-                        setLocalComments(transformedComments);
-                        // Update comment count locally if it differs
-                        if (transformedComments.length > post.comments) {
-                            // Sync parent state if needed, but for now rely on local length for display if open
-                        }
+                        setLocalComments(fetchedComments.map(transformComment));
+                        commentsFetchedRef.current = true;
                     } catch (error) {
                         console.error('Failed to load comments', error);
                     } finally {
@@ -1124,40 +1237,39 @@
                 }
             };
 
-            // Realtime Comments Logic
+            // Realtime: subscribe once on mount
             useEffect(() => {
-                if (!showComments) return;
-
                 const channel = window.supabase.channel(`comments:${post.id}`)
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, async (payload) => {
                         const currentUser = await window.getCurrentUser();
-                        if (payload.new.user_id === currentUser?.id) return; // Ignore own (handled optimistically)
-
-                        // Fetch profile for new comment
+                        if (payload.new.user_id === currentUser?.id) return;
                         const { data: profile } = await window.supabase
-                            .from('profiles')
-                            .select('full_name, avatar_url')
-                            .eq('id', payload.new.user_id)
-                            .single();
-
-                        const newComment = {
-                            id: payload.new.id,
-                            user_id: payload.new.user_id,
-                            user: profile?.full_name || 'User',
-                            avatar: profile?.avatar_url || '',
-                            text: payload.new.text_content,
-                            time: 'Just now'
+                            .from('profiles').select('full_name, username, avatar_url')
+                            .eq('id', payload.new.user_id).maybeSingle();
+                        const newEntry = {
+                            id: payload.new.id, user_id: payload.new.user_id,
+                            user: profile?.full_name || 'User', username: profile?.username || '',
+                            avatar: profile?.avatar_url || '', text: payload.new.text_content,
+                            time: 'Just now',
+                            parent_comment_id: payload.new.parent_comment_id || null,
+                            likes: [], replies: []
                         };
-
-                        setLocalComments(prev => [...prev, newComment]);
+                        const parentId = payload.new.parent_comment_id;
+                        if (!parentId) {
+                            setLocalComments(prev => prev.some(c => c.id === newEntry.id) ? prev : [...prev, newEntry]);
+                        } else {
+                            setLocalComments(prev => {
+                                if (!prev.some(c => c.id === parentId)) return prev;
+                                return prev.map(c => c.id === parentId
+                                    ? { ...c, replies: [...(c.replies || []).filter(r => r.id !== newEntry.id), newEntry] }
+                                    : c);
+                            });
+                        }
                         vibrate(5);
                     })
                     .subscribe();
-
-                return () => {
-                    window.supabase.removeChannel(channel);
-                };
-            }, [showComments, post.id]);
+                return () => window.supabase.removeChannel(channel);
+            }, [post.id]);
 
             const toggleShareMenu = () => {
                 vibrate(5);
@@ -1172,37 +1284,97 @@
 
             const handleSendComment = async () => {
                 if (!commentText.trim()) return;
-
+                const isReply = !!replyingTo;
                 const tempId = Date.now();
-                const tempComment = {
-                    id: tempId,
-                    user: 'You',
-                    avatar: userProfile?.avatar_url || '',
-                    text: commentText,
-                    time: 'Just now',
-                    isPending: true
+                const tempEntry = {
+                    id: tempId, user: userProfile?.full_name || 'You',
+                    username: userProfile?.username || '', user_id: userProfile?.id,
+                    avatar: userProfile?.avatar_url || '', text: commentText,
+                    time: 'Just now', isPending: true, likes: [], replies: []
                 };
-
-                setLocalComments(prev => [...prev, tempComment]);
+                if (isReply) {
+                    setLocalComments(prev => prev.map(c =>
+                        c.id === replyingTo.id ? { ...c, replies: [...(c.replies || []), tempEntry] } : c
+                    ));
+                } else {
+                    setLocalComments(prev => [...prev, tempEntry]);
+                }
+                const textToSend = commentText;
                 setCommentText('');
+                setReplyingTo(null);
+                setMentionQuery(null);
                 vibrate(10);
-
                 try {
-                    const newComment = await window.createComment(post.id, commentText);
-                    // Update the pending comment with real data
-                    setLocalComments(prev => prev.map(c => c.id === tempId ? {
-                        id: newComment.id,
-                        user: 'You',
-                        avatar: userProfile?.avatar_url || '',
-                        text: newComment.text_content,
-                        time: 'Just now'
-                    } : c));
-
-                    onAddComment(post.id, commentText); // Global update if needed
+                    let newData;
+                    if (isReply) {
+                        newData = await window.createReply(post.id, replyingTo.id, textToSend);
+                        setLocalComments(prev => prev.map(c => c.id === replyingTo.id
+                            ? {
+                                ...c, replies: (c.replies || []).map(r => r.id === tempId ? {
+                                    id: newData.id, user: userProfile?.full_name || 'You',
+                                    username: userProfile?.username || '', user_id: userProfile?.id,
+                                    avatar: userProfile?.avatar_url || '', text: newData.text_content,
+                                    time: 'Just now', likes: [], replies: []
+                                } : r)
+                            }
+                            : c
+                        ));
+                    } else {
+                        newData = await window.createComment(post.id, textToSend);
+                        setLocalComments(prev => prev.map(c => c.id === tempId ? {
+                            id: newData.id, user: userProfile?.full_name || 'You',
+                            username: userProfile?.username || '', avatar: userProfile?.avatar_url || '',
+                            text: newData.text_content, time: 'Just now', likes: newData.likes || [], replies: []
+                        } : c));
+                    }
+                    if (onAddComment) onAddComment(post.id, textToSend);
                 } catch (error) {
                     console.error('Comment failed', error);
-                    setLocalComments(prev => prev.filter(c => c.id !== tempId));
+                    if (isReply) {
+                        setLocalComments(prev => prev.map(c =>
+                            c.id === replyingTo?.id ? { ...c, replies: (c.replies || []).filter(r => r.id !== tempId) } : c
+                        ));
+                    } else {
+                        setLocalComments(prev => prev.filter(c => c.id !== tempId));
+                    }
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to post comment', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            const handleReply = (commentOrReply, topLevelId = null) => {
+                const parentId = topLevelId || commentOrReply.parent_comment_id || commentOrReply.id;
+                setReplyingTo({ id: parentId, user: commentOrReply.user, username: commentOrReply.username || '' });
+                setCommentText(`@${commentOrReply.username || commentOrReply.user} `);
+                setShowComments(true);
+                setTimeout(() => commentInputRef.current?.focus(), 50);
+            };
+
+            const handleCommentChange = (e) => {
+                const val = e.target.value;
+                setCommentText(val);
+                const cursor = e.target.selectionStart;
+                const atMatch = val.substring(0, cursor).match(/@([\w.]*)$/);
+                setMentionQuery(atMatch ? atMatch[1] : null);
+            };
+
+            const handleMentionSelect = (user) => {
+                const cursor = commentInputRef.current?.selectionStart || commentText.length;
+                const textBeforeCursor = commentText.substring(0, cursor);
+                const textAfterCursor = commentText.substring(cursor);
+                const atIndex = textBeforeCursor.lastIndexOf('@');
+
+                if (atIndex !== -1) {
+                    const newTextBefore = textBeforeCursor.substring(0, atIndex) + '@' + user.username + ' ';
+                    setCommentText(newTextBefore + textAfterCursor);
+                    setMentionQuery(null);
+                    // Reset cursor position after React update
+                    setTimeout(() => {
+                        if (commentInputRef.current) {
+                            const newPos = newTextBefore.length;
+                            commentInputRef.current.focus();
+                            commentInputRef.current.setSelectionRange(newPos, newPos);
+                        }
+                    }, 0);
                 }
             };
 
@@ -1421,7 +1593,7 @@
                         )}
                     </div>
 
-                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{post.text}</p>
+                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{renderTextWithMentions(post.text)}</p>
 
                     {post.media && (
                         <ZoomableMedia
@@ -1493,7 +1665,7 @@
                                 {isLoadingComments && <div className="text-center text-muted text-xs py-2">Loading comments...</div>}
 
                                 {localComments.map(c => (
-                                    <CommentItem key={c.id} comment={c} />
+                                    <CommentItem key={c.id} comment={c} onReply={(target, topLevelId = null) => handleReply(target, topLevelId || c.id)} />
                                 ))}
 
                                 {!isLoadingComments && localComments.length === 0 && (
@@ -1501,15 +1673,25 @@
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors">
-                                <input
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    placeholder="Add a comment..."
-                                    className="bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
-                                />
-                                <button onClick={handleSendComment} className={`${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors`}><Icon icon="Send" size={14} /></button>
+                            <div className="relative">
+                                <MentionAutocomplete query={mentionQuery} onSelect={handleMentionSelect} />
+                                {replyingTo && (
+                                    <div className="flex items-center justify-between px-3 py-1.5 bg-neon/5 border border-neon/20 rounded-t-xl mb-0.5 text-[10px]">
+                                        <span className="text-neon">Replying to <strong>@{replyingTo.username || replyingTo.user}</strong></span>
+                                        <button onClick={() => { setReplyingTo(null); setCommentText(''); }} className="text-muted hover:text-white">✕</button>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors">
+                                    <input
+                                        ref={commentInputRef}
+                                        value={commentText}
+                                        onChange={handleCommentChange}
+                                        placeholder={replyingTo ? `Reply to @${replyingTo.username || replyingTo.user}...` : 'Add a comment or type @ to mention...'}
+                                        className="bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
+                                    />
+                                    <button onClick={handleSendComment} className={`${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors`}><Icon icon="Send" size={14} /></button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -2150,8 +2332,42 @@
             const fileInputRef = useRef(null);
             const verificationInputRef = useRef(null); // Ref for verification proof upload
             const [draftId, setDraftId] = useState(null); // ID if editing existing draft
+            const [mentionQuery, setMentionQuery] = useState(null);
 
             const PREDEFINED_CATEGORIES = ['Electronics', 'Automotive', 'Software', 'Fashion', 'Tech', 'Food', 'Gaming', 'Lifestyle', 'Other'];
+
+            const [mentionCoords, setMentionCoords] = useState({ top: 0, left: 0 });
+
+            // Helper to get caret coordinates inside a textarea
+            const getCaretCoordinates = (element, position) => {
+                const div = document.createElement('div');
+                const style = window.getComputedStyle(element);
+                const properties = [
+                    'direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY',
+                    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle',
+                    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+                    'fontStyle', 'fontVariant', 'fontWeight', 'stretch', 'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily',
+                    'textAlign', 'textTransform', 'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing', 'tabSize', 'MozTabSize'
+                ];
+                properties.forEach(prop => { div.style[prop] = style[prop]; });
+                div.style.position = 'absolute';
+                div.style.visibility = 'hidden';
+                div.style.whiteSpace = 'pre-wrap';
+                div.style.wordWrap = 'break-word';
+                div.style.top = '0';
+                div.style.left = '-9999px';
+                div.textContent = element.value.substring(0, position);
+                const span = document.createElement('span');
+                span.textContent = element.value.substring(position) || '.';
+                div.appendChild(span);
+                document.body.appendChild(div);
+                const coordinates = {
+                    top: span.offsetTop + parseInt(style.borderTopWidth),
+                    left: span.offsetLeft + parseInt(style.borderLeftWidth)
+                };
+                document.body.removeChild(div);
+                return coordinates;
+            };
 
             useEffect(() => {
                 if (isOpen) {
@@ -2210,7 +2426,43 @@
             const canPublish = text.length >= MIN_CHARS && text.length <= MAX_CHARS;
 
             const handleTextChange = (e) => {
-                if (e.target.value.length <= MAX_CHARS) setText(e.target.value);
+                const val = e.target.value;
+                if (val.length <= MAX_CHARS) setText(val);
+
+                // Mention logic
+                const cursor = e.target.selectionStart;
+                const atMatch = val.substring(0, cursor).match(/@([\w.]*)$/);
+
+                if (atMatch) {
+                    setMentionQuery(atMatch[1]);
+                    // Calculate coordinates for caret following
+                    const coords = getCaretCoordinates(e.target, cursor);
+                    setMentionCoords(coords);
+                } else {
+                    setMentionQuery(null);
+                }
+            };
+
+            const handleMentionSelect = (user) => {
+                const textarea = document.querySelector('textarea[placeholder*="mention"]');
+                const cursor = textarea?.selectionStart || text.length;
+                const textBeforeCursor = text.substring(0, cursor);
+                const textAfterCursor = text.substring(cursor);
+                const atIndex = textBeforeCursor.lastIndexOf('@');
+
+                if (atIndex !== -1) {
+                    const newTextBefore = textBeforeCursor.substring(0, atIndex) + '@' + user.username + ' ';
+                    setText(newTextBefore + textAfterCursor);
+                    setMentionQuery(null);
+                    // Reset cursor position after React update
+                    setTimeout(() => {
+                        if (textarea) {
+                            const newPos = newTextBefore.length;
+                            textarea.focus();
+                            textarea.setSelectionRange(newPos, newPos);
+                        }
+                    }, 0);
+                }
             };
 
             const handleTagToggle = () => {
@@ -2371,16 +2623,17 @@
 
             return (
                 <div className={`absolute inset-0 z-40 flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-                    <div className={`w-full max-w-sm bg-[#0A0F1D] border border-[#2f8bff]/20 rounded-[24px] shadow-2xl overflow-hidden flex flex-col relative transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-8 opacity-0'}`} style={{ height: '580px' }}>
+                    <div className={`w-full max-w-sm bg-[#0A0F1D] border border-[#2f8bff]/20 rounded-[24px] shadow-2xl overflow-visible flex flex-col relative transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-8 opacity-0'}`} style={{ height: '580px' }}>
                         <div className="px-6 pt-6 pb-2 flex justify-between items-center">
                             <h2 className="text-xl font-heading font-bold text-white tracking-wide">{initialPost ? 'Edit Opinion' : 'Draft Opinion'}</h2>
                             <button onClick={handleSaveDraft} className="text-[10px] font-bold text-slate-400 bg-white/5 px-3 py-1 rounded tracking-widest border border-white/10 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-1"><Icon icon="Save" size={10} /> SAVE DRAFT</button>
                         </div>
-                        <div className="flex-1 flex flex-col relative overflow-hidden">
+                        <div className="flex-1 flex flex-col relative overflow-visible">
                             {stage === 'WRITE' && (
                                 <>
                                     <div className="flex-1 px-6 py-2 relative">
-                                        <textarea value={text} onChange={handleTextChange} placeholder="Share, what's your opinion" className="w-full h-full bg-transparent text-lg text-white placeholder-slate-600 outline-none resize-none font-light leading-relaxed custom-scrollbar pb-6" autoFocus={false} />
+                                        <MentionAutocomplete query={mentionQuery} onSelect={handleMentionSelect} direction="down" coords={mentionCoords} />
+                                        <textarea value={text} onChange={handleTextChange} placeholder="Share, what's your opinion or type @ to mention..." className="w-full h-full bg-transparent text-lg text-white placeholder-slate-600 outline-none resize-none font-light leading-relaxed custom-scrollbar pb-6" autoFocus={false} />
                                         <div className={`absolute bottom-2 right-6 text-[10px] font-medium transition-colors ${text.length < MIN_CHARS || text.length === MAX_CHARS ? 'text-neon' : 'text-slate-600'}`}>{text.length} / {MAX_CHARS}</div>
                                     </div>
                                     <div className="px-6 pb-2">
@@ -2940,6 +3193,7 @@
         };
 
         const App = () => {
+            const [isGuest, setIsGuest] = useState(false);
             const [loading, setLoading] = useState(true);
             const [refreshing, setRefreshing] = useState(false);
             const [activeTab, setActiveTab] = useState('home');
@@ -3217,6 +3471,14 @@
                 const initUser = async () => {
                     try {
                         const user = await window.getCurrentUser();
+                        if (!user) {
+                            setIsGuest(true);
+                            setShowOnboardingModal(true);
+                            setIsLoadingPosts(false);
+                            setLoading(false);
+                            return;
+                        }
+                        setIsGuest(false);
                         setCurrentUser(user);
                         if (user) {
                             // ⚡ PARALLEL LOADING - Fetch profile and bookmarks simultaneously
@@ -3779,8 +4041,15 @@
 
 
 
-                    {/* ONBOARDING MODAL POPUP */}
-                    {showOnboardingModal && (
+                    {/* Auth Modal for Guests */}
+                    <AuthModal
+                        isOpen={showOnboardingModal && isGuest}
+                        onClose={() => setShowOnboardingModal(false)}
+                        isClosable={!isGuest}
+                    />
+
+                    {/* ONBOARDING MODAL POPUP for logged in users */}
+                    {showOnboardingModal && !isGuest && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/80 backdrop-blur-lg"></div>
                             <div className="relative w-full max-w-2xl h-[90vh] bg-[#0F1627] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
@@ -3792,12 +4061,217 @@
             );
         };
 
+        // AUTH MODAL (Login/Signup) - Mirrored from HOMEPAGE_FINAL
+        const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+            const [mode, setMode] = useState('login'); // 'login' or 'signup'
+            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            if (!isOpen) return null;
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+                vibrate(10);
+
+                if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+                    setError("Passwords don't match");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await window.authReadyPromise;
+                    if (mode === 'signup') {
+                        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                        if (signupData.error) throw signupData.error;
+
+                        if (signupData?.session) {
+                            window.location.href = 'ONBOARDING.HTML';
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+                            }));
+                            onClose();
+                        }
+                    } else {
+                        const user = await window.signInUser(formData.email, formData.password);
+                        if (user) {
+                            if (user.onboardingRequired) {
+                                window.location.href = 'ONBOARDING.HTML';
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    setError(err.message || 'Authentication failed');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleGoogleLogin = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    await window.signInWithProvider('google');
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const handleForgotPassword = async () => {
+                if (!formData.email) {
+                    setError("Please enter your email first");
+                    return;
+                }
+                setLoading(true);
+                try {
+                    await window.resetPassword(formData.email);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+                    }));
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => isClosable && onClose()}></div>
+                    <div className="w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10" onClick={e => e.stopPropagation()}>
+                        {isClosable && (
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                                <Icon icon="X" size={24} />
+                            </button>
+                        )}
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
+                                {mode === 'login' ? 'Welcome Back' : 'Sign Up'}
+                            </h2>
+                            <p className="text-slate-400 text-sm">
+                                {mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name</label>
+                                    <input
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        type="text"
+                                        placeholder="John Doe"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address</label>
+                                <input
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password</label>
+                                <input
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password</label>
+                                    <input
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+                                >
+                                    Forgot Password?
+                                </button>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? 'PROCESSING...' : (mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT')}
+                                <Icon icon="ArrowRight" size={18} />
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase">OR</span>
+                                <div className="flex-grow border-t border-slate-700"></div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleLogin}
+                                className="w-full flex items-center justify-center gap-2 bg-[#1a1f2e] hover:bg-[#252a3b] text-white py-3 rounded-xl font-semibold text-sm transition-all border border-slate-700"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" /></svg>
+                                Continue with Google
+                            </button>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm text-slate-400">
+                            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button
+                                onClick={() => { vibrate(5); setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
+                                className="text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform"
+                            >
+                                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-    </style>
-    </div>
-    <!-- TEST_UPDATE_TOY_END -->
 </body>
 
 
