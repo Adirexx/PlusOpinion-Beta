@@ -254,9 +254,8 @@
         import { supabase } from "./supabase.js";
 
         supabase.auth.onAuthStateChange((event, session) => {
-            if (!session) {
-                window.location.href = "index.html";
-            }
+            // Automatic redirect removed to allow Guest Lock UI
+            // if (!session) { window.location.href = "index.html"; }
         });
     </script>
 
@@ -387,6 +386,26 @@
             const Component = Icons[icon];
             if (!Component) return null;
             return <Component width={size} height={size} className={className} />;
+        };
+
+        const renderTextWithMentions = (text) => {
+            if (!text) return text;
+            const parts = text.split(/(@[\w.]+)/g);
+            return parts.map((part, i) => {
+                if (/@[\w.]+/.test(part)) {
+                    const username = part.slice(1);
+                    return (
+                        <span key={i} className="text-neon font-semibold cursor-pointer hover:underline"
+                            onClick={(e) => {
+                                e.stopPropagation(); vibrate(5);
+                                window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+                            }}>
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            });
         };
 
         const vibrate = (pattern = 5) => {
@@ -564,24 +583,25 @@
                 if (isUserInteraction()) {
                     if (type === 'post_commented' || type === 'comment_replied' || type === 'comment' || type === 'reply') {
                         const isReply = type === 'comment_replied' || type === 'reply';
+                        const actorDisplay = metadata.actor_username ? `@${metadata.actor_username}` : actorName;
                         const title = actorName ? `${actorName} ${isReply ? 'replied' : 'commented'}` : (isReply ? 'New Reply' : 'New Comment');
 
-                        // Extract full comment text from metadata
-                        const fullComment = metadata.comment_preview || metadata.comment_text || commentPreview;
+                        // For replies: show the reply text + the original comment as context
+                        const replyText = metadata.reply_text || '';
+                        const fullComment = metadata.comment_preview || metadata.comment_text || commentPreview || replyText;
 
-                        // Build category/product context - use post category, not notification category
-                        const category = metadata.category;
+                        // Build category/product context
+                        const ctxCategory = metadata.category;
                         const product = productName;
                         let contextLine = '';
-                        if (category && product) {
-                            contextLine = `${category} / ${product}`;
+                        if (ctxCategory && product) {
+                            contextLine = `${ctxCategory} / ${product}`;
                         } else if (product) {
                             contextLine = product;
-                        } else if (category) {
-                            contextLine = category;
+                        } else if (ctxCategory) {
+                            contextLine = ctxCategory;
                         }
 
-                        // If no comment text or context, show the original message as fallback
                         const fallbackMessage = (!fullComment && !contextLine)
                             ? (data.message || (isReply ? 'replied to your comment' : 'commented on your post'))
                             : '';
@@ -589,9 +609,11 @@
                         return {
                             title,
                             message: fallbackMessage,
-                            commentText: fullComment,
+                            commentText: isReply && replyText ? replyText : fullComment,
+                            // For replies, show the original comment being replied to
+                            replyContext: (isReply && metadata.comment_preview && replyText) ? metadata.comment_preview : null,
                             postContext: contextLine,
-                            categoryBadge: category
+                            categoryBadge: ctxCategory
                         };
                     }
 
@@ -620,9 +642,19 @@
                     }
 
                     if (type === 'comment_liked' || type === 'like_comment') {
-                        const title = actorName ? `${actorName} liked` : 'New Like';
-                        const message = productName ? `Liked your comment on '${productName}'` : 'Liked your comment';
-                        return { title, message };
+                        const title = actorName ? `${actorName} agreed with you` : 'New Agreement';
+                        // Show the actual comment text that was agreed with as main context
+                        const likedComment = metadata.comment_preview || commentPreview || '';
+                        const ctx = productName ? `on '${productName}'` : '';
+                        const message = !likedComment
+                            ? (ctx ? `Agreed with your comment ${ctx}` : (data.message || 'Agreed with your comment'))
+                            : '';
+                        return {
+                            title,
+                            message,
+                            commentText: likedComment || undefined,
+                            postContext: productName || undefined
+                        };
                     }
 
                     if (type === 'post_bookmarked' || type === 'saved') {
@@ -631,12 +663,23 @@
                         return { title, message };
                     }
 
-                    if (type === 'mention' || data.title?.includes('mention')) {
+                    if (type === 'mention' || type === 'mentioned' || data.title?.includes('mention')) {
+                        const actorDisplay = metadata.actor_username ? `@${metadata.actor_username}` : actorName;
                         const title = actorName ? `${actorName} mentioned you` : 'New Mention';
-                        const message = productName
-                            ? `Mentioned you in '${productName}' discussion.`
-                            : postPreview ? `Mentioned you: "${postPreview}"` : 'Mentioned you in a discussion.';
-                        return { title, message };
+                        // Show the actual comment text containing the mention
+                        const mentionComment = metadata.comment_text || metadata.comment_preview || '';
+                        const postCtx = productName || '';
+                        const message = !mentionComment
+                            ? (postCtx
+                                ? `Mentioned you in a comment on '${postCtx}'`
+                                : (data.message || 'Mentioned you in a comment'))
+                            : '';
+                        return {
+                            title,
+                            message,
+                            commentText: mentionComment || undefined,
+                            postContext: postCtx || undefined
+                        };
                     }
                 }
 
@@ -675,7 +718,7 @@
                 return { title: data.title || 'Notification', message: data.message || data.desc || '' };
             };
 
-            const { title, message, tag: contentTag, commentText, postContext, categoryBadge } = getNotificationContent();
+            const { title, message, tag: contentTag, commentText, replyContext, postContext, categoryBadge } = getNotificationContent();
             const displayTag = contentTag || data.tag;
 
             // Render icon/avatar based on notification type
@@ -845,7 +888,16 @@
                                     {commentText && (
                                         <div className="mt-1">
                                             <p className="text-[13px] text-slate-300 leading-snug break-words">
-                                                "{commentText}"
+                                                "{renderTextWithMentions(commentText)}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Reply Context - shows the original comment being replied to */}
+                                    {replyContext && (
+                                        <div className="mt-1.5 pl-2 border-l-2 border-white/15 flex items-start gap-1">
+                                            <p className="text-[11px] text-slate-500 italic line-clamp-2">
+                                                In reply to: "{renderTextWithMentions(replyContext)}"
                                             </p>
                                         </div>
                                     )}
@@ -854,7 +906,7 @@
                                     {data.metadata?.post_preview && (
                                         <div className="mt-1.5 pl-2 border-l-2 border-white/10">
                                             <p className="text-[12px] text-slate-500 italic line-clamp-2">
-                                                {data.metadata.post_preview}
+                                                {renderTextWithMentions(data.metadata.post_preview)}
                                             </p>
                                         </div>
                                     )}
@@ -1044,6 +1096,8 @@
 
         // --- MAIN APP ---
         const App = () => {
+            const [isGuest, setIsGuest] = useState(false);
+            const [showAuthModal, setShowAuthModal] = useState(false);
             const [filter, setFilter] = useState('All');
             const [notifications, setNotifications] = useState([]);
             const [hasUnread, setHasUnread] = useState(false);
@@ -1078,6 +1132,13 @@
             useEffect(() => {
                 async function loadUser() {
                     const user = await window.getCurrentUser();
+                    if (!user) {
+                        setIsGuest(true);
+                        setShowAuthModal(true);
+                        setLoading(false);
+                        return;
+                    }
+                    setIsGuest(false);
                     setCurrentUser(user);
                 }
                 loadUser();
@@ -1528,8 +1589,223 @@
                         onToggle={toggleSetting}
                     />
 
+                    {/* Auth Modal for Guests */}
+                    <AuthModal
+                        isOpen={showAuthModal}
+                        onClose={() => setShowAuthModal(false)}
+                        isClosable={!isGuest}
+                    />
+
                     {/* Bottom Nav */}
                     <BottomNav activeTab={activeTab} explicitCount={unreadCount} isVisible={navVisible} />
+                </div>
+            );
+        };
+
+        // AUTH MODAL (Login/Signup) - Mirrored from HOMEPAGE_FINAL
+        const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+            const [mode, setMode] = useState('login'); // 'login' or 'signup'
+            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            if (!isOpen) return null;
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+                vibrate(10);
+
+                if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+                    setError("Passwords don't match");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await window.authReadyPromise;
+                    if (mode === 'signup') {
+                        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                        if (signupData.error) throw signupData.error;
+
+                        if (signupData?.session) {
+                            window.location.href = 'ONBOARDING.HTML';
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+                            }));
+                            onClose();
+                        }
+                    } else {
+                        const user = await window.signInUser(formData.email, formData.password);
+                        if (user) {
+                            if (user.onboardingRequired) {
+                                window.location.href = 'ONBOARDING.HTML';
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    setError(err.message || 'Authentication failed');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleGoogleLogin = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    await window.signInWithProvider('google');
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const handleForgotPassword = async () => {
+                if (!formData.email) {
+                    setError("Please enter your email first");
+                    return;
+                }
+                setLoading(true);
+                try {
+                    await window.resetPassword(formData.email);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+                    }));
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => isClosable && onClose()}></div>
+                    <div className="w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10" onClick={e => e.stopPropagation()}>
+                        {isClosable && (
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                                <Icon icon="X" size={24} />
+                            </button>
+                        )}
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
+                                {mode === 'login' ? 'Welcome Back' : 'Sign Up'}
+                            </h2>
+                            <p className="text-slate-400 text-sm">
+                                {mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name</label>
+                                    <input
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        type="text"
+                                        placeholder="John Doe"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address</label>
+                                <input
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password</label>
+                                <input
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password</label>
+                                    <input
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+                                >
+                                    Forgot Password?
+                                </button>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? 'PROCESSING...' : (mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT')}
+                                <Icon icon="ArrowRight" size={18} />
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase">OR</span>
+                                <div className="flex-grow border-t border-slate-700"></div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleLogin}
+                                className="w-full flex items-center justify-center gap-2 bg-[#1a1f2e] hover:bg-[#252a3b] text-white py-3 rounded-xl font-semibold text-sm transition-all border border-slate-700"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" /></svg>
+                                Continue with Google
+                            </button>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm text-slate-400">
+                            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button
+                                onClick={() => { vibrate(5); setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
+                                className="text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform"
+                            >
+                                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             );
         };
@@ -1537,9 +1813,6 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-    </style>
-    </div>
-    <!-- TEST_UPDATE_TOY_END -->
 </body>
 
 
