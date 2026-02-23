@@ -3,7 +3,7 @@
 // Updated at: FEB23_MAJOR_UPDATE_V2.8
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260223_MAJOR_V2.8';
+  : 'BUILD_20260223_MAJOR_V2.9';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
