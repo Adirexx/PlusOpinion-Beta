@@ -4726,23 +4726,50 @@
                                             </div>
                                         ) : (
                                             /* Normal Feed Rendering (for logged in users or casual guests) */
-                                            visiblePosts.map((post, index) => (
-                                                <div key={post.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                                                    <PostCard
-                                                        post={post}
-                                                        onRemove={handleRemovePost}
-                                                        onEdit={(post) => { setEditingPost(post); setIsEditModalOpen(true); }}
-                                                        onBookmark={toggleSave}
-                                                        onShare={handleShare}
-                                                        userProfile={userProfile}
-                                                        savedPosts={savedPosts}
-                                                        comments={postComments[post.id] || []}
-                                                        isGuest={isGuest}
-                                                        onAuthRequired={() => setShowOnboardingModal(true)}
-                                                        onImageClick={(src, type) => setViewingImage({ src, type })}
-                                                    />
-                                                </div>
-                                            ))
+                                            <>
+                                                {/* If LOGGED IN and DeepLinkedPost exists, show it with a glow at the top! */}
+                                                {!isGuest && deepLinkedPost && (
+                                                    <div className="animate-slide-up relative ring-2 ring-neon/50 rounded-3xl shadow-[0_0_30px_rgba(47,139,255,0.2)] mb-8 before:absolute before:inset-0 before:bg-neon/5 before:rounded-3xl before:pointer-events-none" style={{ animationDelay: '0ms' }}>
+                                                        <div className="absolute -top-3 left-6 bg-neon text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg z-10 tracking-widest uppercase flex items-center gap-1">
+                                                            <Icon icon="Link" size={10} />
+                                                            Shared Post
+                                                        </div>
+                                                        <PostCard
+                                                            post={deepLinkedPost}
+                                                            onRemove={handleRemovePost}
+                                                            onEdit={(post) => { setEditingPost(post); setIsEditModalOpen(true); }}
+                                                            onBookmark={toggleSave}
+                                                            onShare={handleShare}
+                                                            userProfile={userProfile}
+                                                            savedPosts={savedPosts}
+                                                            comments={postComments[deepLinkedPost.id] || []}
+                                                            isGuest={false}
+                                                            onAuthRequired={() => setShowOnboardingModal(true)}
+                                                            onImageClick={(src, type) => setViewingImage({ src, type })}
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {visiblePosts
+                                                    .filter(post => !deepLinkedPost || post.id !== deepLinkedPost.id)
+                                                    .map((post, index) => (
+                                                        <div key={post.id} className="animate-slide-up" style={{ animationDelay: `${(index + (!isGuest && deepLinkedPost ? 1 : 0)) * 50}ms` }}>
+                                                            <PostCard
+                                                                post={post}
+                                                                onRemove={handleRemovePost}
+                                                                onEdit={(post) => { setEditingPost(post); setIsEditModalOpen(true); }}
+                                                                onBookmark={toggleSave}
+                                                                onShare={handleShare}
+                                                                userProfile={userProfile}
+                                                                savedPosts={savedPosts}
+                                                                comments={postComments[post.id] || []}
+                                                                isGuest={isGuest}
+                                                                onAuthRequired={() => setShowOnboardingModal(true)}
+                                                                onImageClick={(src, type) => setViewingImage({ src, type })}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                            </>
                                         )}
 
                                         {/* Load More Spinner - Hide if exclusively viewing shared post */}
