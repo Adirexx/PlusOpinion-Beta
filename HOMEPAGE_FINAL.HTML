@@ -299,6 +299,34 @@
             border-bottom: 1px solid var(--glass-border);
         }
 
+        .glass-card {
+            background: rgba(20, 25, 35, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .animate-up {
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .rqs-pill {
             background: linear-gradient(90deg, var(--neon), #6fb6ff);
             box-shadow: 0 0 12px var(--neon-weak);
@@ -820,7 +848,7 @@
             </button>
         );
 
-        const BottomNav = ({ activeTab, setActiveTab, isVisible = true }) => {
+        const BottomNav = ({ activeTab, setActiveTab, isVisible = true, isGuest, onAuthRequired }) => {
             // Initialize with cached value to prevent flicker
             const [unreadCount, setUnreadCount] = useState(() => {
                 return window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0;
@@ -841,28 +869,132 @@
                 <div className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-[50] transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
                     <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
                     <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
-                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} />
+                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} onClick={() => !isGuest ? console.log('myspace') : onAuthRequired()} />
                     <NavItem
                         icon="Bell"
                         label="Notifications"
                         isActive={activeTab === 'notifs'}
-                        onClick={() => goTo('NOTIFICATION PANEL.HTML')}
-                        badge={unreadCount} // Pass unread count
+                        onClick={() => !isGuest ? goTo('NOTIFICATION PANEL.HTML') : onAuthRequired()}
+                        badge={unreadCount}
                     />
-                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => !isGuest ? goTo('PRIVATE OWNER PROFILE.HTML') : onAuthRequired()} />
                 </div>
             );
         };
 
 
 
-        const CommentItem = ({ comment }) => {
+        // --- Clickable @mention renderer ---
+        const renderTextWithMentions = (text) => {
+            if (!text) return text;
+            const parts = text.split(/(@[\w.]+)/g);
+            return parts.map((part, i) => {
+                if (/@[\w.]+/.test(part)) {
+                    const username = part.slice(1);
+                    return (
+                        <span
+                            key={i}
+                            className="text-neon font-semibold cursor-pointer hover:underline"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                vibrate(5);
+                                window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+                            }}
+                        >
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            });
+        };
+
+        // =============================================
+        // COMMENT REPLY ITEM (indented)
+        // =============================================
+        const ReplyItem = ({ reply, onReply }) => {
             const [isLiked, setIsLiked] = useState(false);
-            const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+            const [likesCount, setLikesCount] = useState(reply.likes?.[0]?.count || 0);
 
             useEffect(() => {
                 const checkLike = async () => {
-                    if (window.hasLikedComment) {
+                    if (window.hasLikedComment && typeof reply.id === 'string') {
+                        try { setIsLiked(await window.hasLikedComment(reply.id)); } catch (e) { }
+                    }
+                };
+                checkLike();
+            }, [reply.id]);
+
+            // Real-time like count for this reply
+            useEffect(() => {
+                const ch = window.supabase.channel(`comment-likes-rt:${reply.id}`)
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${reply.id}` },
+                        () => setLikesCount(p => p + 1))
+                    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${reply.id}` },
+                        () => setLikesCount(p => Math.max(0, p - 1)))
+                    .subscribe();
+                return () => window.supabase.removeChannel(ch);
+            }, [reply.id]);
+
+            const handleLike = async () => {
+                vibrate(5);
+                const newStatus = !isLiked;
+                setIsLiked(newStatus);
+                setLikesCount(p => newStatus ? p + 1 : Math.max(0, p - 1));
+                try {
+                    if (newStatus) await window.likeComment(reply.id);
+                    else await window.unlikeComment(reply.id);
+                } catch (e) {
+                    setIsLiked(!newStatus);
+                    setLikesCount(p => !newStatus ? p + 1 : Math.max(0, p - 1));
+                }
+            };
+
+            return (
+                <div className={`flex gap-2 text-sm animate-fade-in ml-7 pl-3 border-l border-white/10 mt-2 ${reply.isPending ? 'opacity-50' : ''}`}>
+                    <div className="flex-shrink-0">
+                        <Avatar
+                            src={reply.avatar}
+                            className="w-5 h-5 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
+                            fallbackSize={10}
+                            onClick={() => { vibrate(); if (reply.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }}
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline justify-between">
+                            <div className="flex items-baseline gap-1.5">
+                                <span
+                                    className="font-bold text-white text-[11px] cursor-pointer hover:text-neon transition-colors"
+                                    onClick={() => { vibrate(); if (reply.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }}
+                                >{reply.user}</span>
+                                <span className="text-[9px] text-muted">{reply.time}</span>
+                            </div>
+                            <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                <Icon icon="ThumbsUp" size={10} className={`stroke-[1.5px] ${isLiked ? 'fill-white' : ''}`} style={{ fill: isLiked ? 'white' : 'none' }} />
+                                {likesCount > 0 && <span className="text-[9px]">{likesCount}</span>}
+                            </button>
+                        </div>
+                        <p className="text-gray-300 text-[11px] leading-relaxed mt-0.5">{renderTextWithMentions(reply.text)}</p>
+                        <button
+                            onClick={() => onReply && onReply(reply)}
+                            className="text-[9px] text-muted hover:text-white transition-colors mt-0.5"
+                        >Reply</button>
+                    </div>
+                </div>
+            );
+        };
+
+        // =============================================
+        // COMMENT ITEM (top-level, with replies list)
+        // =============================================
+        const CommentItem = ({ comment, onReply }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+            const [showReplies, setShowReplies] = useState(true);
+
+            useEffect(() => {
+                const checkLike = async () => {
+                    if (window.hasLikedComment && typeof comment.id === 'string') {
                         try {
                             const liked = await window.hasLikedComment(comment.id);
                             setIsLiked(liked);
@@ -872,11 +1004,23 @@
                 checkLike();
             }, [comment.id]);
 
+            // Real-time like count via Supabase channel
+            useEffect(() => {
+                if (!comment.id || comment.isPending) return;
+                const ch = window.supabase.channel(`comment-likes-rt:${comment.id}`)
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${comment.id}` },
+                        () => setLikesCount(p => p + 1))
+                    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${comment.id}` },
+                        () => setLikesCount(p => Math.max(0, p - 1)))
+                    .subscribe();
+                return () => window.supabase.removeChannel(ch);
+            }, [comment.id]);
+
             const handleLike = async () => {
                 vibrate(5);
                 const newStatus = !isLiked;
                 setIsLiked(newStatus);
-                setLikesCount(prev => newStatus ? prev + 1 : prev - 1);
+                setLikesCount(p => newStatus ? p + 1 : Math.max(0, p - 1));
 
                 try {
                     if (newStatus) {
@@ -887,42 +1031,120 @@
                 } catch (e) {
                     console.error('Comment like failed', e);
                     setIsLiked(!newStatus);
-                    setLikesCount(prev => !newStatus ? prev + 1 : prev - 1);
+                    setLikesCount(p => !newStatus ? p + 1 : Math.max(0, p - 1));
                 }
             };
 
+            const replies = comment.replies || [];
+
             return (
-                <div className={`flex gap-3 text-sm animate-fade-in ${comment.isPending ? 'opacity-50' : ''} group`}>
-                    <div className="flex-shrink-0">
-                        <div
-                            className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
-                            onClick={() => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
-                        >
-                            <Avatar
-                                src={comment.avatar}
-                                className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
-                                fallbackSize={12}
-                                onClick={() => { vibrate(); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex-1">
-                        <div className="flex items-baseline justify-between focus-within:ring-0">
+                <div className={`animate-fade-in ${comment.isPending ? 'opacity-50' : ''}`}>
+                    <div className="flex gap-3 text-sm group">
+                        <div className="flex-shrink-0">
                             <div
-                                className="flex items-baseline gap-2 cursor-pointer group/name"
+                                className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
                                 onClick={() => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
                             >
-                                <span className="font-bold text-white text-xs group-hover/name:text-neon transition-colors">{comment.user}</span>
-                                <span className="text-[10px] text-muted">{comment.time}</span>
+                                <Avatar
+                                    src={comment.avatar}
+                                    className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
+                                    fallbackSize={12}
+                                    onClick={() => { vibrate(); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
+                                />
                             </div>
-                            <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
-                                <Icon icon="ThumbsUp" size={12} className={`stroke-[1.5px] ${isLiked ? "fill-white" : ""}`} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
-                                {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
-                            </button>
                         </div>
-                        <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{comment.text}</p>
+                        <div className="flex-1">
+                            <div className="flex items-baseline justify-between focus-within:ring-0">
+                                <div
+                                    className="flex items-baseline gap-2 cursor-pointer group/name"
+                                    onClick={() => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }}
+                                >
+                                    <span className="font-bold text-white text-xs group-hover/name:text-neon transition-colors">{comment.user}</span>
+                                    <span className="text-[10px] text-muted">{comment.time}</span>
+                                </div>
+                                <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                    <Icon icon="ThumbsUp" size={12} className={`stroke-[1.5px] ${isLiked ? "fill-white" : ""}`} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
+                                    {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
+                                </button>
+                            </div>
+                            <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{renderTextWithMentions(comment.text)}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                                <button
+                                    onClick={() => onReply && onReply(comment)}
+                                    className="text-[10px] text-muted hover:text-white transition-colors font-medium"
+                                >Reply{replies.length > 0 ? ` · ${replies.length}` : ''}</button>
+                                {replies.length > 0 && (
+                                    <button onClick={() => setShowReplies(p => !p)} className="text-[10px] text-neon/70 hover:text-neon transition-colors font-medium">
+                                        {showReplies ? 'Hide replies' : `View ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                </div >
+
+                    {/* Nested Replies */}
+                    {showReplies && replies.map(r => (
+                        <ReplyItem key={r.id} reply={r} onReply={() => onReply && onReply(r, comment.id)} />
+                    ))}
+                </div>
+            );
+        };
+
+        // =============================================
+        // @MENTION AUTOCOMPLETE COMPONENT
+        // =============================================
+        const MentionAutocomplete = ({ query, onSelect, onClose, direction = 'up', coords }) => {
+            const [users, setUsers] = useState([]);
+            const [loading, setLoading] = useState(false);
+
+            useEffect(() => {
+                if (!query || query.length < 1) { setUsers([]); return; }
+                setLoading(true);
+                const timer = setTimeout(async () => {
+                    try {
+                        const results = await window.searchUsersForMention(query);
+                        setUsers(results);
+                    } catch (e) {
+                        setUsers([]);
+                    } finally {
+                        setLoading(false);
+                    }
+                }, 250);
+                return () => clearTimeout(timer);
+            }, [query]);
+
+            if (!query || (users.length === 0 && !loading)) return null;
+
+            const positionClass = direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2';
+            const style = coords ? {
+                position: 'absolute',
+                top: `${coords.top + 25}px`,
+                left: `${coords.left}px`,
+                width: '220px',
+                zIndex: 100
+            } : {};
+
+            return (
+                <div
+                    style={style}
+                    className={`${coords ? '' : 'absolute ' + positionClass + ' left-0 right-0'} bg-[#1A1C2E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in`}
+                >
+                    {loading && <div className="px-3 py-2 text-xs text-muted">Searching...</div>}
+                    {users.map(u => (
+                        <button
+                            key={u.id}
+                            onMouseDown={(e) => { e.preventDefault(); onSelect(u); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+                        >
+                            <Avatar src={u.avatar_url} className="w-7 h-7 rounded-full border border-white/10 object-cover flex-shrink-0" fallbackSize={13} />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-white text-xs font-semibold truncate">{u.full_name}</div>
+                                <div className="text-muted text-[10px] truncate">@{u.username}</div>
+                            </div>
+                            <span className="text-[9px] text-neon/60 font-bold shrink-0">RQS {u.rqs_score}</span>
+                        </button>
+                    ))}
+                </div>
             );
         };
 
@@ -944,7 +1166,7 @@
             return `${diffMonths}mo`;
         };
 
-        const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAddComment, onImageClick, onRemove, onEdit, onBookmark, userProfile, savedPosts }) => {
+        const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAddComment, onImageClick, onRemove, onEdit, onBookmark, userProfile, savedPosts, isGuest, onAuthRequired }) => {
             const [isLiked, setIsLiked] = useState(false);
             const [localLikes, setLocalLikes] = useState(post.agrees);
             const [showComments, setShowComments] = useState(false);
@@ -956,6 +1178,16 @@
             const isSaved = savedPosts?.has(String(post.id));
             const [isLoadingComments, setIsLoadingComments] = useState(false);
             const [localCommentCount, setLocalCommentCount] = useState(post.comments);
+            const [replyingTo, setReplyingTo] = useState(null); // { id, topLevelId, user, username }
+            const [mentionQuery, setMentionQuery] = useState(null); // active @query string
+            const commentInputRef = useRef(null);
+            const commentsFetchedRef = useRef(false); // tracks if we've done a fresh threaded fetch
+            const localCommentsRef = useRef(localComments); // always has latest comments for realtime handler
+
+            // Keep ref in sync with state
+            useEffect(() => {
+                localCommentsRef.current = localComments;
+            }, [localComments]);
 
             // Portal menu positioning
             const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
@@ -1015,6 +1247,10 @@
             }, [post.id]);
 
             const handleLike = async () => {
+                if (isGuest) {
+                    if (onAuthRequired) onAuthRequired();
+                    return;
+                }
                 vibrate(10);
                 const newStatus = !isLiked;
                 setIsLiked(newStatus);
@@ -1035,64 +1271,99 @@
                 }
             };
 
+            const transformComment = (c) => ({
+                id: c.id,
+                user: c.profiles?.full_name || 'User',
+                username: c.profiles?.username || '',
+                avatar: c.profiles?.avatar_url || '',
+                text: c.text_content,
+                time: formatTime(c.created_at),
+                user_id: c.user_id,
+                likes: c.likes,
+                parent_comment_id: c.parent_comment_id || null,
+                replies: (c.replies || []).map(r => transformComment(r))
+            });
+
+            const fetchThreadedComments = async () => {
+                setIsLoadingComments(true);
+                try {
+                    const fetchedComments = await window.getComments(post.id);
+                    setLocalComments(fetchedComments.map(transformComment));
+                    commentsFetchedRef.current = true;
+                } catch (error) {
+                    console.error('Failed to load comments', error);
+                } finally {
+                    setIsLoadingComments(false);
+                }
+            };
+
             const toggleComments = async () => {
+                if (isGuest) {
+                    if (onAuthRequired) onAuthRequired();
+                    return;
+                }
                 vibrate(5);
                 const shouldShow = !showComments;
                 setShowComments(shouldShow);
 
-                if (shouldShow && localComments.length === 0 && post.comments > 0) {
-                    setIsLoadingComments(true);
-                    try {
-                        const fetchedComments = await window.getComments(post.id);
-
-                        // Transform comments to UI format
-                        const transformedComments = fetchedComments.map(c => ({
-                            id: c.id,
-                            user: c.profiles?.full_name || 'User',
-                            avatar: c.profiles?.avatar_url || '',
-                            text: c.text_content,
-                            time: formatTime(c.created_at),
-                            user_id: c.user_id
-                        }));
-                        setLocalComments(transformedComments);
-                        // Update comment count locally if it differs
-                        if (transformedComments.length > post.comments) {
-                            // Sync parent state if needed, but for now rely on local length for display if open
-                        }
-                    } catch (error) {
-                        console.error('Failed to load comments', error);
-                    } finally {
-                        setIsLoadingComments(false);
-                    }
+                // Only fetch when opening AND we haven't loaded threaded data yet
+                // (commentsFetchedRef is reset if the post re-mounts)
+                if (shouldShow && !commentsFetchedRef.current) {
+                    await fetchThreadedComments();
                 }
             };
 
-            // Realtime Comments Logic
+            // Realtime Comments - subscribe once on mount, independent of showComments toggle
             useEffect(() => {
-                if (!showComments) return;
-
                 const channel = window.supabase.channel(`comments:${post.id}`)
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, async (payload) => {
                         const currentUser = await window.getCurrentUser();
-                        if (payload.new.user_id === currentUser?.id) return; // Ignore own (handled optimistically)
+                        if (payload.new.user_id === currentUser?.id) return; // Handled optimistically
 
-                        // Fetch profile for new comment
                         const { data: profile } = await window.supabase
                             .from('profiles')
-                            .select('full_name, avatar_url')
+                            .select('full_name, username, avatar_url')
                             .eq('id', payload.new.user_id)
-                            .single();
+                            .maybeSingle();
 
-                        const newComment = {
+                        const newEntry = {
                             id: payload.new.id,
                             user_id: payload.new.user_id,
                             user: profile?.full_name || 'User',
+                            username: profile?.username || '',
                             avatar: profile?.avatar_url || '',
                             text: payload.new.text_content,
-                            time: 'Just now'
+                            time: 'Just now',
+                            parent_comment_id: payload.new.parent_comment_id || null,
+                            likes: [],
+                            replies: []
                         };
 
-                        setLocalComments(prev => [...prev, newComment]);
+                        const parentId = payload.new.parent_comment_id;
+                        if (!parentId) {
+                            // Top-level comment
+                            setLocalComments(prev => {
+                                // Avoid duplicates
+                                if (prev.some(c => c.id === newEntry.id)) return prev;
+                                return [...prev, newEntry];
+                            });
+                        } else {
+                            // Reply — nest under parent (use functional update to get latest state)
+                            setLocalComments(prev => {
+                                const parentExists = prev.some(c => c.id === parentId);
+                                if (!parentExists) return prev; // parent not loaded yet, skip
+                                return prev.map(c =>
+                                    c.id === parentId
+                                        ? {
+                                            ...c, replies: [
+                                                ...(c.replies || []).filter(r => r.id !== newEntry.id), // dedup
+                                                newEntry
+                                            ]
+                                        }
+                                        : c
+                                );
+                            });
+                        }
                         vibrate(5);
                     })
                     .subscribe();
@@ -1100,7 +1371,7 @@
                 return () => {
                     window.supabase.removeChannel(channel);
                 };
-            }, [showComments, post.id]);
+            }, [post.id]); // only post.id, NOT showComments
 
             const toggleShareMenu = () => {
                 vibrate(5);
@@ -1116,38 +1387,136 @@
             const handleSendComment = async () => {
                 if (!commentText.trim()) return;
 
+                const isReply = !!replyingTo;
                 const tempId = Date.now();
-                const tempComment = {
+                const tempEntry = {
                     id: tempId,
                     user: userProfile?.full_name || 'You',
+                    username: userProfile?.username || '',
                     user_id: userProfile?.id,
                     avatar: userProfile?.avatar_url || '',
                     text: commentText,
                     time: 'Just now',
-                    isPending: true
+                    isPending: true,
+                    likes: [],
+                    replies: []
                 };
 
-                setLocalComments(prev => [...prev, tempComment]);
+                if (isReply) {
+                    // Optimistically add to topLevel's replies
+                    setLocalComments(prev => prev.map(c =>
+                        c.id === replyingTo.topLevelId
+                            ? { ...c, replies: [...(c.replies || []), tempEntry] }
+                            : c
+                    ));
+                } else {
+                    setLocalComments(prev => [...prev, tempEntry]);
+                }
+
+                const textToSend = commentText;
                 setCommentText('');
+                // Keep replyingTo in local scope for createReply call before nullifying
+                const currentReplyingTo = replyingTo;
+                setReplyingTo(null);
+                setMentionQuery(null);
                 vibrate(10);
 
                 try {
-                    const newComment = await window.createComment(post.id, commentText);
-                    // Update the pending comment with real data
-                    setLocalComments(prev => prev.map(c => c.id === tempId ? {
-                        id: newComment.id,
-                        user: 'You',
-                        avatar: userProfile?.avatar_url || '',
-                        text: newComment.text_content,
-                        time: 'Just now'
-                    } : c));
+                    let newData;
+                    if (isReply) {
+                        newData = await window.createReply(post.id, currentReplyingTo.topLevelId, textToSend);
+                        // Update reply in parent's replies list
+                        setLocalComments(prev => prev.map(c =>
+                            c.id === currentReplyingTo.topLevelId
+                                ? {
+                                    ...c, replies: (c.replies || []).map(r =>
+                                        r.id === tempId ? {
+                                            id: newData.id,
+                                            user: userProfile?.full_name || 'You',
+                                            username: userProfile?.username || '',
+                                            user_id: userProfile?.id,
+                                            avatar: userProfile?.avatar_url || '',
+                                            text: newData.text_content,
+                                            time: 'Just now',
+                                            likes: [],
+                                            replies: []
+                                        } : r
+                                    )
+                                }
+                                : c
+                        ));
+                    } else {
+                        newData = await window.createComment(post.id, textToSend);
+                        setLocalComments(prev => prev.map(c => c.id === tempId ? {
+                            id: newData.id,
+                            user: userProfile?.full_name || 'You',
+                            username: userProfile?.username || '',
+                            avatar: userProfile?.avatar_url || '',
+                            text: newData.text_content,
+                            time: 'Just now',
+                            likes: newData.likes || [],
+                            replies: []
+                        } : c));
+                    }
 
-
-                    if (onAddComment) onAddComment(post.id, commentText); // Global update if needed
+                    if (onAddComment) onAddComment(post.id, textToSend);
                 } catch (error) {
                     console.error('Comment failed', error);
-                    setLocalComments(prev => prev.filter(c => c.id !== tempId));
+                    // Rollback
+                    if (isReply) {
+                        setLocalComments(prev => prev.map(c =>
+                            c.id === replyingTo?.id
+                                ? { ...c, replies: (c.replies || []).filter(r => r.id !== tempId) }
+                                : c
+                        ));
+                    } else {
+                        setLocalComments(prev => prev.filter(c => c.id !== tempId));
+                    }
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to post comment', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            // Handle reply button click from CommentItem/ReplyItem
+            const handleReply = (commentOrReply) => {
+                // Always reply to the top-level comment ID if replying to a reply
+                const parentId = commentOrReply.parent_comment_id || commentOrReply.id;
+                const parentComment = localComments.find(c => c.id === parentId) || commentOrReply;
+                setReplyingTo({ id: parentId, user: commentOrReply.user, username: commentOrReply.username || '' });
+                setCommentText(`@${commentOrReply.username || commentOrReply.user} `);
+                setShowComments(true);
+                setTimeout(() => commentInputRef.current?.focus(), 50);
+            };
+
+            // Detect @mention in comment input
+            const handleCommentChange = (e) => {
+                const val = e.target.value;
+                setCommentText(val);
+                // Find active @mention: look for @ before cursor
+                const cursor = e.target.selectionStart;
+                const textUpToCursor = val.substring(0, cursor);
+                const atMatch = textUpToCursor.match(/@([\w.]*)$/);
+                setMentionQuery(atMatch ? atMatch[1] : null);
+            };
+
+            // @mention autocomplete: insert selected user into text
+            const handleMentionSelect = (user) => {
+                const cursor = commentInputRef.current?.selectionStart || commentText.length;
+                const textBeforeCursor = commentText.substring(0, cursor);
+                const textAfterCursor = commentText.substring(cursor);
+                const atIndex = textBeforeCursor.lastIndexOf('@');
+
+                if (atIndex !== -1) {
+                    const newTextBefore = textBeforeCursor.substring(0, atIndex) + '@' + user.username + ' ';
+                    setCommentText(newTextBefore + textAfterCursor);
+                    setMentionQuery(null);
+                    // Reset cursor position after React update
+                    setTimeout(() => {
+                        if (commentInputRef.current) {
+                            const newPos = newTextBefore.length;
+                            commentInputRef.current.focus();
+                            commentInputRef.current.setSelectionRange(newPos, newPos);
+                        }
+                    }, 0);
                 }
             };
 
@@ -1157,6 +1526,12 @@
             };
 
             const handleMoreAction = (action) => {
+                if (action === 'edit' || action === 'delete' || action === 'bookmark') {
+                    if (isGuest) {
+                        if (onAuthRequired) onAuthRequired();
+                        return;
+                    }
+                }
                 vibrate(10);
                 setShowMoreMenu(false);
 
@@ -1191,6 +1566,10 @@
             };
 
             const handleReport = async () => {
+                if (isGuest) {
+                    if (onAuthRequired) onAuthRequired();
+                    return;
+                }
                 vibrate(10);
                 const currentUser = await window.getCurrentUser();
                 let reporterUsername = 'Anonymous';
@@ -1383,7 +1762,7 @@
                         )}
                     </div>
 
-                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{post.text}</p>
+                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{renderTextWithMentions(post.text)}</p>
 
                     {post.media && (
                         <ZoomableMedia
@@ -1445,16 +1824,18 @@
                     {showComments && (
                         <div className="mt-4 pt-0 border-t border-white/5 animate-fade-in origin-top">
                             <div className="flex justify-between items-center mb-3 pt-2">
-                                <span className="text-xs font-bold text-white">Comments ({localComments.length})</span>
-                                <button onClick={() => setShowComments(false)} className="text-muted hover:text-white text-xs">Close</button>
+                                <span className="text-xs font-bold text-white">
+                                    Comments ({localComments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)})
+                                </span>
+                                <button onClick={() => { setShowComments(false); setReplyingTo(null); setMentionQuery(null); }} className="text-muted hover:text-white text-xs">Close</button>
                             </div>
 
                             {/* Comments List */}
-                            <div className="space-y-3 mb-4 max-h-60 overflow-y-auto no-scrollbar">
+                            <div className="space-y-4 mb-4 max-h-72 overflow-y-auto no-scrollbar">
                                 {isLoadingComments && <div className="text-center text-muted text-xs py-2">Loading comments...</div>}
 
                                 {localComments.map(c => (
-                                    <CommentItem key={c.id} comment={c} />
+                                    <CommentItem key={c.id} comment={c} onReply={handleReply} />
                                 ))}
 
                                 {!isLoadingComments && localComments.length === 0 && (
@@ -1462,15 +1843,33 @@
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors">
-                                <input
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    placeholder="Add a comment..."
-                                    className="bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
+                            {/* Reply Banner */}
+                            {replyingTo && (
+                                <div className="flex items-center justify-between px-3 py-1.5 mb-1.5 bg-neon/5 border border-neon/20 rounded-lg">
+                                    <span className="text-[10px] text-neon/80">Replying to <span className="font-bold">@{replyingTo.username || replyingTo.user}</span></span>
+                                    <button onClick={() => { setReplyingTo(null); setCommentText(''); setMentionQuery(null); }} className="text-muted hover:text-white">
+                                        <Icon icon="X" size={12} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Input with @Mention Autocomplete */}
+                            <div className="relative">
+                                <MentionAutocomplete
+                                    query={mentionQuery}
+                                    onSelect={handleMentionSelect}
                                 />
-                                <button onClick={handleSendComment} className={`${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors`}><Icon icon="Send" size={14} /></button>
+                                <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors">
+                                    <input
+                                        ref={commentInputRef}
+                                        value={commentText}
+                                        onChange={handleCommentChange}
+                                        placeholder={replyingTo ? `Reply to @${replyingTo.username || replyingTo.user}...` : "Add a comment or type @ to mention..."}
+                                        className="bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
+                                    />
+                                    <button onClick={handleSendComment} className={`${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors`}><Icon icon="Send" size={14} /></button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -1777,7 +2176,7 @@
         // --- OVERLAY COMPONENTS ---
 
         // MENU DRAWER (UPDATED PROFILE & CLOSE BUTTON)
-        const MenuDrawer = ({ isOpen, onClose, onLogout, userProfile }) => {
+        const MenuDrawer = ({ isOpen, onClose, onLogout, userProfile, isGuest, onAuthRequired }) => {
             useEffect(() => {
                 if (isOpen) {
                     document.body.style.overflow = 'hidden';
@@ -1819,7 +2218,7 @@
                                 </button>
                             </div>
 
-                            <div className="relative rounded-2xl p-5 mb-8 overflow-hidden group shrink-0 active:scale-[0.99] transition-transform duration-200 cursor-pointer" onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')}>
+                            <div className="relative rounded-2xl p-5 mb-8 overflow-hidden group shrink-0 active:scale-[0.99] transition-transform duration-200 cursor-pointer" onClick={() => !isGuest ? goTo('PRIVATE OWNER PROFILE.HTML') : onAuthRequired()}>
                                 {userProfile.banner_url ? (
                                     <div className="absolute inset-0"><img src={userProfile.banner_url} alt="Banner" className="w-full h-full object-cover" /><div className="absolute inset-0 bg-gradient-to-br from-black/70 to-black/50"></div></div>
                                 ) : (
@@ -1854,7 +2253,7 @@
 
                             <div className="flex-1 space-y-3 pt-2">
                                 <div className="text-[10px] font-bold text-muted uppercase tracking-widest px-2 mb-2">Settings</div>
-                                <MenuItem icon="BookMark" label="Bookmarks" onClick={() => goTo('BOOKMARKS.HTML')} />
+                                <MenuItem icon="BookMark" label="Bookmarks" onClick={() => !isGuest ? goTo('BOOKMARKS.HTML') : onAuthRequired()} />
                                 <MenuItem icon="Moon" label="Appearance" subLabel="PlusOpinion Midnight" hasAction onClick={() => { }} />
 
                                 <div className="h-px bg-white/5 w-full my-4"></div>
@@ -2302,13 +2701,251 @@
             );
         };
 
+        // AUTH MODAL (Login/Signup)
+        const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+            const [mode, setMode] = useState('login'); // 'login' or 'signup'
+            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            if (!isOpen) return null;
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+                vibrate(10);
+
+                if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+                    setError("Passwords don't match");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await window.authReadyPromise;
+                    if (mode === 'signup') {
+                        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                        if (signupData.error) throw signupData.error;
+
+                        // Notify admin of new lead
+                        try {
+                            fetch("https://formspree.io/f/xvgzlowy", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    email: formData.email,
+                                    name: formData.name,
+                                    source: "Homepage AuthModal"
+                                })
+                            });
+                        } catch (e) { }
+
+                        if (signupData?.session) {
+                            window.location.href = 'ONBOARDING.HTML';
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+                            }));
+                            onClose();
+                        }
+                    } else {
+                        const user = await window.signInUser(formData.email, formData.password);
+                        if (user) {
+                            if (user.onboardingRequired) {
+                                window.location.href = 'ONBOARDING.HTML';
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    setError(err.message || 'Authentication failed');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleGoogleLogin = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    await window.signInWithProvider('google');
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const handleForgotPassword = async () => {
+                if (!formData.email) {
+                    setError("Please enter your email first");
+                    return;
+                }
+                setLoading(true);
+                try {
+                    await window.resetPassword(formData.email);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+                    }));
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    {/* Background Video for Modal */}
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover opacity-30"
+                    >
+                        <source src="./bg-video.mp4" type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={() => isClosable && onClose()}></div>
+                    <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
+                        {isClosable && (
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                                <Icon icon="X" size={24} />
+                            </button>
+                        )}
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
+                                {mode === 'login' ? 'Welcome Back' : 'Sign Up'}
+                            </h2>
+                            <p className="text-slate-400 text-sm">
+                                {mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name <span className="text-red-500">*</span></label>
+                                    <input
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        type="text"
+                                        placeholder="John Doe"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address <span className="text-red-500">*</span></label>
+                                <input
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password <span className="text-red-500">*</span></label>
+                                <input
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    type="password"
+                                    placeholder={mode === 'signup' ? "Enter password (min 6 characters)" : "Enter your password"}
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password <span className="text-red-500">*</span></label>
+                                    <input
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        type="password"
+                                        placeholder="Re-enter password"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+                                >
+                                    Forgot Password?
+                                </button>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full ${mode === 'signup' ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:shadow-blue-500/50 shadow-blue-500/30' : 'bg-blue-600 hover:bg-blue-500'} text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                {loading ? (mode === 'login' ? 'LOGGING IN...' : 'CREATING ACCOUNT...') : (mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT')}
+                                <Icon icon="ArrowRight" size={18} />
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs">
+                                    {mode === 'login' ? 'OR LOGIN WITH' : 'OR CONTINUE WITH'}
+                                </span>
+                                <div className="flex-grow border-t border-slate-700"></div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleGoogleLogin}
+                                    className="flex items-center justify-center gap-2 bg-[#1a1f2e] hover:bg-[#252a3b] text-white py-3 rounded-xl font-semibold text-sm transition-all border border-slate-700 hover:border-slate-600"
+                                >
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" /></svg>
+                                    Continue with Google
+                                </button>
+                            </div>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm text-slate-400">
+                            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button
+                                onClick={() => {
+                                    vibrate(5);
+                                    setMode(mode === 'login' ? 'signup' : 'login');
+                                    setError(null);
+                                }}
+                                className="text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform"
+                            >
+                                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         // EXPLORE PROFILES MODAL
         const ExploreProfilesModal = ({ isOpen, onClose, profiles }) => {
             if (!isOpen) return null;
 
             return (
                 <div className="fixed inset-0 bg-black/95 z-[9999] flex flex-col">
-                    {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                         <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
                             <Icon icon="ArrowLeft" size={24} />
@@ -2317,7 +2954,6 @@
                         <div className="w-6"></div>
                     </div>
 
-                    {/* Profiles Grid */}
                     <div className="flex-1 overflow-y-auto p-4">
                         <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
                             {profiles.map((profile) => (
@@ -2359,7 +2995,6 @@
         };
 
         // OPINION MODAL (Composer)
-        // OPINION MODAL (Composer)
         const OpinionModal = ({ isOpen, onClose, onPublished, userProfile, initialPost = null }) => {
             const [stage, setStage] = useState('IDLE');
             const [text, setText] = useState('');
@@ -2371,8 +3006,42 @@
             const fileInputRef = useRef(null);
             const verificationInputRef = useRef(null); // Ref for verification proof upload
             const [draftId, setDraftId] = useState(null); // ID if editing existing draft
+            const [mentionQuery, setMentionQuery] = useState(null);
 
             const PREDEFINED_CATEGORIES = ['Electronics', 'Automotive', 'Software', 'Fashion', 'Tech', 'Food', 'Gaming', 'Lifestyle', 'Other'];
+
+            const [mentionCoords, setMentionCoords] = useState({ top: 0, left: 0 });
+
+            // Helper to get caret coordinates inside a textarea
+            const getCaretCoordinates = (element, position) => {
+                const div = document.createElement('div');
+                const style = window.getComputedStyle(element);
+                const properties = [
+                    'direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY',
+                    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle',
+                    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+                    'fontStyle', 'fontVariant', 'fontWeight', 'stretch', 'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily',
+                    'textAlign', 'textTransform', 'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing', 'tabSize', 'MozTabSize'
+                ];
+                properties.forEach(prop => { div.style[prop] = style[prop]; });
+                div.style.position = 'absolute';
+                div.style.visibility = 'hidden';
+                div.style.whiteSpace = 'pre-wrap';
+                div.style.wordWrap = 'break-word';
+                div.style.top = '0';
+                div.style.left = '-9999px';
+                div.textContent = element.value.substring(0, position);
+                const span = document.createElement('span');
+                span.textContent = element.value.substring(position) || '.';
+                div.appendChild(span);
+                document.body.appendChild(div);
+                const coordinates = {
+                    top: span.offsetTop + parseInt(style.borderTopWidth),
+                    left: span.offsetLeft + parseInt(style.borderLeftWidth)
+                };
+                document.body.removeChild(div);
+                return coordinates;
+            };
 
             useEffect(() => {
                 if (isOpen) {
@@ -2438,7 +3107,43 @@
             const canPublish = text.length >= MIN_CHARS && text.length <= MAX_CHARS;
 
             const handleTextChange = (e) => {
-                if (e.target.value.length <= MAX_CHARS) setText(e.target.value);
+                const val = e.target.value;
+                if (val.length <= MAX_CHARS) setText(val);
+
+                // Mention logic
+                const cursor = e.target.selectionStart;
+                const atMatch = val.substring(0, cursor).match(/@([\w.]*)$/);
+
+                if (atMatch) {
+                    setMentionQuery(atMatch[1]);
+                    // Calculate coordinates for caret following
+                    const coords = getCaretCoordinates(e.target, cursor);
+                    setMentionCoords(coords);
+                } else {
+                    setMentionQuery(null);
+                }
+            };
+
+            const handleMentionSelect = (user) => {
+                const textarea = document.querySelector('textarea[placeholder*="mention"]');
+                const cursor = textarea?.selectionStart || text.length;
+                const textBeforeCursor = text.substring(0, cursor);
+                const textAfterCursor = text.substring(cursor);
+                const atIndex = textBeforeCursor.lastIndexOf('@');
+
+                if (atIndex !== -1) {
+                    const newTextBefore = textBeforeCursor.substring(0, atIndex) + '@' + user.username + ' ';
+                    setText(newTextBefore + textAfterCursor);
+                    setMentionQuery(null);
+                    // Reset cursor position after React update
+                    setTimeout(() => {
+                        if (textarea) {
+                            const newPos = newTextBefore.length;
+                            textarea.focus();
+                            textarea.setSelectionRange(newPos, newPos);
+                        }
+                    }, 0);
+                }
             };
 
             const handleTagToggle = () => {
@@ -2601,7 +3306,7 @@
 
             return (
                 <div className={`absolute inset-0 z-40 flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-                    <div className={`w-full max-w-sm bg-[#0A0F1D] border border-[#2f8bff]/20 rounded-[24px] shadow-2xl overflow-hidden flex flex-col relative transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-8 opacity-0'}`} style={{ height: '580px' }}>
+                    <div className={`w-full max-w-sm bg-[#0A0F1D] border border-[#2f8bff]/20 rounded-[24px] shadow-2xl overflow-visible flex flex-col relative transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-8 opacity-0'}`} style={{ height: '580px' }}>
                         <div className="px-6 pt-6 pb-2 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 {stage === 'VERIFY' && (
@@ -2616,11 +3321,12 @@
                             </div>
                             <button onClick={handleSaveDraft} className="text-[10px] font-bold text-slate-400 bg-white/5 px-3 py-1 rounded tracking-widest border border-white/10 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-1"><Icon icon="Save" size={10} /> SAVE DRAFT</button>
                         </div>
-                        <div className="flex-1 flex flex-col relative overflow-hidden">
+                        <div className="flex-1 flex flex-col relative overflow-visible">
                             {stage === 'WRITE' && (
                                 <>
                                     <div className="flex-1 px-6 py-2 relative">
-                                        <textarea value={text} onChange={handleTextChange} placeholder="Share, what's your opinion" className="w-full h-full bg-transparent text-lg text-white placeholder-slate-600 outline-none resize-none font-light leading-relaxed custom-scrollbar pb-6" autoFocus={false} />
+                                        <MentionAutocomplete query={mentionQuery} onSelect={handleMentionSelect} direction="down" coords={mentionCoords} />
+                                        <textarea value={text} onChange={handleTextChange} placeholder="Share, what's your opinion or type @ to mention..." className="w-full h-full bg-transparent text-lg text-white placeholder-slate-600 outline-none resize-none font-light leading-relaxed custom-scrollbar pb-6" autoFocus={false} />
                                         <div className={`absolute bottom-2 right-6 text-[10px] font-medium transition-colors ${text.length < MIN_CHARS || text.length === MAX_CHARS ? 'text-neon' : 'text-slate-600'}`}>{text.length} / {MAX_CHARS}</div>
                                     </div>
                                     <div className="px-6 pb-2">
@@ -3114,12 +3820,14 @@
             const [fabVisible, setFabVisible] = useState(true);
             const [userProfile, setUserProfile] = useState({
                 id: null,
-                full_name: "User",
-                username: "",
+                full_name: "Guest User",
+                username: "guest",
                 avatar_url: "",
                 banner_url: "",
                 rqs: 0
             });
+            const [isGuest, setIsGuest] = useState(false);
+            const [deepLinkedPost, setDeepLinkedPost] = useState(null);
             const [feedFilters, setFeedFilters] = useState({ source: 'All', type: 'All', category: null });
 
             // Listen for Hash Changes (Category Filter)
@@ -3200,7 +3908,14 @@
             // --- EXPOSE TOGGLES GLOBALLY ---
             useEffect(() => {
                 window.toggleSidebar = () => { vibrate(5); setIsMenuOpen(prev => !prev); };
-                window.toggleLens = () => { vibrate(5); setIsLensOpen(prev => !prev); };
+                window.toggleLens = () => {
+                    vibrate(5);
+                    if (isGuest) {
+                        setShowAuthModal(true);
+                        return;
+                    }
+                    setIsLensOpen(prev => !prev);
+                };
                 return () => {
                     delete window.toggleSidebar;
                     delete window.toggleLens;
@@ -3391,6 +4106,7 @@
                 try {
                     const profile = await window.getMyProfile();
                     if (profile) {
+                        setIsGuest(false);
                         setUserProfile({
                             id: profile.id,
                             full_name: profile.full_name || "User",
@@ -3398,7 +4114,6 @@
                             avatar_url: profile.avatar_url || "",
                             banner_url: profile.banner_url || "",
                             rqs_score: profile.rqs_score || 0
-
                         });
 
                         // Load bookmarks for persistence early (using String IDs)
@@ -3409,9 +4124,22 @@
                         if (bookmarks) {
                             setSavedPosts(new Set(bookmarks.map(b => String(b.post_id))));
                         }
+                    } else {
+                        setIsGuest(true);
+                        // Lock page if not viewing a deep-linked post
+                        const searchParams = new URLSearchParams(window.location.search);
+                        if (!searchParams.get('post')) {
+                            setShowOnboardingModal(true);
+                        }
                     }
                 } catch (error) {
                     console.error('Error loading user profile/bookmarks:', error);
+                    setIsGuest(true);
+                    // Lock page if not viewing a deep-linked post
+                    const searchParams = new URLSearchParams(window.location.search);
+                    if (!searchParams.get('post')) {
+                        setShowOnboardingModal(true);
+                    }
                 }
             };
 
@@ -3430,6 +4158,42 @@
             useEffect(() => {
                 const init = async () => {
                     setLoading(true);
+
+                    // Check for deep-link post parameter
+                    const searchParams = new URLSearchParams(window.location.search);
+                    const postId = searchParams.get('post');
+
+                    if (postId) {
+                        try {
+                            const post = await window.getPost(postId);
+                            if (post) {
+                                // Transform to UI post format
+                                const uiPost = {
+                                    id: post.id,
+                                    user_id: post.user_id,
+                                    name: post.profiles?.full_name || 'PlusOpinion User',
+                                    username: post.profiles?.username || 'user',
+                                    avatar: post.profiles?.avatar_url || "",
+                                    rqs: post.profiles?.rqs_score || 0,
+                                    verified: !!post.profiles?.is_verified,
+                                    category: post.category,
+                                    product: post.product_name,
+                                    text: post.text_content,
+                                    media: post.media_url,
+                                    media_type: post.media_type || 'image',
+                                    time: "Recent",
+                                    isHidden: false,
+                                    agrees: post.agrees_count || 0,
+                                    comments: post.comments_count || 0,
+                                    seenBy: post.seen_by_brand
+                                };
+                                setDeepLinkedPost(uiPost);
+                            }
+                        } catch (e) {
+                            console.error('Failed to load deep-linked post:', e);
+                        }
+                    }
+
                     await Promise.all([loadUserProfile(), loadPosts(0, true)]);
                     setLoading(false);
                 };
@@ -3484,7 +4248,11 @@
                     setIsMenuOpen(true);
                     window.history.replaceState(null, '', window.location.pathname);
                 } else if (hash === '#lens' || hash === '#search') {
-                    setIsLensOpen(true);
+                    if (isGuest) {
+                        setShowAuthModal(true);
+                    } else {
+                        setIsLensOpen(true);
+                    }
                     window.history.replaceState(null, '', window.location.pathname);
                 }
             }, []);
@@ -3494,7 +4262,13 @@
                 window.PlusOpinionActions = {
                     openOpinion: () => setIsOverlayOpen(true),
                     openMenu: () => setIsMenuOpen(true),
-                    openLens: () => setIsLensOpen(true),
+                    openLens: () => {
+                        if (isGuest) {
+                            setShowAuthModal(true);
+                            return;
+                        }
+                        setIsLensOpen(true);
+                    },
                     sharePost: (post) => { setSharePostData(post); setIsShareModalOpen(true); },
                     reportPost: (postId) => { setReportPostId(postId); setIsReportModalOpen(true); }
                 };
@@ -3872,6 +4646,9 @@
                         >
                             {activeTab === 'home' ? (
                                 <>
+                                    {/* Deep-Linked Post (Pin to top if exists) */}
+
+                                    {/* Guest Welcome Banner */}
                                     {/* Loading State - SKELETON */}
                                     {loading && posts.length === 0 && (
                                         <div className="space-y-4 pt-2">
@@ -3881,87 +4658,93 @@
                                         </div>
                                     )}
 
-                                    {/* Filter Banner - Always at top when filter is active */}
-                                    {feedFilters.category && (
-                                        <div className="flex items-center justify-between mb-4 px-2 py-3 bg-neon/10 border border-neon/20 rounded-xl animate-fade-in">
-                                            <div className="flex items-center gap-2">
-                                                <Icon icon="Filter" size={14} className="text-neon" />
-                                                <span className="text-xs font-medium text-white/80">Filtering by:</span>
-                                                <span className="text-xs font-bold text-neon uppercase tracking-wide">{feedFilters.category}</span>
+                                    {/* Guest Welcome Banner - Enhanced Design */}
+                                    {isGuest && !deepLinkedPost && (
+                                        <div className="mb-8 p-6 rounded-3xl bg-gradient-to-br from-[#0F1627] to-[#1a2332] border border-white/10 shadow-2xl relative overflow-hidden group animate-fade-in">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-neon/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                                            <div className="relative z-10">
+                                                <h2 className="text-2xl font-black text-white tracking-tight font-heading mb-2">
+                                                    Welcome to PlusOpinion!
+                                                </h2>
+                                                <p className="text-muted text-sm leading-relaxed mb-6 max-w-[280px]">
+                                                    Join the future of consumer intelligence. Share opinions, earn rewards, and discover honest feedback.
+                                                </p>
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={() => setShowOnboardingModal(true)}
+                                                        className="flex-1 h-12 bg-neon text-white font-bold rounded-xl shadow-lg shadow-neon/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        Join the Feed
+                                                        <Icon icon="ArrowRight" size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { vibrate(5); toggleOverlay(); }}
+                                                        className="h-12 px-5 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-all flex items-center justify-center"
+                                                    >
+                                                        <Icon icon="Info" size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button
-                                                onClick={() => { setFeedFilters(prev => ({ ...prev, category: null })); window.history.pushState({}, '', window.location.pathname); window.location.reload(); }}
-                                                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-white/60 hover:text-red-400 transition-colors"
-                                            >
-                                                <Icon icon="X" size={12} /> Clear
-                                            </button>
                                         </div>
                                     )}
 
-                                    {/* Minimal Empty State for Filter Results */}
-                                    {!isLoadingPosts && visiblePosts.length === 0 && feedFilters.category && (
-                                        <div className="flex flex-col items-center py-16 px-6 animate-fade-in">
-                                            <p className="text-white/50 text-sm mb-6">
-                                                No results found for "<span className="text-white/70">{feedFilters.category}</span>"
-                                            </p>
-                                            <button
-                                                onClick={() => { setFeedFilters(prev => ({ ...prev, category: null })); window.history.pushState({}, '', window.location.pathname); window.location.reload(); }}
-                                                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-neon hover:text-white border border-neon/30 hover:border-neon/60 rounded-lg transition-all"
-                                            >
-                                                <Icon icon="Home" size={14} />
-                                                Go to Homepage
-                                            </button>
-                                        </div>
-                                    )}
 
-                                    {/* Default Empty State (no filter) */}
-                                    {!isLoadingPosts && visiblePosts.length === 0 && !feedFilters.category && (
-                                        <div className="flex flex-col items-center justify-center py-24 px-8 text-center animate-fade-in">
-                                            <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 relative overflow-hidden group">
-                                                <div className="absolute inset-0 bg-neon/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                <Icon icon="Zap" size={40} className="text-neon/50 stroke-[1.5px] transition-transform group-hover:scale-110" />
-                                            </div>
-                                            <h3 className="text-white font-heading font-bold text-xl tracking-tight mb-2">
-                                                Your Feed is Empty
-                                            </h3>
-                                            <p className="text-muted text-sm max-w-[260px] leading-relaxed mx-auto mb-8">
-                                                Follow more topics or share your first opinion to see what others are saying.
-                                            </p>
-                                            <div className="flex flex-col gap-3 w-full max-w-[200px] mx-auto">
-                                                <button
-                                                    onClick={toggleOverlay}
-                                                    className="h-[48px] bg-white text-black font-bold rounded-2xl text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    <Icon icon="Plus" size={16} />
-                                                    Post an Opinion
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
                                     <div className="space-y-6 pb-20">
-                                        {visiblePosts.map((post, index) => (
-                                            <div key={post.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                        {/* If Guest and DeepLinkedPost, ONLY show that post */}
+                                        {isGuest && deepLinkedPost ? (
+                                            <div className="animate-slide-up">
                                                 <PostCard
-                                                    post={post}
+                                                    post={deepLinkedPost}
                                                     onRemove={handleRemovePost}
-                                                    onEdit={(post) => { setEditingPost(post); setIsEditModalOpen(true); }}
-                                                    onBookmark={toggleSave}
+                                                    onEdit={() => { }}
+                                                    onBookmark={() => setShowOnboardingModal(true)}
                                                     onShare={handleShare}
                                                     userProfile={userProfile}
                                                     savedPosts={savedPosts}
-                                                    comments={postComments[post.id] || []}
+                                                    comments={postComments[deepLinkedPost.id] || []}
+                                                    isGuest={isGuest}
+                                                    onAuthRequired={() => setShowOnboardingModal(true)}
                                                     onImageClick={(src, type) => setViewingImage({ src, type })}
                                                 />
+                                                <div className="mt-12 p-8 rounded-3xl text-center bg-white/5 border border-white/10">
+                                                    <h3 className="text-lg font-bold text-white mb-2">Want to see more?</h3>
+                                                    <p className="text-muted text-xs mb-6 px-4">Create an account to browse thousands of authentic opinions and earn rewards.</p>
+                                                    <button
+                                                        onClick={() => setShowOnboardingModal(true)}
+                                                        className="w-full h-12 bg-white text-black font-bold rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl"
+                                                    >
+                                                        Create Free Account
+                                                    </button>
+                                                </div>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            /* Normal Feed Rendering (for logged in users or casual guests) */
+                                            visiblePosts.map((post, index) => (
+                                                <div key={post.id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+                                                    <PostCard
+                                                        post={post}
+                                                        onRemove={handleRemovePost}
+                                                        onEdit={(post) => { setEditingPost(post); setIsEditModalOpen(true); }}
+                                                        onBookmark={toggleSave}
+                                                        onShare={handleShare}
+                                                        userProfile={userProfile}
+                                                        savedPosts={savedPosts}
+                                                        comments={postComments[post.id] || []}
+                                                        isGuest={isGuest}
+                                                        onAuthRequired={() => setShowOnboardingModal(true)}
+                                                        onImageClick={(src, type) => setViewingImage({ src, type })}
+                                                    />
+                                                </div>
+                                            ))
+                                        )}
 
-                                        {/* Load More Spinner */}
-                                        {isLoadingMore && (
+                                        {/* Load More Spinner - Hide if exclusively viewing shared post */}
+                                        {isLoadingMore && !deepLinkedPost && (
                                             <div className="py-4 flex justify-center">
                                                 <div className="w-6 h-6 border-2 border-neon border-t-transparent rounded-full animate-spin"></div>
                                             </div>
                                         )}
-                                        {!hasMore && visiblePosts.length > 0 && (
+                                        {!hasMore && visiblePosts.length > 0 && !deepLinkedPost && (
                                             <div className="py-12 flex flex-col items-center justify-center gap-3">
                                                 <div className="w-[60px] h-[1px] bg-gradient-to-r from-transparent via-[#2f8bff]/30 to-transparent"></div>
                                                 <span className="text-[9px] font-medium tracking-[0.4em] uppercase text-[#2f8bff] opacity-50">
@@ -3982,8 +4765,8 @@
                     </div>
 
                     {/* BIG FAB */}
-                    < button
-                        onClick={toggleOverlay}
+                    <button
+                        onClick={() => !isGuest ? toggleOverlay() : setShowOnboardingModal(true)}
                         className={`
                             absolute bottom-24 right-5 h-12 rounded-full 
                             flex items-center justify-center 
@@ -4001,17 +4784,19 @@
                         <span className={`font-heading font-bold text-sm tracking-wide ml-2 opinion-text transition-all duration-300 overflow-hidden whitespace-nowrap ${isOverlayOpen ? 'w-0 opacity-0 ml-0' : 'w-auto opacity-100 ml-2'}`}>
                             OPINION
                         </span>
-                    </button >
+                    </button>
 
                     {/* BOTTOM NAV - FIXED */}
                     <BottomNav
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
+                        isGuest={isGuest}
+                        onAuthRequired={() => setShowOnboardingModal(true)}
                         isVisible={navVisible && !isOverlayOpen && !isAnySidePanelOpen && !viewingImage}
                     />
 
                     {/* OVERLAYS & SHEETS */}
-                    < OpinionModal isOpen={isOverlayOpen} onClose={toggleOverlay} onPublished={handleNewPost} userProfile={userProfile} initialPost={editingPost} />
+                    <OpinionModal isOpen={isOverlayOpen} onClose={toggleOverlay} onPublished={handleNewPost} userProfile={userProfile} initialPost={editingPost} />
                     <ExploreProfilesModal isOpen={showExploreModal} onClose={() => setShowExploreModal(false)} profiles={allProfiles} />
 
                     <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
@@ -4032,7 +4817,14 @@
                         setAllProfiles={setAllProfiles}
                     />
 
-                    <MenuDrawer isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} onLogout={() => setShowLogoutConfirm(true)} userProfile={userProfile} />
+                    <MenuDrawer
+                        isOpen={isMenuOpen}
+                        onClose={() => setIsMenuOpen(false)}
+                        onLogout={() => setShowLogoutConfirm(true)}
+                        userProfile={userProfile}
+                        isGuest={isGuest}
+                        onAuthRequired={() => { setIsMenuOpen(false); setShowOnboardingModal(true); }}
+                    />
 
                     <LogoutModal isOpen={showLogoutConfirm} onCancel={() => setShowLogoutConfirm(false)} onConfirm={async () => {
                         try {
@@ -4073,44 +4865,20 @@
                     {/* FULLSCREEN IMAGE VIEWER */}
                     <ImageViewer src={viewingImage?.src} type={viewingImage?.type} onClose={() => setViewingImage(null)} />
 
-                    {/* ONBOARDING MODAL POPUP */}
-                    <EditModal
-                        isOpen={isEditModalOpen}
-                        onClose={() => setIsEditModalOpen(false)}
-                        post={editingPost}
-                        onSave={(id, newText) => {
-                            setPosts(prev => prev.map(p => p.id === id ? { ...p, text: newText, text_content: newText, is_edited: true } : p));
-                        }}
+                    {/* AUTH MODAL POPUP (Replaces Onboarding Iframe) */}
+                    <AuthModal
+                        isOpen={showOnboardingModal}
+                        onClose={() => setShowOnboardingModal(false)}
+                        isClosable={!isGuest || !!deepLinkedPost}
                     />
 
-                    {
-                        showOnboardingModal && (
-                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                                {/* Blurred Background */}
-                                <div className="absolute inset-0 bg-black/80 backdrop-blur-lg"></div>
-
-                                {/* Modal Container */}
-                                <div className="relative w-full max-w-2xl h-[90vh] bg-[#0F1627] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
-                                    {/* Iframe to Onboarding Page */}
-                                    <iframe
-                                        src="onboarding.html"
-                                        className="w-full h-full"
-                                        title="Complete Your Profile"
-                                    />
-                                </div>
-                            </div>
-                        )
-                    }
-
-                </div >
+                </div>
             );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-    </style>
-    </div>
     <!-- TEST_UPDATE_TOY_END -->
 </body>
 
