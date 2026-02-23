@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
         // Fetch post data using REST API to avoid dependency issues in basic environments
         // We include profiles to get username and avatar
-        const apiUrl = `${SUPABASE_URL}/rest/v1/posts?id=eq.${id}&select=*,profiles:user_id(username,full_name,avatar_url)`;
+        const apiUrl = `${SUPABASE_URL}/rest/v1/posts?id=eq.${id}&select=*,profiles:user_id(username,full_name,avatar_url,rqs_score)`;
 
         const response = await fetch(apiUrl, {
             headers: {
@@ -47,10 +47,11 @@ export default async function handler(req, res) {
         const username = post.profiles?.username || 'user';
         const fullName = post.profiles?.full_name || 'PlusOpinion User';
         const postText = post.text_content || '';
+        const rqs = post.profiles?.rqs_score || 0;
 
         // Clean text for meta tags (remove newlines, quotes)
-        const cleanDescription = postText.replace(/[\r\n]+/g, ' ').replace(/"/g, '&quot;').substring(0, 200);
-        const title = `${fullName} (@${username}) on PlusOpinion`;
+        const cleanDescription = (postText.replace(/[\r\n]+/g, ' ').replace(/"/g, '&quot;').substring(0, 180) + '...').trim();
+        const title = `${fullName} (@${username}) | RQS ${rqs}`;
         const image = post.media_url || post.profiles?.avatar_url || 'https://plusopinion.com/icon-512.png';
         const url = `https://plusopinion.com/post/${id}`;
 
@@ -90,9 +91,9 @@ export default async function handler(req, res) {
       The frontend (HOMEPAGE_FINAL.HTML) will read the 'post' param 
       and show the specific post content to the user.
     -->
-    <meta http-equiv="refresh" content="0;url=/feed?post=${id}">
+    <meta http-equiv="refresh" content="0;url=/HOMEPAGE_FINAL.HTML?post=${id}">
     <script>
-        window.location.replace("/feed?post=${id}");
+        window.location.replace("/HOMEPAGE_FINAL.HTML?post=${id}");
     </script>
 </head>
 <body style="background: #020205; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
