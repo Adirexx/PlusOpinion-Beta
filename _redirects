@@ -11,12 +11,8 @@
 /sitemap.xml /sitemap.xml 200
 
 # --- DEEP LINK ROUTES (must come first!) ---
-# Shared profiles: plusopinion.com/profile/username
-/profile /PUBLIC%20POV%20PROFILE.HTML 200
-/profile/* /PUBLIC%20POV%20PROFILE.HTML 200
 
-# Shared posts: plusopinion.com/post/id
-/post/* /HOMEPAGE_FINAL.HTML 200
+/profile /PUBLIC%20POV%20PROFILE.HTML 200
 
 # --- MAIN APP PAGES ---
 /feed /HOMEPAGE_FINAL.HTML 200
