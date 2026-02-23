@@ -2729,7 +2729,7 @@
                         } catch (e) { }
 
                         if (signupData?.session) {
-                            window.location.href = 'onboarding.html';
+                            window.location.href = 'ONBOARDING.HTML';
                         } else {
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
@@ -2740,7 +2740,7 @@
                         const user = await window.signInUser(formData.email, formData.password);
                         if (user) {
                             if (user.onboardingRequired) {
-                                window.location.href = 'onboarding.html';
+                                window.location.href = 'ONBOARDING.HTML';
                             } else {
                                 window.location.reload();
                             }
@@ -3549,6 +3549,11 @@
                                 <div className="flex gap-3 w-full">
                                     <div className="relative">
                                         <img src={post.avatar || DEFAULT_AVATAR} className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
+                                        {post.verified && (
+                                            <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-[#121212]">
+                                                <Icon icon="Check" size={8} className="text-white" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0 pr-2">
                                         <div className="flex items-center gap-2">
@@ -3568,12 +3573,6 @@
                                     <span className="mx-1.5 opacity-30">|</span>
                                     <span className="truncate">plus opinion</span>
                                 </div>
-                                {/* Verified Purchase Badge - Only shown when post is verified */}
-                                {post.verified && (
-                                    <div className="flex items-center text-accent-green ml-1" title="Verified Purchase">
-                                        <Icon icon="ShieldCheck" size={16} />
-                                    </div>
-                                )}
                             </div>
 
                             <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light line-clamp-3">{post.text}</p>
