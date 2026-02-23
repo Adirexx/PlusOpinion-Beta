@@ -52,31 +52,31 @@
 
     <!-- Global Design System -->
     <!-- Note: External local CSS links may not load in preview, but inline styles are provided below -->
-    <link rel="stylesheet" href="./global.css">
+    <link rel="stylesheet" href="/global.css">
 
     <!-- Supabase Authentication -->
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js"></script>
-    <script type="module" src="./api.js"></script>
-    <script type="module" src="./auth.js"></script>
-    <script src="./rqs_calculator.js"></script>
-    <script src="./auth_guard.js"></script>
+    <script type="module" src="/supabase.js"></script>
+    <script type="module" src="/api.js"></script>
+    <script type="module" src="/auth.js"></script>
+    <script src="/rqs_calculator.js"></script>
+    <script src="/auth_guard.js"></script>
 
     <!-- SPA Core Infrastructure -->
-    <script src="./state_manager.js"></script>
-    <script src="./router.js"></script>
-    <script src="./spa_router.js"></script>
-    <script src="./pull_to_refresh.js?v=2.0"></script>
-    <script src="./navigation_preloader.js"></script>
+    <script src="/state_manager.js"></script>
+    <script src="/router.js"></script>
+    <script src="/spa_router.js"></script>
+    <script src="/pull_to_refresh.js?v=2.0"></script>
+    <script src="/navigation_preloader.js"></script>
 
 
-    <script type="module" src="./notifications.js"></script>
+    <script type="module" src="/notifications.js"></script>
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
-    <link rel="icon" href="./icon-192.png">
-    <link rel="icon" href="./icon-512.png">
+    <link rel="icon" href="/icon-192.png">
+    <link rel="icon" href="/icon-512.png">
 
 
     <!-- Libraries -->
@@ -92,7 +92,7 @@
     </script>
 
     <!-- Local Scripts -->
-    <script src="./runtime.js"></script>
+    <script src="/runtime.js"></script>
 
     <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -101,10 +101,10 @@
 
     <!-- Framer Motion (Optional - dependency removed from logic to prevent crash) -->
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="./pwa_installer.js" defer></script>
+    <script src="/pwa_installer.js" defer></script>
 
     <!-- Professional Update & Maintenance System -->
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
     <script>
         // Check for active Supabase session instead of sessionStorage
         // This enables persistent login across browser restarts
@@ -2805,7 +2805,7 @@
                         playsInline
                         className="absolute inset-0 w-full h-full object-cover opacity-30"
                     >
-                        <source src="./bg-video.mp4" type="video/mp4" />
+                        <source src="/bg-video.mp4" type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={() => isClosable && onClose()}></div>
                     <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
@@ -4128,7 +4128,7 @@
                         setIsGuest(true);
                         // Lock page if not viewing a deep-linked post
                         const searchParams = new URLSearchParams(window.location.search);
-                        if (!searchParams.get('post')) {
+                        if (!searchParams.get('post') && !window.location.pathname.startsWith('/post/')) {
                             setShowOnboardingModal(true);
                         }
                     }
@@ -4137,7 +4137,7 @@
                     setIsGuest(true);
                     // Lock page if not viewing a deep-linked post
                     const searchParams = new URLSearchParams(window.location.search);
-                    if (!searchParams.get('post')) {
+                    if (!searchParams.get('post') && !window.location.pathname.startsWith('/post/')) {
                         setShowOnboardingModal(true);
                     }
                 }
@@ -4161,7 +4161,14 @@
 
                     // Check for deep-link post parameter
                     const searchParams = new URLSearchParams(window.location.search);
-                    const postId = searchParams.get('post');
+                    let postId = searchParams.get('post');
+
+                    if (!postId && window.location.pathname.startsWith('/post/')) {
+                        const segments = window.location.pathname.split('/post/');
+                        if (segments.length > 1 && segments[1]) {
+                            postId = segments[1].split('/')[0].split('?')[0]; // Clean up ID
+                        }
+                    }
 
                     if (postId) {
                         try {
