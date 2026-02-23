@@ -9,51 +9,51 @@ const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
 // Complete list of files to cache for offline support
 const FILES_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./onboarding.html",
-  "./HOMEPAGE_FINAL.HTML",
-  "./BOOKMARKS.HTML",
-  "./CATAGORYPAGE.HTML",
-  "./PRIVATE OWNER PROFILE.HTML",
-  "./PUBLIC POV PROFILE.HTML",
-  "./MY SPACE FINAL (USER).HTML",
-  "./MY SPACE FINAL(COMPANIES).HTML",
-  "./NOTIFICATION PANEL.HTML",
-  "./reset-password.html",
-  "./change-password.html",
+  "/",
+  "/index.html",
+  "/onboarding.html",
+  "/HOMEPAGE_FINAL.HTML",
+  "/BOOKMARKS.HTML",
+  "/CATAGORYPAGE.HTML",
+  "/PRIVATE OWNER PROFILE.HTML",
+  "/PUBLIC POV PROFILE.HTML",
+  "/MY SPACE FINAL (USER).HTML",
+  "/MY SPACE FINAL(COMPANIES).HTML",
+  "/NOTIFICATION PANEL.HTML",
+  "/reset-password.html",
+  "/change-password.html",
 
   // Core Scripts
-  "./runtime.js",
-  "./bridge.js",
-  "./data.seed.js",
-  "./auth.js",
-  "./auth_guard.js",
-  "./supabase.js",
-  "./api.js",
+  "/runtime.js",
+  "/bridge.js",
+  "/data.seed.js",
+  "/auth.js",
+  "/auth_guard.js",
+  "/supabase.js",
+  "/api.js",
 
   // SPA Infrastructure
-  "./state_manager.js",
-  "./router.js",
-  "./pull_to_refresh.js",
-  "./navigation_preloader.js",
+  "/state_manager.js",
+  "/router.js",
+  "/pull_to_refresh.js",
+  "/navigation_preloader.js",
 
   // Feature Scripts
-  "./notifications.js",
-  "./rqs_calculator.js",
-  "./payment_gateway.js",
-  "./build-version.js",
+  "/notifications.js",
+  "/rqs_calculator.js",
+  "/payment_gateway.js",
+  "/build-version.js",
 
   // Styles
-  "./global.css",
+  "/global.css",
 
   // Media
-  "./bg-video.mp4",
-  "./icon-192.png",
-  "./icon-512.png",
+  "/bg-video.mp4",
+  "/icon-192.png",
+  "/icon-512.png",
 
   // PWA
-  "./manifest.json"
+  "/manifest.json"
 ];
 
 // Install event - cache files with robust error handling
