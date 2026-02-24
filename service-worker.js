@@ -104,23 +104,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // --- Supabase ISP Block Bypass ---
-  // Catch any direct network requests to the blocked Supabase domain (like images)
-  // and silently rewrite them to our Cloudflare proxy
-  if (url.hostname === 'ogqyemyrxogpnwitumsr.supabase.co') {
-    const proxyUrl = self.location.origin + '/supabase-api' + url.pathname + url.search;
-
-    event.respondWith(
-      fetch(proxyUrl, {
-        method: event.request.method,
-        headers: event.request.headers,
-        mode: 'cors', // Images need standard cors handling through the proxy
-        credentials: event.request.credentials
-      })
-    );
-    return;
-  }
-
   // Skip caching for external domains (only cache same-origin requests)
   if (url.origin !== self.location.origin) {
     event.respondWith(fetch(event.request));
