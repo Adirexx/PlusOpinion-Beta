@@ -1,9 +1,9 @@
 // Dynamic version - will be replaced at build time
 // For localhost, use timestamp; for production, use build timestamp
-// Updated at: FEB23_MAJOR_UPDATE_V3.1
+// Updated at: FEB23_MAJOR_UPDATE_V2.8
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260223_MAJOR_V3.2';
+  : 'BUILD_20260223_MAJOR_V2.8';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 
@@ -101,6 +101,23 @@ self.addEventListener("fetch", (event) => {
   // Skip caching for non-GET requests (POST, PUT, DELETE are not cacheable)
   if (event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // --- Supabase ISP Block Bypass ---
+  // Catch any direct network requests to the blocked Supabase domain (like images)
+  // and silently rewrite them to our Cloudflare proxy
+  if (url.hostname === 'ogqyemyrxogpnwitumsr.supabase.co') {
+    const proxyUrl = self.location.origin + '/supabase-api' + url.pathname + url.search;
+
+    event.respondWith(
+      fetch(proxyUrl, {
+        method: event.request.method,
+        headers: event.request.headers,
+        mode: 'cors', // Images need standard cors handling through the proxy
+        credentials: event.request.credentials
+      })
+    );
     return;
   }
 
