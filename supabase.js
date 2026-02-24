@@ -1,7 +1,18 @@
 // Supabase client will be initialized from the UMD bundle loaded via script tag
 // This avoids the ESM import issue with node:module dependencies
 
-const SUPABASE_URL = "https://ogqyemyrxogpnwitumsr.supabase.co";
+const SUPABASE_PROJECT_URL = "https://ogqyemyrxogpnwitumsr.supabase.co";
+
+const hostname = window.location.hostname;
+const isLocalhost = hostname === 'localhost' ||
+  hostname === '127.0.0.1' ||
+  hostname.startsWith('192.168.') ||
+  hostname.startsWith('10.') ||
+  hostname.endsWith('.local');
+
+// Under hostile ISP DNS (e.g. Jio blocking .supabase.co), we route API calls through our own domain
+// when in production. For local development with basic HTTP servers, we keep the direct URL.
+const SUPABASE_URL = isLocalhost ? SUPABASE_PROJECT_URL : window.location.origin + '/supabase-api';
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM";
 
 // Wait for Supabase UMD to load, then create client
