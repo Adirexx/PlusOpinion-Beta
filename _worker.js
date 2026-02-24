@@ -15,6 +15,19 @@ export default {
         const url = new URL(request.url);
         const userAgent = request.headers.get('user-agent') || '';
 
+        // 0. Supabase ISP Bypass Proxy
+        // Intercept all requests to /supabase-api/* and forward them to Supabase backend securely
+        // This bypasses Indian ISPs (like Jio) blocking .supabase.co domains via DNS poisoning
+        if (url.pathname.startsWith('/supabase-api/')) {
+            const targetUrl = new URL(request.url);
+            targetUrl.hostname = 'ogqyemyrxogpnwitumsr.supabase.co';
+            targetUrl.pathname = targetUrl.pathname.replace('/supabase-api', '');
+
+            // Cloudflare Worker correctly forwards methods, bodies, and CORS headers
+            const proxyRequest = new Request(targetUrl.toString(), request);
+            return fetch(proxyRequest);
+        }
+
         // 1. Check if this is a POST sharing link: /post/:id
         if (url.pathname.startsWith('/post/')) {
             const parts = url.pathname.split('/');
@@ -198,3 +211,4 @@ function generateHtmlResponse(title, description, image, canonicalUrl, appUrl, i
         }
     });
 }
+
