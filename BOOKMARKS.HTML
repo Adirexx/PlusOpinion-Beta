@@ -52,30 +52,30 @@
 
     <!-- Global Design System -->
     <!-- Note: External local CSS links may not load in preview, but inline styles are provided below -->
-    <link rel="stylesheet" href="./global.css">
+    <link rel="stylesheet" href="/global.css">
 
     <!-- Supabase Authentication -->
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js"></script>
-    <script type="module" src="./auth.js"></script>
-    <script type="module" src="./api.js"></script>
-    <script src="./auth_guard.js"></script>
+    <script type="module" src="/supabase.js"></script>
+    <script type="module" src="/auth.js"></script>
+    <script type="module" src="/api.js"></script>
+    <script src="/auth_guard.js"></script>
 
     <!-- SPA Core Infrastructure -->
-    <script src="./state_manager.js"></script>
-    <script src="./router.js"></script>
-    <script src="./spa_router.js"></script>
-    <script src="./pull_to_refresh.js?v=2.1"></script>
-    <script src="./navigation_preloader.js"></script>
+    <script src="/state_manager.js"></script>
+    <script src="/router.js"></script>
+    <script src="/spa_router.js"></script>
+    <script src="/pull_to_refresh.js?v=2.1"></script>
+    <script src="/navigation_preloader.js"></script>
 
 
-    <script type="module" src="./notifications.js"></script>
+    <script type="module" src="/notifications.js"></script>
 
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
-    <link rel="icon" href="./icon-192.png">
-    <link rel="icon" href="./icon-512.png">
+    <link rel="icon" href="/icon-192.png">
+    <link rel="icon" href="/icon-512.png">
 
 
     <!-- Libraries -->
@@ -91,7 +91,7 @@
     </script>
 
     <!-- Local Scripts -->
-    <script src="./runtime.js"></script>
+    <script src="/runtime.js"></script>
 
     <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -102,7 +102,7 @@
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <!-- Professional Update & Maintenance System -->
-    <script src="./updater.js"></script>
+    <script src="/updater.js"></script>
 
     <script>
         // Check for active Supabase session instead of sessionStorage
@@ -4089,7 +4089,7 @@
                         if (signupData.error) throw signupData.error;
 
                         if (signupData?.session) {
-                            window.location.href = 'ONBOARDING.HTML';
+                            window.location.href = 'onboarding.html';
                         } else {
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
@@ -4100,7 +4100,7 @@
                         const user = await window.signInUser(formData.email, formData.password);
                         if (user) {
                             if (user.onboardingRequired) {
-                                window.location.href = 'ONBOARDING.HTML';
+                                window.location.href = 'onboarding.html';
                             } else {
                                 window.location.reload();
                             }
@@ -4245,14 +4245,7 @@
                                 <div className="flex-grow border-t border-slate-700"></div>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={handleGoogleLogin}
-                                className="w-full flex items-center justify-center gap-2 bg-[#1a1f2e] hover:bg-[#252a3b] text-white py-3 rounded-xl font-semibold text-sm transition-all border border-slate-700"
-                            >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" /></svg>
-                                Continue with Google
-                            </button>
+                            <div className="google-sso-container" data-action="signin"></div>
                         </form>
 
                         <div className="mt-6 text-center text-sm text-slate-400">
