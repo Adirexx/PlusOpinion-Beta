@@ -1,11 +1,12 @@
 // Dynamic version - will be replaced at build time
-// For localhost, use timestamp; for production, use build timestamp
-// Updated at: FEB23_MAJOR_UPDATE_V3.6
+// Updated at: FEB26_VIDEO_FIX_V6.0.0
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260223_MAJOR_V3.7';
+  : 'BUILD_20260226_VIDEOFIX_V6.0.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
+const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
+const PROD_PROXY_BASE = 'https://plusopinion.com/supabase-api';
 
 // Complete list of files to cache for offline support
 const FILES_TO_CACHE = [
@@ -22,8 +23,6 @@ const FILES_TO_CACHE = [
   "/NOTIFICATION PANEL.HTML",
   "/reset-password.html",
   "/change-password.html",
-
-  // Core Scripts
   "/runtime.js",
   "/bridge.js",
   "/data.seed.js",
@@ -31,44 +30,29 @@ const FILES_TO_CACHE = [
   "/auth_guard.js",
   "/supabase.js",
   "/api.js",
-
-  // SPA Infrastructure
   "/state_manager.js",
   "/router.js",
   "/pull_to_refresh.js",
   "/navigation_preloader.js",
-
-  // Feature Scripts
   "/notifications.js",
   "/rqs_calculator.js",
   "/payment_gateway.js",
   "/build-version.js",
-
-  // Styles
   "/global.css",
-
-  // Media
-  "/bg-video.mp4",
   "/icon-192.png",
   "/icon-512.png",
-
-  // PWA
   "/manifest.json"
 ];
 
-// Install event - cache files with robust error handling
 self.addEventListener("install", (event) => {
-  console.log(`[SW] Installing version ${VERSION}`);
+  console.log(`[SW] Installing v${VERSION}`);
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Loop through files and add them individually to pinpoint errors
       for (const file of FILES_TO_CACHE) {
         try {
-          await cache.add(file);
-          // console.log(`[SW] Cached: ${file}`);
+          await cache.add(new Request(file + (file.includes('?') ? '&' : '?') + 'v=' + VERSION));
         } catch (err) {
-          console.error(`[SW] Failed to cache: ${file}`, err);
-          // In production, you might want to throw or ignore
+          console.warn(`[SW] Cache miss: ${file}`, err.message);
         }
       }
     })
@@ -76,113 +60,219 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate event - delete old caches
 self.addEventListener("activate", (event) => {
-  console.log(`[SW] Activating version ${VERSION}`);
+  console.log(`[SW] Activating v${VERSION}`);
   event.waitUntil(
     caches.keys().then((keyList) =>
-      Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log(`[SW] Deleting old cache: ${key}`);
-            return caches.delete(key);
-          }
-        })
-      )
+      Promise.all(keyList.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
     )
   );
-  self.clients.claim(); // Take control immediately
+  self.clients.claim();
 });
 
-// Fetch event - smart caching strategy
+// ─────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────
+
+/** True if the pathname ends with a video file extension */
+function isVideoUrl(pathname) {
+  return /\.(mp4|mov|webm|ogg|avi|mkv|m4v|3gp)(\?|$)/i.test(pathname);
+}
+
+/** True if the pathname ends with an image file extension */
+function isImageUrl(pathname) {
+  return /\.(jpg|jpeg|png|gif|webp|heic|avif|svg|bmp|tiff)(\?|$)/i.test(pathname);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CLEAN URL MAPPING (Simulates _redirects on Localhost)
+// ─────────────────────────────────────────────────────────────────
+const CLEAN_TO_PHYSICAL_MAP = {
+  "/feed": "/HOMEPAGE_FINAL.HTML",
+  "/onboarding": "/onboarding.html",
+  "/reset-password": "/reset-password.html",
+  "/change-password": "/change-password.html",
+  "/bookmarks": "/BOOKMARKS.HTML",
+  "/categories": "/CATAGORYPAGE.HTML",
+  "/myspace": "/MY SPACE FINAL (USER).HTML",
+  "/workspace": "/MY SPACE FINAL(COMPANIES).HTML",
+  "/notifications": "/NOTIFICATION PANEL.HTML",
+  "/myprofile": "/PRIVATE OWNER PROFILE.HTML",
+  "/profile": "/PUBLIC POV PROFILE.HTML",
+  "/about": "/ABOUT.HTML",
+  "/support": "/SUPPORT.HTML",
+  "/privacy-policy": "/PRIVACY_POLICY.HTML",
+  "/t&c": "/TERMS_AND_CONDITIONS.HTML",
+  "/maintenance": "/MAINTENANCE.HTML"
+};
+
+// ─────────────────────────────────────────────────────────────────
+// FETCH EVENT
+// ─────────────────────────────────────────────────────────────────
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
+  const isLocalhost = self.location.hostname === 'localhost' ||
+    self.location.hostname === '127.0.0.1';
 
-  // Skip caching for non-GET requests (POST, PUT, DELETE are not cacheable)
-  if (event.request.method !== 'GET') {
-    event.respondWith(fetch(event.request));
+  // ══════════════════════════════════════════════════════════════════
+  // CLEAN URL FALLBACK (Localhost only)
+  // Intercepts clean paths (e.g. /onboarding) and serves the .html file
+  // ══════════════════════════════════════════════════════════════════
+  if (isLocalhost && CLEAN_TO_PHYSICAL_MAP[url.pathname]) {
+    const physicalPath = CLEAN_TO_PHYSICAL_MAP[url.pathname];
+    const newUrl = new URL(physicalPath, url.origin);
+    // Maintain query params and hash
+    newUrl.search = url.search;
+    newUrl.hash = url.hash;
+
+    console.log(`[SW] Routing clean path: ${url.pathname} -> ${physicalPath}`);
+
+    event.respondWith(
+      fetch(newUrl).then(response => {
+        if (response.ok) return response;
+        // If physical file not found, fall back to original request (will 404 anyway)
+        return fetch(event.request);
+      }).catch(() => fetch(event.request))
+    );
     return;
   }
 
-  // --- Supabase ISP Block Bypass ---
-  // Catch any direct network requests to the blocked Supabase domain (like images)
-  // and silently rewrite them to our Cloudflare proxy
-  if (url.hostname === 'ogqyemyrxogpnwitumsr.supabase.co') {
-    const isLocalhost = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+  // ══════════════════════════════════════════════════════════════════
+  // SUPABASE ISP BYPASS — Intercept all supabase.co requests
+  // ══════════════════════════════════════════════════════════════════
+  if (url.hostname === SUPABASE_HOSTNAME) {
+    if (isLocalhost) {
+      // ── LOCALHOST STRATEGY ─────────────────────────────────────────
+      // Videos and images need DIFFERENT proxy strategies:
+      //
+      // IMAGES → wsrv.nl CDN (fast, compressed, no CORS issues for <img>)
+      //          wsrv.nl is an IMAGE-ONLY CDN and CANNOT handle video files.
+      //
+      // VIDEOS → Production Cloudflare proxy (https://plusopinion.com/supabase-api)
+      //          Videos require full HTTP streaming (206 Partial Content + Range),
+      //          CORS headers, and Content-Type — all broken with wsrv.nl + no-cors.
+      //
+      // ALL OTHER (REST/auth) → Production proxy
+      // ──────────────────────────────────────────────────────────────
 
-    if (!isLocalhost) {
-      const proxyUrl = self.location.origin + '/supabase-api' + url.pathname + url.search;
+      if (isImageUrl(url.pathname)) {
+        // IMAGE: wsrv.nl CDN — compresses & serves as WebP instantly
+        const imgProxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url.toString())}&w=900&fit=cover&output=webp&q=80`;
+        event.respondWith(
+          fetch(imgProxyUrl, {
+            mode: 'cors',  // Use cors (not no-cors) so <img> can display the result
+            credentials: 'omit'
+          }).catch(() =>
+            // Fallback: try production proxy if wsrv.nl fails
+            fetch(PROD_PROXY_BASE + url.pathname + url.search, { mode: 'cors', credentials: 'omit' })
+              .catch(() => new Response(null, { status: 504 }))
+          )
+        );
+        return;
+      }
 
+      // VIDEO or REST: proxy through production Cloudflare worker
+      // This correctly handles:
+      //   - HTTP Range requests (video seeking/streaming) → 206 Partial Content
+      //   - CORS headers (Access-Control-Allow-Origin)
+      //   - Full response body streaming for <video> elements
+      const prodProxyUrl = PROD_PROXY_BASE + url.pathname + url.search;
       event.respondWith(
-        fetch(proxyUrl, {
+        fetch(prodProxyUrl, {
           method: event.request.method,
-          headers: event.request.headers,
-          mode: 'cors', // Images need standard cors handling through the proxy
-          credentials: event.request.credentials
+          headers: event.request.headers,  // Forward Range, Authorization, etc.
+          body: ['GET', 'HEAD'].includes(event.request.method) ? undefined : event.request.body,
+          mode: 'cors',
+          credentials: 'omit'
         }).catch(err => {
-          console.warn('[SW] Proxy fetch failed gracefully:', err);
-          return new Response(null, { status: 504, statusText: 'Gateway Timeout' });
+          console.warn('[SW] Localhost prod-proxy failed:', err.message);
+          return new Response(
+            isVideoUrl(url.pathname)
+              ? null
+              : JSON.stringify({ error: 'proxy_failed' }),
+            {
+              status: 502,
+              headers: { 'Content-Type': isVideoUrl(url.pathname) ? 'video/mp4' : 'application/json' }
+            }
+          );
         })
       );
       return;
     }
-  }
 
-  // Skip caching for external domains (only cache same-origin requests)
-  if (url.origin !== self.location.origin) {
+    // ── PRODUCTION STRATEGY (Cloudflare Pages) ─────────────────────────
+    // Same-origin proxy: /supabase-api/* → Cloudflare Worker → Supabase
+    // All headers forwarded (Authorization, Range, apikey, etc.)
+    // Worker adds proper CORS headers and handles WebSocket upgrades.
+    const proxyUrl = self.location.origin + '/supabase-api' + url.pathname + url.search;
     event.respondWith(
-      fetch(event.request).catch(err => {
-        console.warn('[SW] External fetch failed gracefully:', err);
+      fetch(proxyUrl, {
+        method: event.request.method,
+        headers: event.request.headers,
+        body: ['GET', 'HEAD'].includes(event.request.method) ? undefined : event.request.body,
+        mode: 'cors',
+        credentials: 'omit'
+      }).catch(err => {
+        console.warn('[SW] Production proxy failed:', err.message);
         return new Response(null, { status: 504, statusText: 'Gateway Timeout' });
       })
     );
     return;
   }
 
+  // Skip non-GET
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
+  // Skip external domains (non-same-origin)
+  if (url.origin !== self.location.origin) {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        new Response(null, { status: 504, statusText: 'Gateway Timeout' })
+      )
+    );
+    return;
+  }
 
-  // Network-first for HTML pages (always get latest version)
-  if (event.request.destination === 'document' || url.pathname.endsWith('.html')) {
+  // ── Network-first for HTML (always fetch latest) ──
+  if (event.request.destination === 'document' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.HTML')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Only cache successful responses
           if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
           }
           return response;
         })
-        .catch(() => {
-          // Offline - serve from cache
-          return caches.match(event.request);
-        })
+        .catch(() => caches.match(event.request))
     );
+    return;
   }
-  // Cache-first for static assets (CSS, JS, images) - faster loading
-  else {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request).then((fetchResponse) => {
-          // Only cache successful responses
-          if (fetchResponse.status === 200) {
-            const responseClone = fetchResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return fetchResponse;
-        });
+
+  // ── Cache-first for static assets (JS, CSS, images) ──
+  event.respondWith(
+    caches.match(event.request).then((cached) =>
+      cached || fetch(event.request).then((res) => {
+        if (res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+        }
+        return res;
       })
-    );
-  }
+    )
+  );
 });
 
-// Listen for messages from main thread
+// Listen for messages
 self.addEventListener('message', (event) => {
-  if (event.data.action === 'skipWaiting') {
+  if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
 });
