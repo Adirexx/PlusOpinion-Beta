@@ -231,16 +231,24 @@
                         handleAuthenticatedUser(existingSession.user);
                     }
 
-                    // Fallback: Give 8s for hash-based OAuth sessions to resolve, then redirect if still no session
+                    // Detect if user arrived via email confirmation link (has token in URL hash)
+                    const _urlHash = new URLSearchParams(window.location.hash.substring(1));
+                    const _hasEmailToken = _urlHash.get('access_token') &&
+                        (_urlHash.get('type') === 'signup' || _urlHash.get('type') === 'recovery');
+
+                    // Fallback timeout: redirect to login if still no session
+                    // Give extra time when processing an email confirmation token (proxy exchange takes longer)
+                    const _fallbackDelay = _hasEmailToken ? 25000 : 8000;
+
                     setTimeout(async () => {
                         if (!mounted) return;
-                        // If user state is already set by onAuthStateChange, don't redirect
                         const { data: { session } } = await window.supabase.auth.getSession();
                         if (!session) {
-                            console.warn('No session found after 8s, redirecting to login');
+                            console.warn('No session found after fallback timeout, redirecting to login');
                             window.navigateTo('index.html');
                         }
-                    }, 8000);
+                    }, _fallbackDelay);
+
                 };
 
                 initAuth();
