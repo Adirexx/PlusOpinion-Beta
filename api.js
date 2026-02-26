@@ -3,8 +3,71 @@
 // Import this in your HTML files after supabase.js
 
 // ============================================
-// AUTH / USER API
+// FIX #3: MEDIA URL REWRITER
 // ============================================
+// Supabase storage.getPublicUrl() returns raw supabase.co URLs.
+// These are BLOCKED by Indian ISPs. This helper rewrites them.
+//
+// CRITICAL DISTINCTION:
+//   IMAGES → wsrv.nl CDN (fast, compressed, CORS-safe for <img> tags)
+//   VIDEOS → production Cloudflare proxy (supports HTTP Range/206 for streaming)
+//
+// wsrv.nl is an IMAGE-ONLY CDN. Routing .mp4/.webm through it causes 404/no-cors
+// failures because <video> requires Content-Type, Content-Range, Accept-Ranges.
+// ============================================
+
+const _SUPABASE_ORIGIN = 'https://ogqyemyrxogpnwitumsr.supabase.co';
+const _VIDEO_EXTS = /\.(mp4|mov|webm|ogg|avi|mkv|m4v|3gp)(\?|$)/i;
+const _IMAGE_EXTS = /\.(jpg|jpeg|png|gif|webp|heic|avif|svg|bmp|tiff)(\?|$)/i;
+
+window.rewriteMediaUrl = function (url) {
+    if (!url || typeof url !== 'string') return url;
+    if (!url.includes('ogqyemyrxogpnwitumsr.supabase.co')) return url;
+
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.endsWith('.local');
+
+    const isVideo = _VIDEO_EXTS.test(url);
+
+    if (isLocalhost) {
+        if (isVideo) {
+            // Videos MUST go through a real proxy that supports:
+            // - HTTP Range requests (206 Partial Content — required for seeking)
+            // - Proper Content-Type, Content-Length, Accept-Ranges headers
+            // wsrv.nl cannot provide any of these for video files.
+            return url.replace(_SUPABASE_ORIGIN, 'https://plusopinion.com/supabase-api');
+        }
+        // Images: wsrv.nl CDN — very fast, compresses to WebP
+        return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=900&fit=cover&output=webp&q=82`;
+    }
+
+    // Production (Cloudflare Pages): same-origin proxy handles everything
+    return url.replace(_SUPABASE_ORIGIN, window.location.origin + '/supabase-api');
+};
+
+/**
+ * Post-process an array of post objects to rewrite all media URLs.
+ * Call this after any API fetch that returns post data with media_url / avatar_url.
+ * This ensures the HTML never even sees raw supabase.co URLs.
+ */
+window.rewritePostUrls = function (posts) {
+    if (!posts || !window.rewriteMediaUrl) return posts;
+    const rewrite = window.rewriteMediaUrl;
+    return posts.map(post => ({
+        ...post,
+        media_url: post.media_url ? rewrite(post.media_url) : post.media_url,
+        verification_proof_url: post.verification_proof_url ? rewrite(post.verification_proof_url) : post.verification_proof_url,
+        profiles: post.profiles ? {
+            ...post.profiles,
+            avatar_url: post.profiles.avatar_url ? rewrite(post.profiles.avatar_url) : post.profiles.avatar_url
+        } : post.profiles
+    }));
+};
+
 
 /**
  * Get current authenticated user
@@ -226,7 +289,9 @@ window.getFeed = async function (options = {}) {
         }
 
         // Final randomized mix of the batch
-        return selection.sort(() => Math.random() - 0.5);
+        const shuffled = selection.sort(() => Math.random() - 0.5);
+        // Rewrite all media URLs before returning (defense-in-depth vs ISP block)
+        return window.rewritePostUrls ? window.rewritePostUrls(shuffled) : shuffled;
     }
 
     const { data, error } = await query
@@ -234,7 +299,9 @@ window.getFeed = async function (options = {}) {
         .range(offset, offset + limit - 1);
 
     if (error) throw error;
-    return data || [];
+    // Rewrite all media/avatar URLs so HTML never sees raw supabase.co URLs
+    const posts = data || [];
+    return window.rewritePostUrls ? window.rewritePostUrls(posts) : posts;
 };
 
 // ============================================
@@ -579,6 +646,13 @@ window.getPost = async function (postId) {
         .single();
 
     if (error) throw error;
+    // Rewrite media URL so video/image sources are proxied
+    if (data && window.rewriteMediaUrl) {
+        data.media_url = data.media_url ? window.rewriteMediaUrl(data.media_url) : data.media_url;
+        if (data.profiles?.avatar_url) {
+            data.profiles.avatar_url = window.rewriteMediaUrl(data.profiles.avatar_url);
+        }
+    }
     return data;
 };
 
@@ -1984,7 +2058,7 @@ window.uploadMedia = async function (file) {
         .from('post-media')
         .getPublicUrl(fileName);
 
-    return data.publicUrl;
+    return window.rewriteMediaUrl ? window.rewriteMediaUrl(data.publicUrl) : data.publicUrl;
 };
 
 /**
