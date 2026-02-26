@@ -39,12 +39,9 @@ let swContent = fs.readFileSync(
     'utf8'
 );
 
-const date = new Date();
-const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
-
 swContent = swContent.replace(
-    /'BUILD_\d{8}_MAJOR_V\d+\.\d+'/,
-    `'BUILD_${dateStr}_MAJOR_V2.9'`
+    /const VERSION = .*'BUILD_TIMESTAMP_PLACEHOLDER'.*/,
+    `const VERSION = '${timestamp}';`
 );
 
 fs.writeFileSync(
