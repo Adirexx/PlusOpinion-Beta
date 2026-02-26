@@ -98,20 +98,24 @@ class NavigationPreloader {
 // Create global instance
 window.NavigationPreloader = new NavigationPreloader();
 
-// Preload common pages immediately
+// Preload common pages immediately (using actual HTML file paths)
 setTimeout(() => {
-    // Preload most common navigation targets
+    // FIX #4: Use real .HTML file paths — SPA routes like /feed only work
+    // on Cloudflare Pages via _redirects, NOT on localhost. This caused
+    // net::ERR_ABORTED 404 errors showing in the console on every page load.
     const commonPages = [
-        '/feed',
-        '/bookmarks',
-        '/notifications'
+        '/HOMEPAGE_FINAL.HTML',
+        '/BOOKMARKS.HTML',
+        '/NOTIFICATION PANEL.HTML',
+        '/PRIVATE OWNER PROFILE.HTML'
     ];
 
     commonPages.forEach(page => {
-        if (window.location.pathname !== `/${page}`) {
+        // Only preload if not currently on that page
+        if (!window.location.pathname.includes(page.replace(/ /g, '%20'))) {
             window.NavigationPreloader.preload(page);
         }
     });
-}, 2000); // Wait 2 seconds after page load
+}, 3000); // Wait 3 seconds — let critical resources load first
 
 console.log('✅ Navigation Preloader ready');
