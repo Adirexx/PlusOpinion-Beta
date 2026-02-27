@@ -1475,4 +1475,123 @@ window.checkFirstPostEncouragement = async function (userId, userName) {
 window.hasReceivedNotification = hasReceivedNotification;
 window.getLastNotification = getLastNotification;
 
+// ============================================
+// NOTIFICATION RETRIEVAL & MANAGEMENT
+// These 3 functions are called by NOTIFICATION PANEL.HTML
+// and MUST exist here for correct read/delete behaviour.
+// ============================================
+
+/**
+ * Fetch notifications for the current user from the database.
+ * Returns raw rows — the panel formats them via formatNotification().
+ */
+window.getNotifications = async function ({ limit = 50, offset = 0 } = {}) {
+    try {
+        const user = await window.getCurrentUser();
+        if (!user) return [];
+
+        const { data, error } = await window.supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('[Notifications] getNotifications failed:', err);
+        return [];
+    }
+};
+
+/**
+ * Mark a single notification as read in the database.
+ * @param {string} notificationId - The UUID of the notification row.
+ */
+window.markNotificationRead = async function (notificationId) {
+    if (!notificationId) return;
+    try {
+        const { error } = await window.supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('id', notificationId);
+
+        if (error) throw error;
+        console.log('[Notifications] Marked as read:', notificationId);
+    } catch (err) {
+        console.error('[Notifications] markNotificationRead failed:', err);
+    }
+};
+
+/**
+ * Mark ALL notifications for the current user as read.
+ */
+window.markAllNotificationsRead = async function () {
+    try {
+        const user = await window.getCurrentUser();
+        if (!user) return;
+
+        const { error } = await window.supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+
+        if (error) throw error;
+        console.log('[Notifications] All marked as read');
+    } catch (err) {
+        console.error('[Notifications] markAllNotificationsRead failed:', err);
+    }
+};
+
+/**
+ * Hard-delete a notification from the database.
+ * @param {string} notificationId - The UUID of the notification row.
+ */
+window.deleteNotification = async function (notificationId) {
+    if (!notificationId) return;
+    try {
+        const { error } = await window.supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notificationId);
+
+        if (error) throw error;
+        console.log('[Notifications] Deleted:', notificationId);
+    } catch (err) {
+        console.error('[Notifications] deleteNotification failed:', err);
+        throw err; // re-throw so caller can handle UI rollback
+    }
+};
+
+/**
+ * Toggle is_bookmarked flag on a notification.
+ * @param {string} notificationId - UUID of the notification.
+ * @param {boolean} bookmarked - New bookmark state.
+ */
+window.toggleNotificationBookmark = async function (notificationId, bookmarked) {
+    if (!notificationId) return;
+    try {
+        const { error } = await window.supabase
+            .from('notifications')
+            .update({
+                metadata: window.supabase.rpc
+                    ? undefined  // will be handled by merge below
+                    : undefined
+            });
+        // Use a targeted update via jsonb merge instead of overwriting whole metadata
+        const { error: err2 } = await window.supabase
+            .from('notifications')
+            .update({ is_bookmarked: bookmarked })
+            .eq('id', notificationId);
+
+        if (err2) throw err2;
+    } catch (err) {
+        console.error('[Notifications] toggleNotificationBookmark failed:', err);
+        throw err;
+    }
+};
+
 console.log('✅ Extended notification system loaded successfully');
+
