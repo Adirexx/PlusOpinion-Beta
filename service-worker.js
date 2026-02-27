@@ -2,7 +2,7 @@
 // Updated at: FEB26_VIDEO_FIX_V8.3.1
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260226_VIDEOFIX_V8.3.1';
+  : 'BUILD_20260226_VIDEOFIX_V8.3.2';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
