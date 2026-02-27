@@ -25,31 +25,109 @@ export default {
         const userAgent = request.headers.get('user-agent') || '';
 
         // ─────────────────────────────────────────────────────────────────
-        // 0. SUPABASE ISP BYPASS PROXY
-        // Intercepts ALL /supabase-api/* requests (REST, Storage, Realtime WebSocket)
-        // and proxies them to Supabase — bypassing Indian ISP DNS poisoning.
+        // 0a. CORS PREFLIGHT — Must be FIRST, before all other handlers.
+        //     Browsers send OPTIONS before any cross-origin request.
+        //     If this comes after the proxy block it's never reached.
+        // ─────────────────────────────────────────────────────────────────
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with',
+                    'Access-Control-Max-Age': '86400'
+                }
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // 0b. SUPABASE ISP BYPASS PROXY
+        //     Intercepts ALL /supabase-api/* — REST, Storage, Auth, Realtime WS
         // ─────────────────────────────────────────────────────────────────
         if (url.pathname.startsWith('/supabase-api/')) {
 
-            // Build the target Supabase URL
+            // Build the upstream Supabase URL
             const targetUrl = new URL(request.url);
             targetUrl.hostname = SUPABASE_HOSTNAME;
             targetUrl.protocol = 'https:';
             targetUrl.pathname = targetUrl.pathname.replace('/supabase-api', '');
 
-            // FIX #5: WebSocket Upgrade for Supabase Realtime
+            // ── WebSocket Upgrade (Supabase Realtime) ──────────────────
+            // Cloudflare Workers require WebSocketPair for WS proxying.
+            // Plain fetch() cannot upgrade to WebSocket — it silently fails.
             const isWebSocketUpgrade = request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
 
             if (isWebSocketUpgrade) {
-                // Cloudflare Workers natively support WebSocket proxying.
-                // Just pass the request through — CF handles the WS handshake.
+                // Build WSS target URL from the Supabase hostname
                 const wsTargetUrl = targetUrl.toString().replace(/^https:/, 'wss:');
-                return fetch(new Request(wsTargetUrl, request));
+
+                // Open a server-side WebSocket connection TO Supabase
+                const upstreamHeaders = new Headers();
+                upstreamHeaders.set('Upgrade', 'websocket');
+                upstreamHeaders.set('Connection', 'Upgrade');
+                // Forward the apikey from query params as a header so Supabase can auth
+                const apikey = url.searchParams.get('apikey') || '';
+                if (apikey) {
+                    upstreamHeaders.set('apikey', apikey);
+                    upstreamHeaders.set('Authorization', `Bearer ${apikey}`);
+                }
+                // Forward any other relevant headers
+                const originalAuth = request.headers.get('Authorization');
+                if (originalAuth && !apikey) upstreamHeaders.set('Authorization', originalAuth);
+
+                const upstreamResponse = await fetch(wsTargetUrl, {
+                    method: 'GET',
+                    headers: upstreamHeaders
+                });
+
+                // Cloudflare gives us a WebSocket via the response when upgrade succeeds
+                if (upstreamResponse.status !== 101) {
+                    return new Response('WebSocket upstream connection failed', {
+                        status: 502,
+                        headers: { 'Access-Control-Allow-Origin': '*' }
+                    });
+                }
+
+                // Create the local client↔worker pair and bridge it with the upstream WS
+                const { 0: clientSocket, 1: serverSocket } = new WebSocketPair();
+
+                const upstream = upstreamResponse.webSocket;
+                upstream.accept();
+                serverSocket.accept();
+
+                // Bridge: client → upstream
+                serverSocket.addEventListener('message', evt => {
+                    try { upstream.send(evt.data); } catch (_) { }
+                });
+                serverSocket.addEventListener('close', evt => {
+                    try { upstream.close(evt.code, evt.reason); } catch (_) { }
+                });
+                serverSocket.addEventListener('error', () => {
+                    try { upstream.close(1011, 'Client error'); } catch (_) { }
+                });
+
+                // Bridge: upstream → client
+                upstream.addEventListener('message', evt => {
+                    try { serverSocket.send(evt.data); } catch (_) { }
+                });
+                upstream.addEventListener('close', evt => {
+                    try { serverSocket.close(evt.code, evt.reason); } catch (_) { }
+                });
+                upstream.addEventListener('error', () => {
+                    try { serverSocket.close(1011, 'Upstream error'); } catch (_) { }
+                });
+
+                // Return the 101 Switching Protocols response to the browser
+                return new Response(null, {
+                    status: 101,
+                    webSocket: clientSocket,
+                    headers: { 'Access-Control-Allow-Origin': '*' }
+                });
             }
 
-            // Build a clean proxy request, forwarding all original headers
+            // ── Regular HTTP Proxy (REST / Auth / Storage) ──────────────
             const proxyHeaders = new Headers(request.headers);
-            // Override the host to match Supabase (required for Cloudflare egress)
             proxyHeaders.set('Host', SUPABASE_HOSTNAME);
 
             const proxyRequest = new Request(targetUrl.toString(), {
@@ -62,11 +140,10 @@ export default {
             try {
                 const response = await fetch(proxyRequest);
 
-                // Add CORS headers so browser JS can access the response
                 const corsHeaders = new Headers(response.headers);
                 corsHeaders.set('Access-Control-Allow-Origin', '*');
                 corsHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-                corsHeaders.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert');
+                corsHeaders.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with');
                 corsHeaders.set('Access-Control-Expose-Headers', 'content-range, range');
 
                 return new Response(response.body, {
@@ -87,30 +164,12 @@ export default {
         }
 
         // ─────────────────────────────────────────────────────────────────
-        // Handle CORS preflight for /supabase-api/* path
-        // ─────────────────────────────────────────────────────────────────
-        if (request.method === 'OPTIONS' && url.pathname.startsWith('/supabase-api/')) {
-            return new Response(null, {
-                status: 204,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert',
-                    'Access-Control-Max-Age': '86400'
-                }
-            });
-        }
-
-        // ─────────────────────────────────────────────────────────────────
         // 1. POST SHARING LINKS: /post/:id
         // ─────────────────────────────────────────────────────────────────
         if (url.pathname.startsWith('/post/')) {
             const parts = url.pathname.split('/');
             const id = parts[2] ? parts[2].split('?')[0] : null;
-
-            if (id) {
-                return await handlePostPreview(id, url, userAgent);
-            }
+            if (id) return await handlePostPreview(id, url, userAgent);
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -119,10 +178,7 @@ export default {
         if (url.pathname.startsWith('/profile/')) {
             const parts = url.pathname.split('/');
             const username = parts[2] ? parts[2].split('?')[0] : null;
-
-            if (username && username !== '') {
-                return await handleProfilePreview(username, url, userAgent);
-            }
+            if (username && username !== '') return await handleProfilePreview(username, url, userAgent);
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -131,6 +187,7 @@ export default {
         return env.ASSETS.fetch(request);
     }
 };
+
 
 // ─────────────────────────────────────────────────────────────────
 // OG PREVIEW HANDLERS
