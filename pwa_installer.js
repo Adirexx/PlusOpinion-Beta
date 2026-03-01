@@ -42,22 +42,43 @@ function showInstallPromotion() {
     // Create the toast element
     const toast = document.createElement('div');
     toast.id = 'pwa-install-toast';
-    // Using fixed positioning and high z-index
-    // Tailwind classes matching the design system
-    toast.className = 'fixed bottom-[75px] left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-sm bg-[#1A1C2E]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-4 transition-all duration-500 ease-out transform translate-y-20 opacity-0';
+
+    // FIX: Use inline styles instead of Tailwind classes (Tailwind may not be loaded on all pages)
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '75px',
+        left: '50%',
+        transform: 'translateX(-50%) translateY(80px)',
+        zIndex: '9999',
+        width: '90%',
+        maxWidth: '384px',
+        background: 'rgba(26, 28, 46, 0.95)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: '16px',
+        padding: '16px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        transition: 'opacity 0.5s ease, transform 0.5s ease',
+        opacity: '0',
+        fontFamily: "'Inter', -apple-system, sans-serif",
+    });
 
     toast.innerHTML = `
-        <div class="w-12 h-12 bg-neon/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-white/5">
-             <img src="./icon-192.png" class="w-full h-full object-cover" alt="App Icon" onerror="this.onerror=null;this.parentNode.innerHTML='<svg class=\'w-6 h-6 text-neon\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z\'></path></svg>'"/>
+        <div style="width:48px;height:48px;background:rgba(47,139,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;border:1px solid rgba(255,255,255,0.05);">
+             <img src="./icon-192.png" style="width:100%;height:100%;object-fit:cover;" alt="App Icon" onerror="this.onerror=null;this.parentNode.innerHTML='<svg style=\\'width:24px;height:24px;color:#2F8BFF\\' fill=\\'none\\' stroke=\\'%232F8BFF\\' viewBox=\\'0 0 24 24\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'2\\' d=\\'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z\\'></path></svg>'"/>
         </div>
-        <div class="flex-1 min-w-0">
-            <h3 class="text-white font-heading font-bold text-sm tracking-wide">Install App</h3>
-            <p class="text-white/60 text-xs truncate">Get the best experience</p>
+        <div style="flex:1;min-width:0;">
+            <h3 style="color:#fff;font-weight:700;font-size:14px;margin:0 0 2px 0;letter-spacing:-0.2px;">Install App</h3>
+            <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Get the best experience</p>
         </div>
-        <button id="pwa-install-btn" class="bg-neon text-white px-4 py-2 rounded-lg text-xs font-bold shadow-[0_0_15px_rgba(47,139,255,0.3)] whitespace-nowrap hover:bg-neon/80 transition-colors">
+        <button id="pwa-install-btn" style="background:linear-gradient(135deg,#2F8BFF,#1972de);color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;box-shadow:0 0 15px rgba(47,139,255,0.3);flex-shrink:0;">
             Install
         </button>
-        <button id="pwa-dismiss-btn" class="p-2 text-white/40 hover:text-white transition-colors">
+        <button id="pwa-dismiss-btn" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;padding:8px;display:flex;align-items:center;border-radius:8px;flex-shrink:0;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -69,7 +90,10 @@ function showInstallPromotion() {
 
     // Animate in
     requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-20', 'opacity-0');
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        });
     });
 
     // Handle Install Click
@@ -77,7 +101,8 @@ function showInstallPromotion() {
     if (installBtn) {
         installBtn.addEventListener('click', async () => {
             // Hide the custom toast
-            toast.classList.add('translate-y-20', 'opacity-0');
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(80px)';
             setTimeout(() => toast.remove(), 500);
 
             if (deferredPrompt) {
@@ -93,7 +118,8 @@ function showInstallPromotion() {
     const dismissBtn = document.getElementById('pwa-dismiss-btn');
     if (dismissBtn) {
         dismissBtn.addEventListener('click', () => {
-            toast.classList.add('translate-y-20', 'opacity-0');
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(80px)';
             setTimeout(() => toast.remove(), 500);
             // Save dismissal timestamp
             localStorage.setItem('pwa_prompt_dismissed', Date.now().toString());
