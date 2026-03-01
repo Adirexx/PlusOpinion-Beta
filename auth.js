@@ -16,23 +16,29 @@ window.authReadyPromise = new Promise(resolve => {
 /* ============================
    SIGN UP (Email + Password)
 ============================ */
-async function signUpUser(email, password, name) {
+async function signUpUser(email, password, name, dob) {
   const redirectPath = '/onboarding.html'; // FORCE .html extension
+
+  // Build user metadata — full_name is used by the DB trigger on_auth_user_created
+  // dob (date_of_birth) is stored in user_metadata for retrieval during onboarding
+  const metadata = { full_name: name };
+  if (dob) metadata.date_of_birth = dob; // format: YYYY-MM-DD
 
   const { data, error } = await window.supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: window.location.origin + redirectPath,
-      data: { full_name: name }
+      data: metadata
     }
   });
 
   if (error) throw error;
 
-  // Profile creation is handled by database trigger 'on_auth_user_created'
-  // No need to manually create profile here
-
+  // Profile row is created by the DB trigger 'on_auth_user_created'.
+  // After the user verifies email and lands on onboarding, the onboarding
+  // flow should read dob from auth.users.raw_user_meta_data and write it
+  // to profiles.date_of_birth if not already set.
   return data;
 }
 
@@ -365,6 +371,9 @@ window.getUserProfile = getUserProfile;
 window.updateUserProfile = updateUserProfile;
 window.uploadAvatar = uploadAvatar;
 window.checkUsernameAvailable = checkUsernameAvailable;
+// Expose Google Identity Services helpers for pages that need to trigger re-scan
+window.initGoogleIdentityServices = initGoogleIdentityServices;
+window.scanAndRenderGoogleButtons = scanAndRenderGoogleButtons;
 
 // Mark auth module as ready
 window.authReady = true;
