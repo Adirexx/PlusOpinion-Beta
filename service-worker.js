@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR01_AUTH_FIX_V3.8.2
+// Updated at: MAR02_DUPLEX_FIX_V3.8.4
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260301_AUTHFIX_V3.8.3';
+  : 'BUILD_20260302_DUPLEXFIX_V3.8.5';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
@@ -177,26 +177,44 @@ self.addEventListener("fetch", (event) => {
       // Localhost python server CANNOT proxy POST/OPTIONS requests properly
       // so we MUST send these directly to the live proxy.
       const prodProxyUrl = PROD_PROXY_BASE + url.pathname + url.search;
+      const isPostWithBody = !['GET', 'HEAD'].includes(event.request.method);
+
       event.respondWith(
-        fetch(prodProxyUrl, {
-          method: event.request.method,
-          headers: event.request.headers,
-          body: ['GET', 'HEAD'].includes(event.request.method) ? undefined : event.request.body,
-          mode: 'cors',
-          credentials: 'omit'
-        }).catch(err => {
-          console.warn('[SW] Localhost prod-proxy failed:', err.message);
-          return new Response(
-            isVideoUrl(url.pathname) ? null : JSON.stringify({ error: 'proxy_failed', details: err.message }),
-            {
-              status: 502,
-              headers: {
-                'Content-Type': isVideoUrl(url.pathname) ? 'video/mp4' : 'application/json',
-                'Access-Control-Allow-Origin': '*'
-              }
+        (async () => {
+          try {
+            // For POST/PATCH/PUT/DELETE, clone the body to avoid consuming the stream
+            // and add duplex: 'half' which is mandatory in Service Workers for POST bodies
+            let bodyInit = undefined;
+            if (isPostWithBody) {
+              try { bodyInit = await event.request.clone().arrayBuffer(); } catch (e) { bodyInit = undefined; }
             }
-          );
-        })
+
+            const fetchOptions = {
+              method: event.request.method,
+              headers: event.request.headers,
+              mode: 'cors',
+              credentials: 'omit'
+            };
+            if (isPostWithBody && bodyInit) {
+              fetchOptions.body = bodyInit;
+              fetchOptions.duplex = 'half';
+            }
+
+            return await fetch(prodProxyUrl, fetchOptions);
+          } catch (err) {
+            console.warn('[SW] Localhost prod-proxy failed:', err.message);
+            return new Response(
+              isVideoUrl(url.pathname) ? null : JSON.stringify({ error: 'proxy_failed', details: err.message }),
+              {
+                status: 502,
+                headers: {
+                  'Content-Type': isVideoUrl(url.pathname) ? 'video/mp4' : 'application/json',
+                  'Access-Control-Allow-Origin': '*'
+                }
+              }
+            );
+          }
+        })()
       );
       return;
     }
@@ -206,17 +224,33 @@ self.addEventListener("fetch", (event) => {
     // All headers forwarded (Authorization, Range, apikey, etc.)
     // Worker adds proper CORS headers and handles WebSocket upgrades.
     const proxyUrl = self.location.origin + '/supabase-api' + url.pathname + url.search;
+    const isProdPostWithBody = !['GET', 'HEAD'].includes(event.request.method);
+
     event.respondWith(
-      fetch(proxyUrl, {
-        method: event.request.method,
-        headers: event.request.headers,
-        body: ['GET', 'HEAD'].includes(event.request.method) ? undefined : event.request.body,
-        mode: 'cors',
-        credentials: 'omit'
-      }).catch(err => {
-        console.warn('[SW] Production proxy failed:', err.message);
-        return new Response(null, { status: 504, statusText: 'Gateway Timeout' });
-      })
+      (async () => {
+        try {
+          let bodyInit = undefined;
+          if (isProdPostWithBody) {
+            try { bodyInit = await event.request.clone().arrayBuffer(); } catch (e) { bodyInit = undefined; }
+          }
+
+          const fetchOptions = {
+            method: event.request.method,
+            headers: event.request.headers,
+            mode: 'cors',
+            credentials: 'omit'
+          };
+          if (isProdPostWithBody && bodyInit) {
+            fetchOptions.body = bodyInit;
+            fetchOptions.duplex = 'half';
+          }
+
+          return await fetch(proxyUrl, fetchOptions);
+        } catch (err) {
+          console.warn('[SW] Production proxy failed:', err.message);
+          return new Response(null, { status: 504, statusText: 'Gateway Timeout' });
+        }
+      })()
     );
     return;
   }
