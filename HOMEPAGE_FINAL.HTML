@@ -2550,20 +2550,26 @@
                                                 <Icon icon="Clock" size={10} className="text-neon" /> {keyword}
                                             </button>
                                             <button
-                                                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-md text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                                                className="absolute right-0 top-0 bottom-0 px-2 rounded-r-lg text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-all z-10 flex items-center justify-center"
                                                 onClick={async (e) => {
+                                                    e.preventDefault();
                                                     e.stopPropagation();
                                                     vibrate(5);
-                                                    const user = await window.getCurrentUser();
-                                                    if (user) {
-                                                        await window.deleteSearchQuery(user.id, keyword);
-                                                        // Refresh recent searches
-                                                        const searches = await window.getRecentSearches(user.id, 10);
-                                                        setQuickSearches(searches);
+
+                                                    // Optimistic UI update for immediate feedback
+                                                    setQuickSearches(prev => prev.filter(k => k !== keyword));
+
+                                                    try {
+                                                        const user = await window.getCurrentUser();
+                                                        if (user) {
+                                                            await window.deleteSearchQuery(user.id, keyword);
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Failed to delete search query:", err);
                                                     }
                                                 }}
                                             >
-                                                <Icon icon="X" size={10} />
+                                                <Icon icon="X" size={12} />
                                             </button>
                                         </div>
                                     ))}
@@ -4851,6 +4857,11 @@
 
                     <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
                     <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} onSubmit={submitReport} />
+                    {isEditModalOpen && <EditModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} post={editingPost} onSave={async (updatedPost) => {
+                        // After save completes, update local posts array
+                        setPosts(prev => prev.map(p => p.id === updatedPost.id ? { ...p, ...updatedPost } : p));
+                        setIsEditModalOpen(false);
+                    }} />}
 
                     <LensOverlay
                         isOpen={isLensOpen}
