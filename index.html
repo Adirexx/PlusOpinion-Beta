@@ -305,7 +305,9 @@
             background: linear-gradient(135deg, #ffffff 0%, #d0d0d0 100%);
             /* Softer gradient */
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            color: transparent;
             margin: 0;
             text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             position: relative;
@@ -1568,7 +1570,10 @@
 
             doubled.forEach(file => {
                 const img = document.createElement('img');
-                img.src = `previews/${file}`;
+                // encodeURIComponent converts spaces → %20, required by Cloudflare Pages.
+                // Python's local server was lenient with spaces, masking this in dev.
+                img.src = `previews/${encodeURIComponent(file)}`;
+                img.onerror = function () { this.style.display = 'none'; };
 
                 // Random aspect ratios/heights for masonry look
                 const heightType = Math.random();
