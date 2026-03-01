@@ -127,25 +127,27 @@
             </style>
         `;
 
-        document.body.appendChild(toast);
-
-        document.getElementById('po-update-btn').onclick = () => {
-            // Update version ID before reload so toast doesn't reappear
-            localStorage.setItem('plusopinion_v_id', newVersion);
-
-            if (swRegistration && swRegistration.waiting) {
-                swRegistration.waiting.postMessage({ action: 'skipWaiting' });
-            }
-
-            // Subtle fade before reload
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s ease';
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 300);
+        const appendToast = () => {
+            document.body.appendChild(toast);
+            document.getElementById('po-update-btn').onclick = () => {
+                localStorage.setItem('plusopinion_v_id', newVersion);
+                if (swRegistration && swRegistration.waiting) {
+                    swRegistration.waiting.postMessage({ action: 'skipWaiting' });
+                }
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => { window.location.reload(); }, 300);
+            };
         };
-    }
+
+        // Guard: if body isn't ready yet (e.g. updater.js loaded in <head>),
+        // wait for DOMContentLoaded before appending the toast
+        if (document.body) {
+            appendToast();
+        } else {
+            document.addEventListener('DOMContentLoaded', appendToast);
+        }
+    } // end showUpdateToast
 
     // Start checking
     checkVersion();
