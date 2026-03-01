@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -8,12 +8,14 @@
     <!-- SEO meta tags and Search Engine Verifications -->
     <meta name="google-site-verification" content="y7kqaEmvNd_Z7UVBmX3bIbsa15mfOxLzNqA25tJ8zCA" />
 
-    <title>PlusOpinion - The Future of Consumer Intelligence</title>
+    <title>PlusOpinion | Share Your Words, Create Value</title>
     <meta name="description"
-        content="Join PlusOpinion, the revolutionary platform transforming consumer feedback. Share authentic product reviews, earn rewards, and discover honest opinions from verified users.">
+        content="Join the platform where opinions matter. Share your perspective, engage with the community, and earn by getting into the partners program. Your words carry real value for the world.">
     <meta name="keywords"
-        content="consumer intelligence, product reviews, authentic feedback, verified reviews, earn rewards, opinion platform, consumer network, product ratings, review community">
+        content="share opinions online, earn from your opinion, authentic consumer feedback, opinion platform, verified product reviews, earn rewards for reviews, social opinion network, consumer intelligence, product feedback community, partners program, PlusOpinion">
     <meta name="author" content="PlusOpinion">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://plusopinion.com/">
 
     <!-- JSON-LD Structured Data for Rich Snippets (Sitelinks & Organization) -->
     <script type="application/ld+json">
@@ -22,6 +24,7 @@
       "@type": "WebSite",
       "name": "PlusOpinion",
       "url": "https://plusopinion.com/",
+      "description": "The platform where opinions matter. Share your perspective, engage with the community, and earn by getting into the partners program.",
       "potentialAction": {
         "@type": "SearchAction",
         "target": {
@@ -39,8 +42,10 @@
       "name": "PlusOpinion",
       "url": "https://plusopinion.com/",
       "logo": "https://plusopinion.com/icon-512.png",
+      "description": "Join the platform where opinions matter. Share your perspective, engage with the community, and earn by getting into the partners program.",
+      "foundingDate": "2026",
       "sameAs": [
-        "https://twitter.com/plusopinion",
+        "https://x.com/plusopinionnow",
         "https://instagram.com/plusopinion",
         "https://www.linkedin.com/company/plusopinion"
       ]
@@ -50,18 +55,22 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:site_name" content="PlusOpinion">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="PlusOpinion - The Future of Consumer Intelligence">
+    <meta property="og:title" content="PlusOpinion — Your Words Carry Value for the World">
     <meta property="og:description"
-        content="Join the revolutionary platform for authentic product reviews. Share your opinion, earn rewards, discover honest feedback.">
-    <meta property="og:image" content="/icon-512.png">
+        content="Join the platform where opinions matter. Share your perspective, engage with the community, and earn by getting into the partners program.">
+    <meta property="og:image" content="https://plusopinion.com/seo-preview.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:url" content="https://plusopinion.com">
+    <meta property="og:locale" content="en_US">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="PlusOpinion - The Future of Consumer Intelligence">
+    <meta name="twitter:site" content="@plusopinionnow">
+    <meta name="twitter:title" content="PlusOpinion — Your Words Carry Value for the World">
     <meta name="twitter:description"
-        content="Share authentic reviews, earn rewards, discover honest consumer opinions.">
-    <meta name="twitter:image" content="/icon-512.png">
+        content="Join the platform where opinions matter. Share your perspective, engage with the community, and earn by getting into the partners program.">
+    <meta name="twitter:image" content="https://plusopinion.com/seo-preview.jpg">
 
     <!-- Favicon for browser tabs -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
@@ -83,21 +92,13 @@
     <!-- Professional Update & Maintenance System -->
     <script src="/updater.js"></script>
 
-
-    <!-- 1. Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <!-- 2. Supabase (UMD bundle for browser compatibility) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-    <!-- 3. React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
     <!-- Auth Ready Promise with Timeout - MUST be before module script -->
     <script>
         // Create a promise that will resolve when auth is ready
-        // Includes a 5-second timeout to prevent infinite hangs
+        // Includes a 15-second timeout to prevent infinite hangs
         let authResolve, authReject;
         window.authReadyPromise = new Promise(function (resolve, reject) {
             authResolve = resolve;
@@ -105,13 +106,13 @@
         });
         window._resolveAuthReady = authResolve;
 
-        // Timeout after 15 seconds if module doesn't load (increased for mobile 3G/4G networks)
+        // Timeout after 15 seconds if module doesn't load
         setTimeout(function () {
             if (!window.authReady) {
                 console.error('❌ Auth module failed to load within 15 seconds');
                 authReject(new Error('Auth module took too long to load. Please check your internet connection and refresh.'));
             }
-        }, 15000); // Increased from 5s to 15s for mobile compatibility
+        }, 15000);
 
         console.log('🔄 Auth promise created, waiting for module to load...');
     </script>
@@ -122,480 +123,1013 @@
     <script>
         window.authReadyPromise.then(() => {
             console.log('✅ Global Auth module linked and ready');
+            if (window.initGoogleIdentityServices) {
+                window.initGoogleIdentityServices();
+            }
         });
     </script>
 
-    <!-- 3. Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
     <script src="/pwa_installer.js" defer></script>
 
-    <!-- Fonts -->
+    <link rel="stylesheet" href="global.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Using Outfit for massive hero text, Inter for UI, and Space Grotesk for logo -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&family=Space+Grotesk:wght@500;600;700;800;900&display=swap"
         rel="stylesheet">
 
     <style>
-        /* --- GLOBAL THEME --- */
-        body {
-            background-color: #020408;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
+        :root {
+            --bg-deep: #000000;
+            /* Absolute black for massive contrast */
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --brand-color: #2F8BFF;
+            --card-glass: rgba(15, 15, 15, 0.45);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(255, 255, 255, 0.15);
+        }
+
+        body,
+        html {
             margin: 0;
             padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
             overflow-x: hidden;
-            scroll-behavior: smooth;
+            overflow-y: auto;
         }
 
-        /* Hide scrollbar but allow scrolling */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        .font-heading {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-
-        /* --- LIVING BACKGROUND --- */
-        .blob-container {
+        /* Dynamic Drifting Background (Pinterest/IG Inspiration) */
+        .bg-drift-container {
             position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.4;
-            animation: float 20s infinite alternate ease-in-out;
-        }
-
-        .blob-1 {
             top: -20%;
             left: -10%;
-            width: 900px;
-            height: 900px;
-            background: #0f172a;
+            width: 120%;
+            height: 140%;
+            display: flex;
+            gap: 24px;
+            transform: rotate(-5deg) scale(1.1);
+            opacity: 0.8;
+            z-index: 0;
+            pointer-events: none;
+            /* Smooth vignette to fade out edges into pure black */
+            mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 80%);
+            -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 80%);
         }
 
-        .blob-2 {
-            top: 30%;
-            right: -20%;
-            width: 700px;
-            height: 700px;
-            background: #172554;
-            animation-delay: -5s;
-            opacity: 0.3;
+        .drift-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 250px;
+            animation: drift 40s linear infinite;
+            /* Restored faster, attractive drift */
         }
 
-        .blob-3 {
-            bottom: -20%;
-            left: 20%;
-            width: 800px;
-            height: 800px;
-            background: #1e1b4b;
-            animation-delay: -10s;
-            opacity: 0.2;
+        /* Alternate directions for columns */
+        .drift-column:nth-child(even) {
+            animation-direction: reverse;
         }
 
-        @keyframes float {
+        .drift-column img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            filter: blur(0.2px) brightness(0.3) contrast(1.0);
+            /* Reduced blur so content is readable, kept darkness and added contrast */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        @keyframes drift {
             0% {
-                transform: translate(0, 0) scale(1);
+                transform: translateY(0);
             }
 
             100% {
-                transform: translate(30px, 50px) scale(1.1);
+                transform: translateY(-50%);
+            }
+
+            /* Assuming content is duplicated to loop smoothly */
+        }
+
+        /* Top Header Area (Fixed over background) */
+        .top-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 30px 60px;
+            z-index: 20;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .beta-badge {
+            border: 1px solid var(--brand-color);
+            color: var(--brand-color);
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 800;
+            background: rgba(47, 139, 255, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #fff;
+        }
+
+        /* Main Foreground Layout */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: space-between;
+            padding: 120px 80px;
+            box-sizing: border-box;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Left side: Hero Text (Apple/Meta Premium Inspiration) */
+        .hero-section {
+            flex: 1;
+            padding-right: 60px;
+            margin-top: -40px;
+        }
+
+        .hero-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 72px;
+            /* Softer, smaller */
+            line-height: 1.1;
+            font-weight: 600;
+            /* Less bold/loud */
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #d0d0d0 100%);
+            /* Softer gradient */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .hero-subtitle {
+            margin-top: 24px;
+            font-size: 20px;
+            color: #A0A0A0;
+            max-width: 500px;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        /* Right side: Glassmorphism Auth Card (Apple/Premium Vibe) */
+        .auth-section {
+            width: 440px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .swipe-login-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .swipe-login-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-card {
+            background: rgba(20, 20, 20, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 32px;
+            padding: 36px 40px;
+            /* Reduced paddings to scale down form size */
+            backdrop-filter: blur(80px) saturate(180%);
+            -webkit-backdrop-filter: blur(80px) saturate(180%);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), inset 0 2px 20px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card-header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .auth-card-header h2 {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .auth-card-header p {
+            margin: 8px 0 0 0;
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 14px 16px;
+            /* Slightly reduced padding */
+            color: #fff;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.25s cubic-bezier(0.1, 0, 0.1, 1);
+        }
+
+        .form-input:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--border-glow);
+        }
+
+        .form-input:focus {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 4px rgba(47, 139, 255, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.25);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        /* Style the default dd/mm/yyyy date placeholder */
+        input[type="date"]:invalid::-webkit-datetime-edit {
+            color: rgba(255, 255, 255, 0.25);
+            text-transform: uppercase;
+        }
+
+        /* Eye Animations */
+        @keyframes eye-blink {
+
+            0%,
+            90%,
+            100% {
+                transform: translateY(-50%) scaleY(1);
+            }
+
+            95% {
+                transform: translateY(-50%) scaleY(0.1);
             }
         }
 
-        /* --- UI UTILS --- */
-        .glass-nav {
-            background: rgba(2, 4, 8, 0.6);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        @keyframes eye-shake {
+
+            0%,
+            100% {
+                transform: translateY(-50%) translateX(0) scale(1);
+            }
+
+            20%,
+            60% {
+                transform: translateY(-50%) translateX(-3px) scale(0.95);
+            }
+
+            40%,
+            80% {
+                transform: translateY(-50%) translateX(3px) scale(0.95);
+            }
         }
 
-        .glass-card {
-            background: rgba(20, 25, 35, 0.4);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+        .password-toggle {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            transform-origin: center;
         }
 
-        .glass-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(59, 130, 246, 0.3);
-            background: rgba(30, 41, 59, 0.5);
+        .password-toggle:hover {
+            color: #fff;
         }
 
-        .text-glow {
-            text-shadow: 0 0 80px rgba(60, 130, 246, 0.6);
+        .password-toggle.is-open {
+            color: var(--brand-color);
+            animation: eye-blink 4s infinite ease-in-out;
         }
 
-        .animate-up {
-            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
-            transform: translateY(30px);
+        .password-toggle.is-closed-anim {
+            animation: eye-shake 0.4s ease-in-out;
         }
 
-        .delay-1 {
-            animation-delay: 0.1s;
+        .btn-primary {
+            width: 100%;
+            background: var(--brand-color);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 14px;
+            /* Reduced vertical padding */
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(47, 139, 255, 0.3);
         }
 
-        .delay-2 {
-            animation-delay: 0.2s;
+        .btn-primary:hover {
+            background: #1972de;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(47, 139, 255, 0.4);
         }
 
-        .delay-3 {
-            animation-delay: 0.3s;
+        .btn-primary:active {
+            transform: scale(0.98);
         }
 
-        @keyframes slideUp {
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 28px 0;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: 15px;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: 15px;
+        }
+
+        .btn-google {
+            width: 100%;
+            background: #ffffff;
+            border: none;
+            color: #000000;
+            border-radius: 16px;
+            padding: 14px;
+            /* Reduced padding */
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-google:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .btn-google:active {
+            transform: scale(0.98);
+        }
+
+        .auth-footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .auth-footer a:hover {
+            color: var(--brand-color);
+        }
+
+        /* Business Account Separate Card below form */
+        .business-account-card {
+            margin-top: 16px;
+            background: rgba(20, 20, 20, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .business-account-card a {
+            display: block;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .business-account-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+
+        /* Form Helpers (TOS, Passwards, etc) */
+        .form-helper {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .form-helper a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: underline;
+        }
+
+        .form-helper a:hover {
+            color: #fff;
+        }
+
+        .auth-switch-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .auth-switch-link a {
+            color: var(--brand-color);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .auth-switch-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Form view toggling */
+        .form-view {
+            display: none;
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .form-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
+        /* OTP Input Styling */
+        .otp-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 32px;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #020408;
+        .otp-input {
+            width: 45px;
+            height: 55px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s cubic-bezier(0.1, 0, 0.1, 1);
+            outline: none;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 4px;
+        .otp-input:focus {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: var(--brand-color);
+            box-shadow: 0 0 0 4px rgba(47, 139, 255, 0.15);
+            transform: translateY(-2px);
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3b82f6;
+        .otp-input::-webkit-outer-spin-button,
+        .otp-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
-        /* --- MOBILE OPTIMIZATIONS (PROFESSIONAL UI/UX PRINCIPLES) --- */
-        @media (max-width: 768px) {
+        /* Fixed Bottom Footer */
+        .bottom-footer {
+            position: absolute;
+            bottom: 18px;
+            left: 40px;
+            right: 40px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: end;
+            z-index: 20;
+            /* To ensure readability over images */
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        }
 
-            /* === PRINCIPLE 1: VISUAL HIERARCHY === */
+        .footer-left {
+            justify-self: start;
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+        }
 
-            /* Navigation - Compact & Professional */
-            .glass-nav {
-                height: 56px !important;
-                padding-left: 0.75rem !important;
-                padding-right: 0.75rem !important;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        .footer-links {
+            justify-self: center;
+            display: flex;
+            gap: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            padding-bottom: 2px;
+            /* slight padding to align with beta tag nicely */
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+
+        .footer-right {
+            justify-self: end;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            transform: translateY(4px);
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-beta-tag {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            padding-right: 2px;
+        }
+
+        .social-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+        .social-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+
+        /* Responsive — medium desktop */
+        @media (max-width: 1200px) {
+            .hero-title {
+                font-size: 62px;
             }
 
-            .glass-nav .hidden.md\:flex {
-                display: none !important;
+            .auth-section {
+                width: 400px;
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           MOBILE REDESIGN — Industry Grade
+           Fixed auth card at bottom, hero text centered in viewport
+        ═══════════════════════════════════════════ */
+        @media (max-width: 992px) {
+
+            html,
+            body {
+                height: 100%;
+                overflow: hidden;
+                background: #000;
             }
 
-            .glass-nav .text-2xl {
-                font-size: 1.125rem !important;
-                font-weight: 800 !important;
-                letter-spacing: -0.02em !important;
+            /* Background drift: show with very dark images on mobile */
+            .bg-drift-container {
+                display: flex;
+                top: -5%;
+                left: -5%;
+                width: 110%;
+                height: 110%;
+                opacity: 1;
+                transform: scale(1.4);
+                mask-image: radial-gradient(ellipse 90% 90% at 50% 30%, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 80%);
+                -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 30%, rgba(0, 0, 0, 1) 10%, rgba(0, 0, 0, 0) 80%);
             }
 
-            .glass-nav .px-2 {
-                padding-left: 0.5rem !important;
-                padding-right: 0.5rem !important;
+            .drift-column {
+                width: 110px;
+                gap: 12px;
             }
 
-            .glass-nav .text-\[10px\] {
-                font-size: 7px !important;
-                letter-spacing: 0.05em !important;
+            .drift-column img {
+                filter: brightness(0.2) blur(1.2px);
+                border-radius: 10px;
             }
 
-            .glass-nav button {
-                padding: 0.5rem 0.875rem !important;
-                font-size: 0.8rem !important;
-                font-weight: 600 !important;
-                box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+            /* Nav: tight, logo left, quote right */
+            .top-nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                padding: 18px 22px;
+                z-index: 200;
+                background: transparent;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
             }
 
-            /* === PRINCIPLE 2: REDUCE HERO HEIGHT & OPTIMIZE SPACING === */
-
-            /* Hero Section - Optimized Height */
-            .min-h-screen.flex.flex-col.items-center.justify-center {
-                min-height: 100vh !important;
-                height: 100vh !important;
-                padding-top: 4rem !important;
-                padding-bottom: 3rem !important;
-                padding-left: 1.25rem !important;
-                padding-right: 1.25rem !important;
+            .logo-text {
+                font-size: 15px;
+                letter-spacing: -0.2px;
             }
 
-            /* System Online Badge - Enhanced */
-            .inline-flex.items-center.gap-2.px-4.py-1\.5 {
-                padding: 0.5rem 0.875rem !important;
-                margin-bottom: 1.25rem !important;
-                font-size: 8px !important;
-                font-weight: 700 !important;
-                letter-spacing: 0.1em !important;
-                box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+            .beta-badge {
+                font-size: 8px;
+                padding: 2px 5px;
             }
 
-            /* === PRINCIPLE 3: TYPOGRAPHY SCALE === */
-
-            h1.text-6xl,
-            h1.md\:text-\[5\.5rem\] {
-                font-size: 2.25rem !important;
-                line-height: 1.1 !important;
-                margin-bottom: 1rem !important;
-                font-weight: 900 !important;
-                letter-spacing: -0.03em !important;
+            .nav-links {
+                display: flex !important;
             }
 
-            .text-lg.md\:text-\[1\.25rem\] {
-                font-size: 0.9rem !important;
-                line-height: 1.6 !important;
-                padding-left: 0.5rem !important;
-                padding-right: 0.5rem !important;
-                font-weight: 400 !important;
-                opacity: 0.9 !important;
+            .nav-links>div {
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.4);
+                font-style: italic;
+                white-space: nowrap;
             }
 
-            /* === PRINCIPLE 4: ENHANCED CTA DESIGN === */
-
-            .pt-12 {
-                padding-top: 1.75rem !important;
+            /* Main container: full screen, content stacked top→bottom */
+            .main-container {
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: stretch;
+                padding: 0;
+                min-height: 100vh;
+                max-width: 100%;
+                margin: 0;
+                position: static;
+                overflow: hidden;
             }
 
-            .flex-col.sm\:flex-row.items-center.justify-center.gap-6 {
-                gap: 0.875rem !important;
-                width: 100% !important;
-                padding-left: 1.25rem !important;
-                padding-right: 1.25rem !important;
+            /* Hero: fixed to top upper portion so it never gets hidden */
+            .hero-section {
+                position: fixed;
+                top: 12%;
+                left: 0;
+                right: 0;
+                bottom: auto;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                text-align: center;
+                padding: 0 28px;
+                box-sizing: border-box;
+                pointer-events: none;
+                z-index: 5;
+                margin: 0;
             }
 
-            .px-10.py-4 {
-                padding: 0.875rem 1.75rem !important;
-                font-size: 0.9rem !important;
-                font-weight: 700 !important;
-                letter-spacing: 0.02em !important;
-                box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4) !important;
-                transition: all 0.3s ease !important;
+            .hero-title {
+                font-size: 34px;
+                font-weight: 500;
+                letter-spacing: -0.5px;
+                line-height: 1.22;
+                background: linear-gradient(175deg, rgba(255, 255, 255, 0.92) 0%, rgba(180, 180, 180, 0.6) 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin: 0;
+                text-shadow: none;
             }
 
-            /* === PRINCIPLE 5: REFINED FEATURE BADGES === */
-
-            .mt-16.flex.justify-center.gap-12 {
-                margin-top: 1.75rem !important;
-                gap: 1rem !important;
-                flex-wrap: wrap;
-                padding-left: 0.75rem !important;
-                padding-right: 0.75rem !important;
+            .hero-subtitle {
+                display: none;
             }
 
-            .mt-16.flex.justify-center.gap-12 span {
-                font-size: 0.6rem !important;
-                padding: 0.25rem 0.5rem !important;
-                font-weight: 600 !important;
-                letter-spacing: 0.05em !important;
-                background: rgba(255, 255, 255, 0.03) !important;
-                border-radius: 6px !important;
+            /* Auth section: fixed at the very bottom */
+            .auth-section {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
             }
 
-            .mt-16.flex.justify-center.gap-12 svg {
-                width: 13px !important;
-                height: 13px !important;
+            /* Login/signup toggle pill floats above card */
+            .swipe-login-btn {
+                position: absolute;
+                top: -46px;
+                right: 16px;
+                background: rgba(18, 18, 22, 0.85);
+                border: 1px solid rgba(255, 255, 255, 0.13);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 9px 18px;
+                border-radius: 100px;
+                font-size: 13px;
+                font-weight: 600;
+                color: #fff;
             }
 
-            /* === PRINCIPLE 6: CONTENT DENSITY === */
-
-            .text-4xl.md\:text-5xl,
-            .text-3xl.md\:text-5xl {
-                font-size: 1.875rem !important;
-                line-height: 1.15 !important;
-                font-weight: 800 !important;
-                letter-spacing: -0.02em !important;
+            /* Glassmorphic auth card — rounded top, flush bottom */
+            .auth-card {
+                border-radius: 24px 24px 0 0;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-bottom: none;
+                padding: 20px 18px 24px;
+                background: rgba(10, 10, 12, 0.9);
+                backdrop-filter: blur(48px) saturate(180%);
+                -webkit-backdrop-filter: blur(48px) saturate(180%);
+                box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.09);
             }
 
-            .text-3xl.md\:text-4xl {
-                font-size: 1.625rem !important;
-                font-weight: 700 !important;
+            .auth-card-header {
+                margin-bottom: 16px;
+                text-align: left;
             }
 
-            /* Section Spacing - Rhythm */
-            .py-32 {
-                padding-top: 3rem !important;
-                padding-bottom: 3rem !important;
+            .auth-card-header h2 {
+                font-size: 20px;
+                letter-spacing: -0.5px;
+                font-weight: 700;
+                margin: 0;
             }
 
-            .py-24 {
-                padding-top: 2.5rem !important;
-                padding-bottom: 2.5rem !important;
+            .auth-card-header p {
+                font-size: 12.5px;
+                margin: 3px 0 0;
             }
 
-            /* === PRINCIPLE 7: CARD ELEVATION === */
-
-            .glass-card {
-                padding: 1.5rem !important;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-                transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+            .form-input {
+                padding: 11px 13px;
+                font-size: 14px;
+                border-radius: 11px;
             }
 
-            .glass-card:active {
-                transform: scale(0.98) !important;
+            .form-row {
+                gap: 10px;
+                margin-bottom: 10px;
             }
 
-            .p-8 {
-                padding: 1.5rem !important;
+            .form-group {
+                margin-bottom: 10px;
             }
 
-            .p-10 {
-                padding: 1.75rem !important;
+            .btn-primary {
+                padding: 12px;
+                font-size: 15px;
+                border-radius: 13px;
             }
 
-            .p-6 {
-                padding: 1.25rem !important;
+            .divider {
+                margin: 14px 0;
             }
 
-            /* Grid Adjustments */
-            .grid.grid-cols-1.md\:grid-cols-3 {
-                gap: 1.25rem !important;
+            .google-sso-container {
+                display: flex;
+                justify-content: center;
+                width: 100%;
             }
 
-            .gap-8 {
-                gap: 1.25rem !important;
+            .form-helper {
+                font-size: 10.5px;
+                margin-top: 4px;
+                margin-bottom: 10px !important;
+                line-height: 1.35;
             }
 
-            .gap-6 {
-                gap: 1rem !important;
+            .auth-switch-link {
+                margin-top: 12px;
+                font-size: 13px;
             }
 
-            /* === PRINCIPLE 8: OPTIMIZED SECTIONS === */
-
-            .md\:h-\[500px\] {
-                height: auto !important;
-                min-height: 280px !important;
+            .business-account-card {
+                border-radius: 0;
+                margin-top: 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                padding: 12px;
+                background: rgba(6, 6, 8, 0.97);
+                backdrop-filter: blur(20px);
             }
 
-            .py-16 {
-                padding-top: 2.75rem !important;
-                padding-bottom: 2.75rem !important;
+            .bottom-footer {
+                display: none;
+            }
+        }
+
+        /* Extra small phones */
+        @media (max-width: 390px) {
+            .hero-title {
+                font-size: 28px;
             }
 
-            /* === PRINCIPLE 9: TYPOGRAPHY REFINEMENT === */
-
-            .text-2xl {
-                font-size: 1.375rem !important;
-                font-weight: 700 !important;
+            .auth-card {
+                padding: 16px 14px 20px;
             }
 
-            .text-xl {
-                font-size: 1.125rem !important;
-                font-weight: 600 !important;
+            .auth-card-header h2 {
+                font-size: 18px;
+            }
+        }
+
+        /* Mobile-only quote — handled by nav-links on mobile */
+        .mobile-quote {
+            display: none;
+        }
+
+        /* Mobile footer strip */
+        .mobile-footer-strip {
+            display: none;
+        }
+
+        @media (max-width: 992px) {
+            .mobile-footer-strip {
+                display: flex;
+                flex-direction: column;
+                padding: 16px 20px;
+                background: rgba(4, 4, 6, 0.99);
+                border-top: 1px solid rgba(255, 255, 255, 0.03);
             }
 
-            .text-lg {
-                font-size: 1rem !important;
+            .m-footer-wrapper {
+                display: flex;
+                flex-direction: row;
+                width: 100%;
+                justify-content: space-between;
+                align-items: center;
             }
 
-            /* === PRINCIPLE 10: SPACING RHYTHM === */
-
-            .mb-24 {
-                margin-bottom: 2.25rem !important;
+            .m-footer-left {
+                color: rgba(255, 255, 255, 0.3);
+                font-size: 9px;
+                flex: 0.5;
+                text-align: left;
+                white-space: nowrap;
             }
 
-            .mb-16 {
-                margin-bottom: 1.75rem !important;
+            .m-footer-links {
+                display: flex;
+                flex-wrap: nowrap;
+                justify-content: center;
+                gap: 10px;
+                flex: 2.5;
+                white-space: nowrap;
             }
 
-            .mb-12 {
-                margin-bottom: 1.5rem !important;
+            .m-footer-links a {
+                color: rgba(255, 255, 255, 0.5);
+                text-decoration: none;
+                font-size: 10px;
+                font-weight: 500;
             }
 
-            .mb-8 {
-                margin-bottom: 1.25rem !important;
-            }
-
-            .mb-6 {
-                margin-bottom: 1rem !important;
-            }
-
-            .mb-4 {
-                margin-bottom: 0.75rem !important;
-            }
-
-            /* How it Works Toggle - Enhanced */
-            .inline-flex.bg-\[#0f172a\].p-1 button {
-                padding: 0.5rem 1rem !important;
-                font-size: 0.8rem !important;
-                font-weight: 600 !important;
-                transition: all 0.3s ease !important;
-            }
-
-            /* === PRINCIPLE 11: REMOVE BOTTOM EMPTY SPACE === */
-
-            /* Reduce chevron bottom spacing */
-            .absolute.bottom-10 {
-                bottom: 2rem !important;
-            }
-
-            .absolute.bottom-10 svg {
-                width: 24px !important;
-                height: 24px !important;
-            }
-
-
-
-            /* === PRINCIPLE 12: ENHANCED MICRO-INTERACTIONS === */
-
-            button {
-                -webkit-tap-highlight-color: transparent !important;
-            }
-
-            button:active {
-                transform: scale(0.96) !important;
-            }
-
-            /* === PRINCIPLE 13: IMPROVED READABILITY === */
-
-            p,
-            span,
-            div {
-                -webkit-font-smoothing: antialiased !important;
-                -moz-osx-font-smoothing: grayscale !important;
-            }
-
-            /* === FOOTER MOBILE OPTIMIZATION === */
-
-            footer {
-                padding-top: 3rem !important;
-                padding-bottom: 3rem !important;
-            }
-
-            footer .text-2xl {
-                font-size: 1.75rem !important;
-            }
-
-            footer .text-sm {
-                font-size: 0.875rem !important;
-            }
-
-            footer a {
-                font-size: 0.875rem !important;
+            .m-footer-right {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                flex: 0.5;
+                position: relative;
             }
         }
     </style>
@@ -603,1073 +1137,774 @@
 
 <body>
 
-    <div id="root"></div>
+    <!-- Dynamic Tilted Masonry Background -->
+    <div class="bg-drift-container" id="bgDrifter">
+        <!-- Columns built by JS to contain duplicate images for infinite scrolling -->
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        const { createRoot } = ReactDOM;
+    <!-- Top Navigation -->
+    <header class="top-nav">
+        <div class="logo-area"
+            style="font-family: 'Space Grotesk', sans-serif; display: flex; align-items: center; gap: 12px;">
+            <span class="logo-text" style="font-weight: 700; font-size: 26px; letter-spacing: -1px;">PlusOpinion</span>
+            <span class="beta-badge"
+                style="border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; background: rgba(59, 130, 246, 0.15); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 4px; font-family: 'Inter', sans-serif; margin-top: -2px;">BETA</span>
+        </div>
+        <div class="nav-links">
+            <div style="font-style: italic; color: #555;">"Closed mouths don't get fed"</div>
+        </div>
+    </header>
 
-        // --- ICONS ---
-        const Icon = ({ d, size = 24, className = "" }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d={d} />
-            </svg>
-        );
+    <!-- Mobile-only centered quote (hidden on desktop via CSS) -->
+    <div class="mobile-quote">"Closed mouths don't get fed"</div>
 
-        const icons = {
-            arrowRight: "M5 12h14M12 5l7 7-7 7",
-            check: "M20 6 9 17l-5-5",
-            x: "M18 6 6 18M6 6l12 12",
-            lock: "M7 11V7a5 5 0 0 1 10 0v4M5 11h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z",
-            mail: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6",
-            barChart: "M12 20V10 M18 20V4 M6 20v-4",
-            chevronDown: "M6 9l6 6 6-6",
-            shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-            zap: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
-            globe: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-            users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 3.13a4 4 0 0 1 0 7.75",
-            wallet: "M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4 M4 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2 M16 16h2",
-            trending: "M23 6l-9.5 9.5-5-5L1 18",
-            star: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-5.82 3.05L7.38 14.14 2 9.27l6.91-1.01L12 2z",
-            image: "M18 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM9 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm11 10H4l5-7 3 4 4-6 4 6z",
-            rocket: "M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z M12 15l-3-3a22 22 0 0 1 2-12 9.5 9.5 0 0 0 10 10c0 .9-2 9.32-12 17 1.5 2.38 17-12 17-12",
-            grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
-            x: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
-            close: "M18 6L6 18M6 6l12 12",
-            linkedin: "M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z M2 9h4v12H2z M4 2a2 2 0 1 1-2 2 2 0 0 1 2-2z",
-            instagram: "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z M17.5 6.5h.01 M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5z"
-        };
+    <!-- Main Content -->
+    <main class="main-container">
 
+        <!-- Massive Hero Text -->
+        <div class="hero-section">
+            <h1 class="hero-title">Your words carry<br>a value for the<br><span
+                    style="background: linear-gradient(135deg, #4DA3FF 0%, #0056D6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">WORLD.</span>
+            </h1>
+            <p class="hero-subtitle">Join the platform where opinions matter. Share your perspective, engage with the
+                community, and earn by getting into partners program.</p>
+        </div>
 
-        // --- SIGN UP MODAL ---
-        const SignupModal = ({ onClose }) => {
-            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
-            const [error, setError] = useState('');
-            const [success, setSuccess] = useState('');
-            const [loading, setLoading] = useState(false);
+        <!-- Premium Auth Card -->
+        <div class="auth-section">
+            <button class="swipe-login-btn" onclick="toggleAuthMode()">
+                <span id="swipeBtnText">Login</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14m-7-7 7 7-7 7" />
+                </svg>
+            </button>
 
-            const handleSignupSubmit = async (e) => {
-                e.preventDefault();
-                setError('');
-                setSuccess('');
-                setLoading(true);
+            <div class="auth-card">
+                <!-- SIGN UP VIEW (Default) -->
+                <div id="signupView" class="form-view active">
+                    <div class="auth-card-header">
+                        <h2>Join today.</h2>
+                        <p>Create a free account to get started</p>
+                    </div>
 
-                // Validate passwords match
-                if (formData.password !== formData.confirmPassword) {
-                    setError('Passwords do not match!');
-                    setLoading(false);
-                    return;
-                }
+                    <form onsubmit="handleSignupSubmit(event)">
+                        <!-- Step 1: Details -->
+                        <div id="signupStep1" class="form-view active">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="text" class="form-input" placeholder="First Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-input" placeholder="Last Name" required>
+                                </div>
+                            </div>
 
-                // Validate password strength (minimum 6 characters)
-                if (formData.password.length < 6) {
-                    setError('Password must be at least 6 characters long!');
-                    setLoading(false);
-                    return;
-                }
+                            <div class="form-group">
+                                <input type="email" class="form-input" placeholder="Email Address" required>
+                            </div>
 
-                try {
-                    // Wait for auth module to load (handles async ES module loading)
-                    console.log('⏳ Waiting for auth to be ready...');
-                    await window.authReadyPromise;
-                    console.log('✅ Auth is ready, proceeding with signup...');
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <input type="password" id="signupPassword" class="form-input" placeholder="Password"
+                                    required>
+                                <svg id="eyeIconSignup" class="password-toggle"
+                                    onclick="togglePasswordVisibility('signupPassword', 'eyeIconSignup')" width="20"
+                                    height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path id="eyePathSignup" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle id="pupilSignup" cx="12" cy="12" r="3"></circle>
+                                    <path id="eyeSlashSignup" d="M3 3l18 18" stroke="currentColor" stroke-width="2"
+                                        style="display:none;"></path>
+                                </svg>
+                            </div>
+                            <div class="form-helper" style="margin-bottom: 20px;">Use 8 or more characters with a mix of
+                                letters, numbers & symbols.</div>
 
-                    // Sign up user with Supabase
-                    console.log('Attempting to sign up user:', formData.email);
-                    const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
-                    console.log('Signup successful result:', signupData);
+                            <div class="form-group">
+                                <input type="date" class="form-input" aria-label="Date of Birth" required
+                                    style="font-family: 'Inter', sans-serif; font-weight: 400;" title="Date of Birth">
+                            </div>
 
-                    // Send notification to admin via Formspree
-                    fetch("https://formspree.io/f/xkowzkjz", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            name: formData.name,
-                            email: formData.email,
-                            source: "Landing Signup - Supabase Auth"
-                        })
-                    }).catch(err => console.error('Formspree error:', err));
+                            <button type="submit" class="btn-primary">Continue</button>
 
-                    // Check if email confirmation is required (session: null)
-                    if (!signupData.session) {
-                        setSuccess('✅ Account created! Please check your email to verify your account. After clicking the link, you\'ll be taken to complete your profile.');
-                        setLoading(false);
-                        // Auto-close modal after 5 seconds
-                        setTimeout(() => {
-                            onClose();
-                        }, 5000);
-                        return;
-                    }
+                            <div class="form-helper" style="text-align: center; margin-top: 12px; margin-bottom: 20px;">
+                                By clicking Continue, you agree to the PlusOpinion <a
+                                    href="TERMS_AND_CONDITIONS.HTML">Terms of Service</a>, <a
+                                    href="PRIVACY_POLICY.HTML">Privacy Policy</a>, and <a
+                                    href="COOKIES.HTML">Cookies</a>.
+                            </div>
 
-                    // If we have a session (instant login), redirect to onboarding
-                    console.log('✅ Session active, redirecting to onboarding...');
-                    window.navigateTo('onboarding.html');
+                            <div class="divider">or</div>
 
-                } catch (error) {
-                    console.error('Signup error:', error);
+                            <div class="grid grid-cols-1 gap-3">
+                                <div class="google-sso-container" data-action="signup"></div>
+                            </div>
 
-                    // Handle duplicate email error (422 Unprocessable Entity or specific message)
-                    if ((error.status === 422 && error.message.includes('registered')) ||
-                        error.message.includes('already registered') ||
-                        error.message.includes('duplicate') ||
-                        error.message.includes('User already registered')) {
-
-                        console.log('Duplicate email detected');
-                        setError('This email is already registered. Please use the Login button instead.');
-                    } else {
-                        setError(error.message || 'Error creating account. Please try again.');
-                    }
-                    setLoading(false);
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Background Video for Modal */}
-                    <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="absolute inset-0 w-full h-full object-cover opacity-30"
-                    >
-                        <source src="/bg-video.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
-                    <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"><Icon d={icons.close} size={24} /></button>
-
-                        <div className="text-center mb-8">
-                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
-                                Sign Up
-                            </h2>
-                            <p className="text-slate-400 text-sm">
-                                Join the future of consumer intelligence.
-                            </p>
+                            <div class="auth-switch-link">
+                                Already a member? <a onclick="toggleAuthMode()">Log in</a>
+                            </div>
                         </div>
 
-                        <form onSubmit={handleSignupSubmit} className="space-y-4">
-                            {error && (
-                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
-                                    {error}
+                        <!-- Step 2: Verification Sent -->
+                        <div id="signupStep2" class="form-view">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <div class="inline-flex p-4 rounded-2xl bg-blue-500/10 text-blue-400 mb-4 border border-white/10"
+                                    style="margin-bottom: 16px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                        </path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </svg>
                                 </div>
-                            )}
-                            {success && (
-                                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 text-green-400 text-sm">
-                                    {success}
-                                </div>
-                            )}
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    type="text"
-                                    placeholder="John Doe"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    type="password"
-                                    placeholder="Enter password (min 6 characters)"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    value={formData.confirmPassword}
-                                    onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                    type="password"
-                                    placeholder="Re-enter password"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg shadow-blue-500/30 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-blue-500/50"
-                            >
-                                {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'} <Icon d={icons.arrowRight} size={18} />
-                            </button>
-
-                            <div className="relative flex py-2 items-center">
-                                <div className="flex-grow border-t border-slate-700"></div>
-                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs">OR CONTINUE WITH</span>
-                                <div className="flex-grow border-t border-slate-700"></div>
+                                <h3 style="font-size: 20px; font-weight: 700; color: white; margin-bottom: 8px;">Check
+                                    your email</h3>
+                                <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">We've sent a
+                                    verification link to your email address. Please click the link to activate your
+                                    account.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="google-sso-container" data-action="signin"></div>
+                            <div
+                                style="text-align: center; margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <div
+                                        style="width: 16px; height: 16px; border: 2px solid var(--brand-color); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;">
+                                    </div>
+                                    <span style="font-size: 13px; color: #fff; font-weight: 500;">Waiting for
+                                        verification...</span>
+                                </div>
                             </div>
-                        </form>
+                            <style>
+                                @keyframes spin {
+                                    100% {
+                                        transform: rotate(360deg);
+                                    }
+                                }
+                            </style>
+
+                            <button type="button" onclick="window.location.reload()" class="btn-primary">I've verified
+                                my email</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- LOGIN VIEW -->
+                <div id="loginView" class="form-view">
+                    <div class="auth-card-header">
+                        <h2>Welcome back.</h2>
+                        <p>Log in to access your dashboard</p>
                     </div>
-                </div >
-            );
-        };
 
+                    <form onsubmit="handleLoginSubmit(event)">
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="google-sso-container" data-action="signin"></div>
+                        </div>
 
-        // --- REQUEST ACCESS MODAL ---
-        const RequestAccessModal = ({ onClose }) => {
-            const [formData, setFormData] = useState({ name: '', email: '', reason: '' });
+                        <div class="divider">or use email</div>
 
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                // Simulate sending to specific email
+                        <div class="form-group">
+                            <input type="email" class="form-input" placeholder="Email Address" required>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="password" id="loginPassword" class="form-input" placeholder="Password"
+                                required>
+                            <svg id="eyeIconLogin" class="password-toggle"
+                                onclick="togglePasswordVisibility('loginPassword', 'eyeIconLogin')" width="20"
+                                height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path id="eyePathLogin" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle id="pupilLogin" cx="12" cy="12" r="3"></circle>
+                                <path id="eyeSlashLogin" d="M3 3l18 18" stroke="currentColor" stroke-width="2"
+                                    style="display:none;"></path>
+                            </svg>
+                        </div>
+
+                        <div style="text-align: right; margin-bottom: 24px; margin-top: -8px;">
+                            <a href="#" onclick="showForgotPasswordView(event)"
+                                style="color: var(--brand-color); font-size: 13px; text-decoration: none; font-weight: 600;">Forgot
+                                password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Log in</button>
+
+                        <div class="auth-switch-link">
+                            Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- FORGOT PASSWORD VIEW -->
+                <div id="forgotPasswordView" class="form-view">
+                    <div class="auth-card-header">
+                        <h2>Reset Password</h2>
+                        <p>We'll send you a magic link</p>
+                    </div>
+
+                    <form onsubmit="handleForgotPasswordSubmit(event)">
+                        <div class="form-group">
+                            <input type="email" id="forgotEmail" class="form-input" placeholder="Email Address"
+                                required>
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 24px;">Send Reset Link</button>
+                        <div class="auth-switch-link" style="margin-top: 16px;">
+                            Remembered your password? <a onclick="toggleAuthMode()">Log in</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Business Account Link — opens inline modal -->
+            <div class="business-account-card" onclick="showBusinessModal()">
+                <a href="#" onclick="event.preventDefault()">Create a Business Account</a>
+            </div>
+
+            <!-- Business Coming Soon Modal (inline, no separate page) -->
+            <div id="businessModal"
+                style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); display:none; align-items:center; justify-content:center; padding:20px;"
+                onclick="hideBusinessModal()">
+                <div style="background:rgba(12,12,18,0.98); border:1px solid rgba(255,255,255,0.12); border-top:1px solid rgba(255,255,255,0.22); border-radius:28px; padding:44px 40px; max-width:480px; width:100%; position:relative; box-shadow:0 40px 100px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.07);"
+                    onclick="event.stopPropagation()">
+                    <button onclick="hideBusinessModal()"
+                        style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:rgba(255,255,255,0.6); font-size:18px; transition:all 0.2s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.06)'">&#x2715;</button>
+
+                    <div style="text-align:center; margin-bottom:28px;">
+                        <div
+                            style="width:56px; height:56px; background:linear-gradient(135deg, rgba(47,139,255,0.15), rgba(47,139,255,0.05)); border:1px solid rgba(47,139,255,0.25); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; backdrop-filter:blur(8px);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(47,139,255,0.9)"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                        </div>
+                        <h2
+                            style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:#fff; margin:0 0 10px; letter-spacing:-0.5px;">
+                            Business Registration</h2>
+                        <p style="font-size:14px; color:rgba(255,255,255,0.45); line-height:1.5; margin:0;">Powering the
+                            next layer of consumer intelligence</p>
+                    </div>
+
+                    <div
+                        style="background:linear-gradient(135deg, rgba(47,139,255,0.07) 0%, rgba(47,139,255,0.03) 100%); border:1px solid rgba(47,139,255,0.15); border-radius:16px; padding:24px; margin-bottom:24px;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                            <div
+                                style="width:8px; height:8px; background:#2F8BFF; border-radius:50%; animation:pulse-dot 2s infinite;">
+                            </div>
+                            <span
+                                style="font-size:11px; font-weight:700; color:#2F8BFF; letter-spacing:0.1em; text-transform:uppercase;">Coming
+                                Soon</span>
+                        </div>
+                        <p
+                            style="font-size:15px; color:rgba(255,255,255,0.82); line-height:1.65; margin:0; font-weight:400;">
+                            Business registrations are not open yet. We are carefully building the business intelligence
+                            layer of PlusOpinion — designed to give brands and companies direct access to verified
+                            consumer insights, sentiment data, and the PlusOpinion partner ecosystem.</p>
+                    </div>
+
+                    <p
+                        style="font-size:13px; color:rgba(255,255,255,0.35); text-align:center; line-height:1.5; margin:0 0 24px;">
+                        When business accounts launch, registered founders and brand managers will be the first to
+                        receive access. Create a personal account today and you will be notified.</p>
+
+                    <button onclick="hideBusinessModal()"
+                        style="width:100%; background:var(--brand-color); color:#fff; border:none; border-radius:14px; padding:14px; font-size:15px; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 20px rgba(47,139,255,0.3);"
+                        onmouseover="this.style.background='#1972de';this.style.transform='translateY(-1px)'"
+                        onmouseout="this.style.background='var(--brand-color)';this.style.transform='none'">Understood —
+                        Sign Me Up Personally</button>
+
+                    <style>
+                        @keyframes pulse-dot {
+
+                            0%,
+                            100% {
+                                opacity: 1
+                            }
+
+                            50% {
+                                opacity: 0.4
+                            }
+                        }
+                    </style>
+                </div>
+            </div>
+
+            <!-- Mobile-only single unified footer -->
+            <div class="mobile-footer-strip">
+                <div class="m-footer-wrapper">
+                    <div class="m-footer-left">© 2026 PlusOpinion</div>
+                    <div class="m-footer-links">
+                        <a href="ABOUT.HTML">About</a>
+                        <a href="PRIVACY_POLICY.HTML">Privacy</a>
+                        <a href="TERMS_AND_CONDITIONS.HTML">Terms</a>
+                        <a href="SUPPORT.HTML">Support</a>
+                        <a href="COOKIES.HTML">Cookies</a>
+                    </div>
+                    <div class="m-footer-right">
+                        <div class="footer-socials" style="margin:0; gap:8px;">
+                            <a href="https://x.com/plusopinionnow" target="_blank" rel="noopener noreferrer"
+                                class="social-icon" style="width:24px; height:24px;" aria-label="X">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                </svg>
+                            </a>
+                            <a href="https://instagram.com/plusopinion" target="_blank" rel="noopener noreferrer"
+                                class="social-icon" style="width:24px; height:24px;" aria-label="Instagram">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                </svg>
+                            </a>
+                            <a href="https://linkedin.com/in/adityakrguptaofficial" target="_blank"
+                                rel="noopener noreferrer" class="social-icon" style="width:24px; height:24px;"
+                                aria-label="LinkedIn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z">
+                                    </path>
+                                    <rect x="2" y="9" width="4" height="12"></rect>
+                                    <circle cx="4" cy="4" r="2"></circle>
+                                </svg>
+                            </a>
+                        </div>
+                        <span class="footer-beta-tag"
+                            style="position: absolute; top: calc(100% + 4px); right: 0; font-size:8.5px; padding:2px 5px; margin:0; white-space: nowrap;">Version
+                            BETA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bottom-footer">
+        <div class="footer-left">
+            <span>© 2026 PlusOpinion, Inc. All rights reserved.</span>
+        </div>
+
+        <div class="footer-links">
+            <a href="ABOUT.HTML">About</a>
+            <a href="PRIVACY_POLICY.HTML">Privacy</a>
+            <a href="TERMS_AND_CONDITIONS.HTML">Terms</a>
+            <a href="SUPPORT.HTML">Support</a>
+            <a href="COOKIES.HTML">Cookies</a>
+        </div>
+
+        <div class="footer-right">
+            <div class="footer-socials">
+                <a href="https://x.com/plusopinionnow" target="_blank" rel="noopener noreferrer" class="social-icon"
+                    aria-label="X">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                </a>
+                <a href="https://instagram.com/plusopinion" target="_blank" rel="noopener noreferrer"
+                    class="social-icon" aria-label="Instagram">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="https://linkedin.com/in/adityakrguptaofficial" target="_blank" rel="noopener noreferrer"
+                    class="social-icon" aria-label="LinkedIn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                </a>
+            </div>
+            <span class="footer-beta-tag">Version BETA</span>
+        </div>
+    </footer>
+
+    <script>
+        // Load the masonry grid with images from the previews folder to act as the flowing background
+        const previewFiles = [
+            "Screenshot 2026-01-04 at 04.25.50.png",
+            "Screenshot 2026-01-05 at 18.42.24.png",
+            "Screenshot 2026-02-12 at 16.18.34.png",
+            "Screenshot 2026-02-14 at 01.32.24.png",
+            "Screenshot 2026-02-14 at 01.32.32.png",
+            "Screenshot 2026-02-17 at 20.56.49.png",
+            "Screenshot 2026-02-17 at 20.57.24.png",
+            "Screenshot 2026-02-17 at 21.01.03.png",
+            "Screenshot 2026-02-17 at 21.01.40.png",
+            "Screenshot 2026-02-17 at 21.05.44.png",
+            "Screenshot 2026-02-23 at 06.35.46.png",
+            "Screenshot 2026-02-24 at 22.03.45.png",
+            "Screenshot 2026-02-24 at 23.36.01.png",
+            "Screenshot 2026-03-01 at 00.56.09.png",
+            "Screenshot 2026-03-01 at 00.57.15.png"
+        ];
+
+        const bgContainer = document.getElementById('bgDrifter');
+
+        // We'll create 5 columns to fill the massive background
+        const COL_COUNT = 5;
+
+        for (let i = 0; i < COL_COUNT; i++) {
+            const col = document.createElement('div');
+            col.className = 'drift-column';
+
+            // Randomize speed slightly per column for parallax feel
+            const speed = 40 + Math.random() * 30; // 40-70s
+            col.style.animationDuration = `${speed}s`;
+
+            // We duplicate the set of images inside each column so it scrolls infinitely
+            // Shuffle files for this column
+            const shuffled = [...previewFiles].sort(() => Math.random() - 0.5);
+            // Double the array to allow seamless scrolling (when it reaches 50%, it looks like 0%)
+            const doubled = [...shuffled, ...shuffled];
+
+            doubled.forEach(file => {
+                const img = document.createElement('img');
+                img.src = `previews/${file}`;
+
+                // Random aspect ratios/heights for masonry look
+                const heightType = Math.random();
+                if (heightType > 0.7) img.style.maxHeight = '150px';
+                else if (heightType > 0.3) img.style.maxHeight = '250px';
+                else img.style.maxHeight = '350px';
+                img.style.objectFit = 'cover';
+
+                col.appendChild(img);
+            });
+
+            bgContainer.appendChild(col);
+        }
+
+        // Check session on load + Google SSO safety re-scan
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Safety: expose business modal helpers immediately
+            window.showBusinessModal = showBusinessModal;
+            window.hideBusinessModal = hideBusinessModal;
+
+            // Safety re-scan for Google SSO buttons (in case GIS loaded before DOM was ready)
+            setTimeout(() => {
+                if (window.initGoogleIdentityServices) window.initGoogleIdentityServices();
+                setTimeout(() => {
+                    if (window.scanAndRenderGoogleButtons) window.scanAndRenderGoogleButtons();
+                }, 600);
+            }, 200);
+
+            try {
+                // Wait for auth module to be ready
+                if (window.authReadyPromise) {
+                    await window.authReadyPromise;
+                }
+                const user = await window.getCurrentUser();
+                if (user) {
+                    console.log('User already logged in, redirecting...');
+                    // Safe navigateTo fallback in case router.js hasn't parsed yet
+                    (window.navigateTo || ((url) => { window.location.href = url; }))('HOMEPAGE_FINAL.HTML');
+                }
+            } catch (error) {
+                console.log('Session check error or no session');
+            }
+        });
+
+        // Toggle Password Visibility with Emotion Animations
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            // Assume strict string naming for internal paths
+            const isSignup = iconId.includes('Signup');
+            const pathId = isSignup ? 'eyePathSignup' : 'eyePathLogin';
+            const pupilId = isSignup ? 'pupilSignup' : 'pupilLogin';
+            const slashId = isSignup ? 'eyeSlashSignup' : 'eyeSlashLogin';
+
+            const path = document.getElementById(pathId);
+            const pupil = document.getElementById(pupilId);
+            const slash = document.getElementById(slashId);
+
+            icon.classList.remove('is-closed-anim');
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.add('is-open');
+                // Open state visuals
+                slash.style.display = 'none';
+                pupil.style.display = 'block';
+                path.setAttribute('d', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z');
+            } else {
+                input.type = "password";
+                icon.classList.remove('is-open');
+                // Trigger shake animation
+                icon.classList.add('is-closed-anim');
+                // Closed state visuals
+                slash.style.display = 'block';
+                pupil.style.display = 'none';
+                path.setAttribute('d', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'); // keep base path, slash covers it
+
+                // Remove shake after it finishes so it can run again
+                setTimeout(() => {
+                    icon.classList.remove('is-closed-anim');
+                }, 400);
+            }
+        }
+
+        // Error Banner Helper
+        function showError(message) {
+            // Remove existing error if any
+            const existingError = document.getElementById('auth-error-banner');
+            if (existingError) existingError.remove();
+
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'auth-error-banner';
+            errorDiv.style.cssText = 'background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; padding: 12px; border-radius: 12px; font-size: 14px; margin-bottom: 16px; text-align: center; animation: fadeIn 0.3s ease;';
+            errorDiv.textContent = message;
+
+            const activeForm = document.querySelector('.form-view.active .form-row') || document.querySelector('.form-view.active .form-group');
+            if (activeForm && activeForm.parentNode) {
+                activeForm.parentNode.insertBefore(errorDiv, activeForm);
+            }
+        }
+
+        // Business modal helpers
+        function showBusinessModal() {
+            const modal = document.getElementById('businessModal');
+            if (modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        }
+        function hideBusinessModal() {
+            const modal = document.getElementById('businessModal');
+            if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideBusinessModal(); });
+
+        // Multi-step signup logic with validation and Supabase integration
+        async function handleSignupSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+
+            // Native HTML5 validation
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Collect fields
+            const firstName = form.querySelector('input[placeholder="First Name"]').value.trim();
+            const lastName = form.querySelector('input[placeholder="Last Name"]').value.trim();
+            // Combine to a single full_name exactly as the backend profiles table expects
+            const fullName = [firstName, lastName].filter(Boolean).join(' ');
+            const email = form.querySelector('input[type="email"]').value.trim();
+            const password = form.querySelector('#signupPassword').value;
+            // DOB: collect from the date input
+            const dobInput = form.querySelector('input[type="date"]');
+            const dob = dobInput ? dobInput.value : null; // format: YYYY-MM-DD
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long!');
+                return;
+            }
+
+            // Age verification: must be at least 13 years old
+            if (dob) {
+                const birthDate = new Date(dob);
+                const today = new Date();
+                const age = today.getFullYear() - birthDate.getFullYear() -
+                    (today < new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0);
+                if (age < 13) {
+                    showError('You must be at least 13 years old to create an account.');
+                    return;
+                }
+            }
+
+            const btn = document.querySelector('#signupStep1 .btn-primary');
+            const originalText = btn.textContent;
+            btn.textContent = 'Creating Account...';
+            btn.disabled = true;
+
+            try {
+                // Ensure auth is loaded
+                if (window.authReadyPromise) await window.authReadyPromise;
+
+                // ✅ Implicit cookie consent: user clicked Continue, which is agreement
+                // Save consent so cookie-consent.js does NOT show the popup
+                try {
+                    localStorage.setItem('plusopinion_cookie_consent', JSON.stringify({
+                        accepted: true,
+                        timestamp: new Date().toISOString(),
+                        version: '1.0',
+                        source: 'signup_continue'
+                    }));
+                    // Also kick off GA since they just consented
+                    if (window.CookieConsent && window.CookieConsent.loadGoogleAnalytics) {
+                        window.CookieConsent.loadGoogleAnalytics();
+                    }
+                } catch (e) { /* storage may be unavailable */ }
+
+                // Sign up via Supabase global function
+                // Pass dob in user_metadata so the DB trigger can store it
+                const signupData = await window.signUpUser(email, password, fullName, dob);
+
+                // Formspree admin notification
                 fetch("https://formspree.io/f/xkowzkjz", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name: formData.name, email: formData.email, note: formData.reason, source: "Landing Access Request" })
-                }).then(() => {
-                    onClose(); // Fixed: setStep(2) was causing a crash because setStep is not defined here
-                });
-            };
+                    body: JSON.stringify({
+                        name: fullName,
+                        email: email,
+                        dob: dob,
+                        source: "Landing Signup - Supabase Auth"
+                    })
+                }).catch(err => console.error('Formspree error:', err));
 
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
-                    <div className="w-full max-w-lg glass-card p-10 rounded-3xl shadow-2xl relative animate-up border border-white/10">
-                        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white"><Icon d={icons.close} size={24} /></button>
-                        <div className="text-center mb-8">
-                            <div className="inline-flex p-4 rounded-2xl bg-purple-500/10 text-purple-400 mb-4 border border-white/10"><Icon d={icons.users} size={32} /></div>
-                            <h2 className="text-2xl font-bold text-white font-heading mb-2">Request Access Code</h2>
-                            <p className="text-slate-400 text-sm">Tell us why you want to join the future.</p>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <input
-                                    required
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    type="text"
-                                    placeholder="Your Name"
-                                    className="w-full bg-[#050a15] border border-white/10 px-4 py-3 rounded-xl outline-none text-white text-sm focus:border-white/30"
-                                />
-                                <input
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    type="email"
-                                    placeholder="Your Email"
-                                    className="w-full bg-[#050a15] border border-white/10 px-4 py-3 rounded-xl outline-none text-white text-sm focus:border-white/30"
-                                />
-                            </div>
-                            <textarea
-                                required
-                                value={formData.reason}
-                                onChange={e => setFormData({ ...formData, reason: e.target.value })}
-                                placeholder="What made you come here?"
-                                className="w-full bg-[#050a15] border border-white/10 px-4 py-3 rounded-xl outline-none text-white text-sm h-24 resize-none focus:border-white/30"
-                            ></textarea>
-                            <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-xl font-bold tracking-wide transition-all shadow-lg active:scale-95">SEND REQUEST</button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
+                if (!signupData.session) {
+                    // Show step 2 (Verification email sent)
+                    document.getElementById('signupStep1').classList.remove('active');
+                    document.getElementById('signupStep2').classList.add('active');
 
-        // --- LOGIN MODAL ---
-        const LoginModal = ({ onClose, onForgotPassword, setModalType }) => {
-            const [formData, setFormData] = useState({ email: '', password: '' });
-            const [error, setError] = useState('');
-            const [loading, setLoading] = useState(false);
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setError('');
-                setLoading(true);
-
-                try {
-                    // Wait for auth module to load
-                    await window.authReadyPromise;
-
-                    // Sign in user with Supabase (session automatically persisted to localStorage)
-                    const user = await window.signInUser(formData.email, formData.password);
-                    console.log('Login successful:', user);
-
-                    // ✅ Check onboarding status from database
-                    const { data: profile, error: profileError } = await window.supabase
-                        .from('profiles')
-                        .select('profile_completed, terms_accepted')
-                        .eq('id', user.id)
-                        .single();
-
-                    let onboardingComplete = false;
-
-                    if (profileError) {
-                        console.error('Error checking profile:', profileError);
-                        // If error fetching profile, assume onboarding needed
-                        onboardingComplete = false;
-                    } else {
-                        // Check if onboarding is complete
-                        onboardingComplete = profile?.profile_completed === true &&
-                            profile?.terms_accepted === true;
-                        console.log('Onboarding status:', onboardingComplete ? 'COMPLETE' : 'INCOMPLETE');
-                    }
-
-                    // Redirect based on status
-                    if (onboardingComplete) {
-                        window.navigateTo('HOMEPAGE_FINAL.HTML');
-                    } else {
-                        window.navigateTo('onboarding.html');
-                    }
-
-                } catch (error) {
-                    console.error('Login error:', error);
-                    setError(error.message || 'Invalid email or password');
-                    setLoading(false);
+                    // Poll for verification in another tab
+                    const pollInterval = setInterval(async () => {
+                        try {
+                            const { data } = await window.supabase.auth.getSession();
+                            if (data && data.session) {
+                                clearInterval(pollInterval);
+                                (window.navigateTo || ((url) => { window.location.href = url; }))('onboarding.html');
+                            }
+                        } catch (e) { }
+                    }, 3000);
+                } else {
+                    // Instantly logged in (email confirmation disabled)
+                    (window.navigateTo || ((url) => { window.location.href = url; }))('onboarding.html');
                 }
-            };
-
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Background Video for Modal */}
-                    <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="absolute inset-0 w-full h-full object-cover opacity-30"
-                    >
-                        <source src="/bg-video.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
-                    <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"><Icon d={icons.close} size={24} /></button>
-
-                        <div className="text-center mb-8">
-                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
-                                Welcome Back
-                            </h2>
-                            <p className="text-slate-400 text-sm">
-                                Login to access your account
-                            </p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {error && (
-                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
-                                    {error}
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password <span className="text-red-500">*</span></label>
-                                <input
-                                    required
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    type="password"
-                                    placeholder="Enter your password"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                />
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    onClose();
-                                    onForgotPassword();
-                                }}
-                                className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
-                            >
-                                Forgot Password?
-                            </button>
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'LOGGING IN...' : 'LOGIN'} <Icon d={icons.arrowRight} size={18} />
-                            </button>
-
-                            <div className="relative flex py-2 items-center">
-                                <div className="flex-grow border-t border-slate-700"></div>
-                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs">OR LOGIN WITH</span>
-                                <div className="flex-grow border-t border-slate-700"></div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="google-sso-container" data-action="signin"></div>
-                            </div>
-                        </form>
-
-                        <div className="mt-6 text-center text-sm text-slate-400">
-                            Don't have an account? <button onClick={() => { onClose(); setTimeout(() => { if (setModalType) setModalType('signup'); }, 100); }} className="text-blue-400 hover:text-blue-300 font-bold">Sign Up</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- FORGOT PASSWORD MODAL ---
-        const ForgotPasswordModal = ({ onClose }) => {
-            const [email, setEmail] = useState('');
-            const [sent, setSent] = useState(false);
-            const [error, setError] = useState('');
-            const [loading, setLoading] = useState(false);
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setError('');
-                setLoading(true);
-
-                try {
-                    await window.resetPassword(email);
-                    setSent(true);
-                } catch (error) {
-                    console.error('Password reset error:', error);
-                    setError(error.message || 'Failed to send reset link');
-                    setLoading(false);
+            } catch (error) {
+                console.error('Signup error:', error);
+                if (error.status === 422 || (error.message && (error.message.includes('registered') || error.message.includes('duplicate')))) {
+                    showError('This email is already registered. Please log in instead.');
+                } else {
+                    showError(error.message || 'Error creating account. Please try again.');
                 }
-            };
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
 
-            return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Background Video for Modal */}
-                    <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="absolute inset-0 w-full h-full object-cover opacity-30"
-                    >
-                        <source src="/bg-video.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-up" onClick={onClose}></div>
-                    <div className="w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl relative animate-up border border-white/10 shadow-blue-500/10" onClick={e => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"><Icon d={icons.close} size={24} /></button>
+        function showSignupStep1() {
+            document.getElementById('signupStep2').classList.remove('active');
+            document.getElementById('signupStep1').classList.add('active');
+        }
 
-                        <div className="text-center mb-8">
-                            <div className="inline-flex p-4 rounded-2xl bg-blue-500/10 text-blue-400 mb-4 border border-white/10"><Icon d={icons.mail} size={32} /></div>
-                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">Reset Password</h2>
-                            <p className="text-slate-400 text-sm">We'll send you a magic link to reset your password</p>
-                        </div>
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const email = form.querySelector('input[type="email"]').value.trim();
+            const password = form.querySelector('input[type="password"]').value;
+            const btn = form.querySelector('.btn-primary');
+            const originalText = btn.textContent;
 
-                        {sent ? (
-                            <div className="text-center space-y-4">
-                                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 text-green-400">
-                                    <p className="font-bold mb-1">Email Sent! ✓</p>
-                                    <p className="text-sm">Check your inbox for the password reset link.</p>
-                                </div>
-                                <button onClick={onClose} className="w-full bg-white/5 hover:bg-white/10 text-white py-3 rounded-2xl font-bold transition-all">
-                                    Close
-                                </button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                {error && (
-                                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
-                                        {error}
-                                    </div>
-                                )}
+            btn.textContent = 'Logging in...';
+            btn.disabled = true;
 
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address <span className="text-red-500">*</span></label>
-                                    <input
-                                        required
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
-                                        type="email"
-                                        placeholder="john@example.com"
-                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
-                                    />
-                                </div>
+            try {
+                if (window.authReadyPromise) await window.authReadyPromise;
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? 'SENDING...' : 'SEND RESET LINK'} <Icon d={icons.mail} size={18} />
-                                </button>
-                            </form>
-                        )}
+                const user = await window.signInUser(email, password);
+
+                // Check onboarding status from DB
+                const { data: profile } = await window.supabase
+                    .from('profiles')
+                    .select('profile_completed, terms_accepted, username, full_name')
+                    .eq('id', user.id)
+                    .single();
+
+                const onboardingComplete = profile?.profile_completed === true
+                    && profile?.terms_accepted === true
+                    && profile?.username
+                    && profile?.full_name;
+
+                const nav = window.navigateTo || ((url) => { window.location.href = url; });
+                if (onboardingComplete) {
+                    nav('HOMEPAGE_FINAL.HTML');
+                } else {
+                    nav('onboarding.html');
+                }
+            } catch (error) {
+                showError(error.message || 'Invalid email or password');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Forgot Password Handler
+        async function handleForgotPasswordSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value.trim();
+            const btn = e.target.querySelector('.btn-primary');
+            const originalText = btn.textContent;
+
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+
+            try {
+                if (window.authReadyPromise) await window.authReadyPromise;
+                await window.resetPassword(email);
+
+                // Show success message inline
+                e.target.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <h3 style="color: #4ade80; margin-bottom: 12px; font-weight: bold; font-size: 20px;">Email Sent! ✓</h3>
+                        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">Check your inbox for the password reset link. It may take a minute to arrive.</p>
+                        <button type="button" onclick="toggleAuthMode()" class="btn-primary" style="margin-top: 24px;">Back to Login</button>
                     </div>
-                </div>
-            );
-        };
+                `;
+            } catch (error) {
+                showError(error.message || 'Failed to send reset link. Please try again.');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
 
-        // --- LANDING PAGE ---
-        const LandingPage = () => {
-            const [modalType, setModalType] = useState(null);
-            const [activeTab, setActiveTab] = useState('reviewers');
+        function showForgotPasswordView(e) {
+            if (e) e.preventDefault();
+            document.getElementById('loginView').classList.remove('active');
+            document.getElementById('signupView').classList.remove('active');
+            document.getElementById('forgotPasswordView').classList.add('active');
 
-            useEffect(() => {
-                // Check if user is already logged in with Supabase
-                const checkSession = async () => {
-                    try {
-                        // Wait for auth module to be ready
-                        await window.authReadyPromise;
+            const existingError = document.getElementById('auth-error-banner');
+            if (existingError) existingError.remove();
+        }
 
-                        const user = await window.getCurrentUser();
-                        if (user) {
-                            console.log('User already logged in, redirecting...');
-                            // User is logged in, redirect to homepage
-                            window.navigateTo('HOMEPAGE_FINAL.HTML');
-                        }
-                    } catch (error) {
-                        console.log('Session check error or no session');
-                    }
-                };
+        // Swap between Sign Up and Login views
+        let currentMode = 'signup';
+        function toggleAuthMode() {
+            const signupView = document.getElementById('signupView');
+            const loginView = document.getElementById('loginView');
+            const forgotPasswordView = document.getElementById('forgotPasswordView');
+            const swipeBtnText = document.getElementById('swipeBtnText');
 
-                checkSession();
-            }, []);
+            // Clear any errors when switching
+            const existingError = document.getElementById('auth-error-banner');
+            if (existingError) existingError.remove();
 
-            return (
-                <div className="relative w-full min-h-screen text-white font-sans selection:bg-blue-500/30">
+            if (forgotPasswordView) forgotPasswordView.classList.remove('active');
 
-                    {/* Background */}
-                    <div className="blob-container">
-                        <div className="blob blob-1"></div>
-                        <div className="blob blob-2"></div>
-                        <div className="blob blob-3"></div>
-                        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
-                    </div>
-
-                    {/* Navbar */}
-                    <nav className="relative md:fixed top-0 w-full z-50 glass-nav h-20 flex items-center justify-between px-6 md:px-12">
-                        <div className="flex items-center gap-3">
-                            <span className="text-2xl font-black tracking-tighter text-white font-heading">PlusOpinion</span>
-                            <span className="px-2 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 text-[10px] font-bold text-blue-400 tracking-widest uppercase">BETA</span>
-                        </div>
-                        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-                            <a href="ABOUT.HTML" className="hover:text-white transition-colors">About</a>
-                            <a href="#features" className="hover:text-white transition-colors">Features</a>
-                            <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-                            <a href="#brands" className="hover:text-white transition-colors">For Brands</a>
-                            <a href="#startups" className="hover:text-white transition-colors">Startups</a>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setModalType('login')} className="px-6 py-2 rounded-full text-sm font-bold text-slate-300 hover:text-white border border-white/10 hover:bg-white/10 transition-all">
-                                Login
-                            </button>
-                            <button onClick={() => setModalType('signup')} className="px-6 py-2 rounded-full text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all">
-                                Sign Up
-                            </button>
-                        </div>
-                    </nav>
-
-                    {/* Mobile Quick Access Bar */}
-                    <div className="md:hidden sticky top-0 z-[60] w-full glass-nav border-b border-white/5 overflow-x-auto whitespace-nowrap px-6 py-4 flex items-center justify-center gap-6 no-scrollbar shadow-2xl">
-                        <a href="ABOUT.HTML" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-400 transition-colors">About</a>
-                        <a href="#features" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-400 transition-colors">Features</a>
-                        <a href="#how-it-works" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-400 transition-colors">How it Works</a>
-                        <a href="#brands" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-400 transition-colors">For Brands</a>
-                        <a href="#startups" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-400 transition-colors">Startups</a>
-                    </div>
-
-                    {/* Hero Section */}
-                    <section className="relative z-10 min-h-[calc(100vh-140px)] md:min-h-screen flex flex-col items-center justify-center text-center px-4 pt-10 md:pt-20">
-                        {/* Background Video */}
-                        <video
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className="absolute inset-0 w-full h-full object-cover opacity-35"
-                            style={{ filter: 'brightness(0.4) contrast(1.2)' }}
-                        >
-                            <source src="/bg-video.mp4" type="video/mp4" />
-                        </video>
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black"></div>
-                        <div className="max-w-5xl space-y-8">
-
-                            <div className="animate-up delay-1">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0f172a]/60 border border-blue-500/20 text-blue-400 text-[10px] font-bold tracking-[0.15em] mb-8 shadow-[0_0_30px_rgba(59,130,246,0.15)] backdrop-blur-sm">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> SYSTEM ONLINE v2.0
-                                </div>
-                                <h1 className="text-6xl md:text-[5.5rem] font-black tracking-tighter leading-[0.95] text-white drop-shadow-2xl font-heading text-glow mb-6">
-                                    The Future of <br />
-                                    Consumer Intelligence
-                                </h1>
-                            </div>
-
-                            <p className="text-lg md:text-[1.25rem] text-slate-400 max-w-2xl mx-auto leading-relaxed font-light animate-up delay-2 opacity-80">
-                                A verified feedback ecosystem where genuine users earn rewards, <br /> and brands get actionable insights to build better.
-                            </p>
-
-                            <div className="pt-12 flex flex-col sm:flex-row items-center justify-center gap-6 animate-up delay-3">
-                                <button onClick={() => setModalType('signup')} className="bg-[#2563eb] hover:bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-lg tracking-wide hover:scale-105 transition-all active:scale-95 flex items-center gap-3 shadow-[0_10px_40px_rgba(37,99,235,0.4)]">
-                                    Join Private Beta <Icon d={icons.arrowRight} size={20} />
-                                </button>
-                                <button onClick={() => setModalType('access')} className="px-10 py-4 rounded-full font-bold text-lg text-white border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-md">
-                                    Request Access Code
-                                </button>
-                            </div>
-
-                            <div className="mt-16 flex justify-center gap-12 text-xs font-semibold text-slate-500 uppercase tracking-wider animate-up delay-3">
-                                <span className="flex items-center gap-2 hover:text-blue-400 transition-colors"><Icon d={icons.check} size={14} className="text-blue-500" /> Verified Reviewers</span>
-                                <span className="flex items-center gap-2 hover:text-blue-400 transition-colors"><Icon d={icons.zap} size={14} className="text-blue-500" /> AI Insights</span>
-                                <span className="flex items-center gap-2 hover:text-blue-400 transition-colors"><Icon d={icons.star} size={14} className="text-blue-500" /> Real Rewards</span>
-                            </div>
-                        </div>
-
-                        <div className="absolute bottom-10 animate-bounce text-slate-600 opacity-50">
-                            <Icon d={icons.chevronDown} size={32} />
-                        </div>
-                    </section>
-
-                    {/* Why PlusOpinion Exists */}
-                    <section id="features" className="relative z-10 bg-[#020408] border-t border-white/5 py-32 px-6">
-                        <div className="max-w-6xl mx-auto">
-                            <div className="text-center mb-24">
-                                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-heading">Why PlusOpinion Exists</h2>
-                                <p className="text-slate-400 max-w-2xl mx-auto text-lg">The current review system is broken. We fixed it.</p>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {[
-                                    { p: 'Fake Reviews Everywhere', s: 'PlusOpinion verifies every review via invoice & AI, ensuring 100% authenticity.', color: 'red' },
-                                    { p: 'Brands Don\'t Understand Users', s: 'PlusOpinion delivers real-time consumer intelligence straight from the source.', color: 'yellow' },
-                                    { p: 'Startups Waste Money', s: 'Validate ideas inside PlusOpinion with real consumer data before you build.', color: 'cyan' }
-                                ].map((card, i) => (
-                                    <div key={i} className="glass-card p-8 rounded-[2rem] group hover:border-blue-500/20">
-                                        <div className={`text-${card.color}-400 text-xs font-bold mb-2 uppercase tracking-wider flex items-center gap-2`}><span className={`w-2 h-2 bg-${card.color}-500 rounded-full`}></span> Problem</div>
-                                        <h3 className="text-xl font-bold text-white mb-4">{card.p}</h3>
-                                        <div className="pt-6 border-t border-white/10">
-                                            <div className="text-green-400 text-xs font-bold mb-2 uppercase tracking-wider flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Solution</div>
-                                            <p className="text-slate-300 text-sm leading-relaxed">{card.s}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Key Features / Platform Capabilities */}
-                    <section className="relative z-10 py-24 px-6 bg-white/[0.02] border-y border-white/5">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="text-center mb-16">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-heading">Platform Capabilities</h2>
-                                <p className="text-slate-400">Built for transparency. Engineered for truth.</p>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {[
-                                    { icon: icons.shield, color: 'text-blue-400', title: 'AI Verification', desc: 'Blocks fake reviews and ensures authenticity.' },
-                                    { icon: icons.star, color: 'text-yellow-400', title: 'Reputation Score', desc: 'Trust indicator of reviewer quality.' },
-                                    { icon: icons.zap, color: 'text-green-400', title: 'Instant Rewards', desc: 'Earn wallet credits for every honest feedback.' },
-                                    { icon: icons.trending, color: 'text-purple-400', title: 'Brand Insights', desc: 'Sentiment analysis and competitor maps.' },
-                                    { icon: icons.globe, color: 'text-cyan-400', title: 'Global Reach', desc: 'Connect with consumers across 40+ countries.' },
-                                    { icon: icons.users, color: 'text-pink-400', title: 'Community First', desc: 'A network built on real human experiences.' }
-                                ].map((feat, i) => (
-                                    <div key={i} className="p-6 rounded-2xl border border-white/5 hover:bg-white/5 transition-colors group">
-                                        <div className={`mb-4 ${feat.color} group-hover:scale-110 transition-transform duration-300`}><Icon d={feat.icon} size={32} /></div>
-                                        <h3 className="text-lg font-bold text-white mb-2">{feat.title}</h3>
-                                        <p className="text-sm text-slate-400">{feat.desc}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* How it Works (Togglable) */}
-                    <section id="how-it-works" className="relative z-10 py-32 px-6 bg-white/[0.02]">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="text-center mb-16">
-                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 font-heading">How PlusOpinion Works</h2>
-                                <div className="inline-flex bg-[#0f172a] p-1 rounded-full border border-white/10">
-                                    <button onClick={() => setActiveTab('reviewers')} className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'reviewers' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>For Reviewers</button>
-                                    <button onClick={() => setActiveTab('brands')} className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'brands' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>For Brands</button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {activeTab === 'reviewers' ? [
-                                    { step: '01', title: 'Register & Verify', desc: 'KYC checks and invoice uploads ensure you are a real user.', icon: icons.lock },
-                                    { step: '02', title: 'Share Feedback', desc: 'Post text, photo, or video reviews about products you own.', icon: icons.image },
-                                    { step: '03', title: 'Earn Rewards', desc: 'Get paid in micro-rewards (₹5-₹20) and grow your RQS.', icon: icons.zap }
-                                ].map((item, i) => (
-                                    <div key={i} className="glass-card p-8 rounded-3xl text-center group hover:-translate-y-2">
-                                        <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 mx-auto mb-6 border border-blue-500/20"><Icon d={item.icon} size={28} /></div>
-                                        <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
-                                        <p className="text-slate-400 text-sm">{item.desc}</p>
-                                    </div>
-                                )) : [
-                                    { step: '01', title: 'Register Brand', desc: 'Get verified access to your brand dashboard.', icon: icons.barChart },
-                                    { step: '02', title: 'View Insights', desc: 'See sentiment analysis, rising issues, and trends.', icon: icons.globe },
-                                    { step: '03', title: 'Improve Product', desc: 'Use real data to build better products and run surveys.', icon: icons.check }
-                                ].map((item, i) => (
-                                    <div key={i} className="glass-card p-8 rounded-3xl text-center group hover:-translate-y-2">
-                                        <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400 mx-auto mb-6 border border-purple-500/20"><Icon d={item.icon} size={28} /></div>
-                                        <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
-                                        <p className="text-slate-400 text-sm">{item.desc}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Brand Dashboard Mockup */}
-                    <section id="brands" className="relative z-10 py-32 px-6 bg-gradient-to-b from-[#020408] to-[#0f172a]">
-                        <div className="max-w-6xl mx-auto text-center">
-                            <h2 className="text-3xl font-bold text-white mb-6 font-heading">Brand Command Center</h2>
-                            <p className="text-slate-400 mb-12 max-w-xl mx-auto">Everything your product team needs — powered by real consumer voices.</p>
-
-                            <div className="glass-card rounded-2xl border border-white/10 p-2 shadow-2xl max-w-5xl mx-auto transform hover:scale-[1.01] transition-transform duration-500 overflow-hidden">
-                                <div className="bg-[#0b0f14] rounded-xl p-6 md:p-10 grid grid-cols-1 md:grid-cols-3 gap-8 md:h-[500px] h-auto overflow-hidden">
-                                    {/* Sidebar Mock */}
-                                    <div className="hidden md:flex flex-col gap-4 col-span-1 border-r border-white/10 pr-8">
-                                        <div className="h-8 w-full bg-white/10 rounded mb-4"></div>
-                                        <div className="h-4 w-2/3 bg-white/5 rounded"></div>
-                                        <div className="h-4 w-3/4 bg-white/5 rounded"></div>
-                                        <div className="h-4 w-1/2 bg-white/5 rounded"></div>
-                                        <div className="mt-auto h-24 bg-blue-900/20 rounded border border-blue-500/20 flex flex-col items-center justify-center gap-2">
-                                            <span className="text-xs text-blue-400 font-bold">LIVE SENTIMENT</span>
-                                            <span className="text-3xl font-black text-white">84%</span>
-                                        </div>
-                                    </div>
-                                    {/* Charts Mock (Restricted to container) */}
-                                    <div className="col-span-2 flex flex-col gap-6 min-w-0 overflow-hidden">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <div className="h-8 w-40 bg-white/10 rounded"></div>
-                                            <div className="flex gap-2"><div className="h-8 w-8 bg-green-500/20 rounded-full"></div><div className="h-8 w-8 bg-purple-500/20 rounded-full"></div></div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="h-32 bg-white/5 rounded-xl border border-white/5 p-4 flex flex-col justify-end min-w-0 overflow-hidden">
-                                                <div className="text-xs text-slate-500 mb-1">BATTERY ISSUES</div>
-                                                <div className="w-full bg-red-500/20 h-2 rounded"><div className="bg-red-500 h-2 rounded w-[70%]"></div></div>
-                                            </div>
-                                            <div className="h-32 bg-white/5 rounded-xl border border-white/5 p-4 flex flex-col justify-end min-w-0 overflow-hidden">
-                                                <div className="text-xs text-slate-500 mb-1">FEATURE REQUESTS</div>
-                                                <div className="w-full bg-blue-500/20 h-2 rounded"><div className="bg-blue-500 h-2 rounded w-[40%]"></div></div>
-                                            </div>
-                                        </div>
-                                        <div className="h-full bg-white/5 rounded-xl border border-white/5 flex items-end justify-between px-6 pb-4 gap-2 min-w-0 overflow-hidden">
-                                            {[40, 60, 30, 80, 50, 90, 65, 45, 70, 85].map((h, i) => (
-                                                <div key={i} className="w-full bg-blue-600/40 rounded-t hover:bg-blue-500 transition-colors" style={{ height: h + '%' }}></div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Startup Tools */}
-                    <section id="startups" className="relative z-10 py-24 px-6 bg-[#020408] border-t border-white/5">
-                        <div className="max-w-4xl mx-auto text-center">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold tracking-wider mb-6"><Icon d={icons.zap} size={14} /> FOR STARTUPS</div>
-                            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-heading">Built for Founders. Loved by Innovators.</h2>
-                            <p className="text-slate-400 text-lg mb-10">Validate ideas, test prototypes, and explore real market needs through verified consumer insights.</p>
-                            <button onClick={() => setModalType('access')} className="px-8 py-3 rounded-full border border-white/10 text-white hover:bg-white/5 transition-colors">Explore Startup Tools</button>
-                        </div>
-                    </section>
-
-                    {/* FAQ */}
-                    <section id="faq" className="relative z-10 py-24 px-6 max-w-3xl mx-auto">
-                        <h2 className="text-3xl font-bold text-center mb-12 text-white font-heading">FAQ</h2>
-                        <div className="space-y-4">
-                            {[
-                                { q: 'How does PlusOpinion verify reviews?', a: 'We use a combination of AI analysis on posting patterns and manual invoice verification for high-value items.' },
-                                { q: 'How do rewards work?', a: 'You earn points for every verified review which can be redeemed for gift cards, products, or crypto.' },
-                                { q: 'Can brands hide negative reviews?', a: 'No. They can only use a time-delayed shield to address issues privately for a short period before it goes public.' },
-                                { q: 'Is my data safe?', a: 'Yes. We prioritize user privacy. Your personal data is encrypted and never shared without consent.' }
-                            ].map((faq, i) => (
-                                <details key={i} className="p-6 rounded-2xl bg-white/5 border border-white/5 group cursor-pointer">
-                                    <summary className="text-white font-bold flex justify-between items-center list-none">{faq.q} <Icon d={icons.chevronDown} size={20} /></summary>
-                                    <p className="text-slate-400 text-sm mt-4 leading-relaxed">{faq.a}</p>
-                                </details>
-                            ))}
-                        </div>
-                    </section>
-
-                    {/* Footer */}
-                    <footer className="relative z-10 border-t border-white/5 py-16 px-6 bg-[#010204]">
-                        <div className="max-w-7xl mx-auto">
-                            {/* Main Footer Content - Horizontal on Desktop, Vertical on Mobile */}
-                            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-8 mb-8">
-                                {/* Company Info */}
-                                <div className="text-center md:text-left">
-                                    <span className="text-2xl md:text-3xl font-black tracking-tighter text-white font-heading block mb-2">PlusOpinion</span>
-                                    <p className="text-sm text-slate-500">The verified consumer intelligence platform.</p>
-                                </div>
-
-                                {/* Footer Links */}
-                                <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-slate-400">
-                                    <a href="ABOUT.HTML" className="hover:text-white transition-colors">About</a>
-                                    <a href="PRIVACY_POLICY.HTML" className="hover:text-white transition-colors">Privacy Policy</a>
-                                    <a href="TERMS_AND_CONDITIONS.HTML" className="hover:text-white transition-colors">Terms of Service</a>
-                                    <a href="SUPPORT.HTML" className="hover:text-white transition-colors">Contact Support</a>
-                                    <a href="#" className="hover:text-white transition-colors">API</a>
-                                </div>
-
-                                {/* Social Icons */}
-                                <div className="flex justify-center md:justify-end gap-4 opacity-50">
-                                    <a href="https://x.com/plusopinionnow" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors text-slate-300"><Icon d={icons.x} size={18} /></a>
-                                    <a href="https://instagram.com/plusopinion" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors text-slate-300"><Icon d={icons.instagram} size={18} /></a>
-                                    <a href="https://linkedin.com/in/adityakrguptaofficial" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors text-slate-300"><Icon d={icons.linkedin} size={18} /></a>
-                                </div>
-                            </div>
-
-                            {/* Copyright */}
-                            <div className="text-center md:text-left text-xs text-slate-600 border-t border-white/5 pt-6 flex justify-between items-center">
-                                <span>© {new Date().getFullYear()} PlusOpinion, Inc. All rights reserved.</span>
-                                <span className="app-version opacity-50 font-mono"></span>
-                            </div>
-                        </div>
-                    </footer>
-
-                    {/* --- MODALS --- */}
-                    {modalType === 'signup' && <SignupModal onClose={() => setModalType(null)} />}
-                    {modalType === 'access' && <RequestAccessModal onClose={() => setModalType(null)} />}
-                    {modalType === 'login' && <LoginModal onClose={() => setModalType(null)} onForgotPassword={() => setModalType('forgotPassword')} setModalType={setModalType} />}
-                    {modalType === 'forgotPassword' && <ForgotPasswordModal onClose={() => setModalType(null)} />}
-
-                </div>
-            );
-        };
-
-        const root = createRoot(document.getElementById('root'));
-        root.render(<LandingPage />);
+            if (currentMode === 'signup') {
+                signupView.classList.remove('active');
+                loginView.classList.add('active');
+                swipeBtnText.textContent = 'Sign Up';
+                currentMode = 'login';
+            } else {
+                loginView.classList.remove('active');
+                signupView.classList.add('active');
+                swipeBtnText.textContent = 'Login';
+                currentMode = 'signup';
+            }
+        }
     </script>
-
-    <!-- Cookie Consent Banner -->
-    <div id="cookie-consent-banner" class="cookie-consent-banner">
-        <div class="cookie-consent-content">
-            <div class="cookie-consent-header">
-                <svg class="cookie-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <circle cx="8" cy="10" r="1.5" fill="currentColor" />
-                    <circle cx="16" cy="10" r="1.5" fill="currentColor" />
-                    <circle cx="12" cy="15" r="1.5" fill="currentColor" />
-                    <circle cx="9" cy="13" r="1" fill="currentColor" />
-                    <circle cx="15" cy="13" r="1" fill="currentColor" />
-                </svg>
-                <h3>Cookie Consent</h3>
-            </div>
-
-            <p class="cookie-consent-text">
-                We use cookies and similar technologies to enhance your experience, analyze site usage, and remember
-                your preferences.
-            </p>
-
-            <div class="cookie-consent-details">
-                <strong>We use:</strong>
-                <ul>
-                    <li><strong>Essential Cookies</strong> - Required for authentication and platform functionality</li>
-                    <li><strong>Analytics Cookies</strong> - To understand how you use our platform (Google Analytics)
-                    </li>
-                </ul>
-            </div>
-
-            <p class="cookie-consent-footer">
-                By clicking "Accept All", you consent to our use of cookies as described in our <a
-                    href="PRIVACY_POLICY.HTML" class="text-blue-400">Privacy Policy</a>. You can reject non-essential
-                cookies by
-                clicking "Reject".
-            </p>
-
-            <div class="cookie-consent-actions">
-                <button class="cookie-btn cookie-btn-reject" onclick="window.CookieConsent.rejectCookies()">
-                    Reject
-                </button>
-                <button class="cookie-btn cookie-btn-accept" onclick="window.CookieConsent.acceptCookies()">
-                    Accept All Cookies
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cookie Consent Styles -->
-    <style>
-        .cookie-consent-banner {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            max-width: 420px;
-            width: calc(100% - 40px);
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            z-index: 999999;
-            opacity: 0;
-            transform: translateY(100px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-        }
-
-        .cookie-consent-banner.show {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: all;
-        }
-
-        .cookie-consent-content {
-            color: #e2e8f0;
-        }
-
-        .cookie-consent-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .cookie-icon {
-            color: #f59e0b;
-            flex-shrink: 0;
-        }
-
-        .cookie-consent-header h3 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
-            margin: 0;
-        }
-
-        .cookie-consent-text {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #cbd5e1;
-            margin: 0 0 16px 0;
-        }
-
-        .cookie-consent-details {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-            font-size: 13px;
-        }
-
-        .cookie-consent-details strong {
-            color: #ffffff;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .cookie-consent-details ul {
-            margin: 0;
-            padding-left: 20px;
-            color: #94a3b8;
-        }
-
-        .cookie-consent-details li {
-            margin-bottom: 6px;
-            line-height: 1.5;
-        }
-
-        .cookie-consent-details li strong {
-            display: inline;
-            color: #e2e8f0;
-            font-weight: 600;
-        }
-
-        .cookie-consent-footer {
-            font-size: 12px;
-            color: #94a3b8;
-            margin: 0 0 20px 0;
-            line-height: 1.5;
-        }
-
-        .cookie-consent-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .cookie-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            font-family: inherit;
-        }
-
-        .cookie-btn-reject {
-            background: rgba(255, 255, 255, 0.05);
-            color: #cbd5e1;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .cookie-btn-reject:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #ffffff;
-        }
-
-        .cookie-btn-accept {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .cookie-btn-accept:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-            transform: translateY(-1px);
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 640px) {
-            .cookie-consent-banner {
-                bottom: 10px;
-                right: 10px;
-                left: 10px;
-                max-width: none;
-                width: auto;
-                padding: 20px;
-            }
-
-            .cookie-consent-header h3 {
-                font-size: 16px;
-            }
-
-            .cookie-consent-text {
-                font-size: 13px;
-            }
-
-            .cookie-consent-details {
-                font-size: 12px;
-            }
-
-            .cookie-consent-actions {
-                flex-direction: column;
-            }
-
-            .cookie-btn {
-                width: 100%;
-            }
-        }
-    </style>
 
     <script src="/router.js"></script>
     <script>
@@ -1678,10 +1913,14 @@
     </script>
     <script src="/pull_to_refresh.js"></script>
 
-    <!-- Cookie Consent Manager -->
+    <!-- 
+        Cookie Consent: On the index page, consent is implicitly given when the user
+        clicks "Continue" during signup (see handleSignupSubmit). The cookie-consent.js
+        is still loaded to handle existing users who have/haven't consented, and to
+        load Google Analytics for those who already accepted. The banner HTML is NOT
+        included in this page, so cookie-consent.js showBanner() will silently no-op.
+    -->
     <script src="/cookie-consent.js"></script>
-
 </body>
-
 
 </html>
