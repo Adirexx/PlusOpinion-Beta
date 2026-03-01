@@ -35,7 +35,7 @@ export default {
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with',
+                    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with, x-supabase-api-version',
                     'Access-Control-Max-Age': '86400'
                 }
             });
@@ -59,8 +59,8 @@ export default {
             const isWebSocketUpgrade = request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
 
             if (isWebSocketUpgrade) {
-                // Build WSS target URL from the Supabase hostname
-                const wsTargetUrl = targetUrl.toString().replace(/^https:/, 'wss:');
+                // Cloudflare fetch() requires https:// for WS proxy requests, NOT wss://
+                const wsTargetUrl = targetUrl.toString();
 
                 // Open a server-side WebSocket connection TO Supabase
                 const upstreamHeaders = new Headers();
@@ -143,7 +143,7 @@ export default {
                 const corsHeaders = new Headers(response.headers);
                 corsHeaders.set('Access-Control-Allow-Origin', '*');
                 corsHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-                corsHeaders.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with');
+                corsHeaders.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with, x-supabase-api-version');
                 corsHeaders.set('Access-Control-Expose-Headers', 'content-range, range');
 
                 return new Response(response.body, {
