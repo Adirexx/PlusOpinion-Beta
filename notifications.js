@@ -904,6 +904,14 @@ window.subscribeToUnreadCount = function (onCountChange) {
         onCountChange(cached);
     }
 
+    // Listen for custom optimistic updates
+    const handleOptimisticUpdate = (e) => {
+        if (!isCancelled && e.detail && typeof e.detail.count === 'number') {
+            onCountChange(e.detail.count);
+        }
+    };
+    window.addEventListener('unread_count_updated', handleOptimisticUpdate);
+
     const setup = async () => {
         const user = await window.getCurrentUser();
         if (!user || isCancelled) return;
@@ -950,6 +958,7 @@ window.subscribeToUnreadCount = function (onCountChange) {
 
     return () => {
         isCancelled = true;
+        window.removeEventListener('unread_count_updated', handleOptimisticUpdate);
         if (subscription) window.supabase.removeChannel(subscription);
     };
 };
@@ -1518,6 +1527,13 @@ window.markNotificationRead = async function (notificationId) {
             .eq('id', notificationId);
 
         if (error) throw error;
+
+        // Optimistically update badge count across app
+        const currentCount = window.getUnreadCountFromCache();
+        const newCount = Math.max(0, currentCount - 1);
+        localStorage.setItem('unread_count', newCount);
+        window.dispatchEvent(new CustomEvent('unread_count_updated', { detail: { count: newCount } }));
+
         console.log('[Notifications] Marked as read:', notificationId);
     } catch (err) {
         console.error('[Notifications] markNotificationRead failed:', err);
@@ -1539,6 +1555,11 @@ window.markAllNotificationsRead = async function () {
             .eq('is_read', false);
 
         if (error) throw error;
+
+        // Clear badge count across app
+        localStorage.setItem('unread_count', 0);
+        window.dispatchEvent(new CustomEvent('unread_count_updated', { detail: { count: 0 } }));
+
         console.log('[Notifications] All marked as read');
     } catch (err) {
         console.error('[Notifications] markAllNotificationsRead failed:', err);
