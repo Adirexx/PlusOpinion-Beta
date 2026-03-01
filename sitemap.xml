@@ -4,7 +4,7 @@
     <!-- Landing Page - Highest Priority -->
     <url>
         <loc>https://plusopinion.com/</loc>
-        <lastmod>2026-02-13</lastmod>
+        <lastmod>2026-03-02</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
@@ -12,7 +12,7 @@
     <!-- Main Homepage - High Priority -->
     <url>
         <loc>https://plusopinion.com/HOMEPAGE_FINAL.HTML</loc>
-        <lastmod>2026-02-13</lastmod>
+        <lastmod>2026-03-02</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
@@ -20,7 +20,7 @@
     <!-- Category Page - High Priority -->
     <url>
         <loc>https://plusopinion.com/CATAGORYPAGE.HTML</loc>
-        <lastmod>2026-02-13</lastmod>
+        <lastmod>2026-03-02</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -28,7 +28,7 @@
     <!-- Public Profile Pages - Medium Priority -->
     <url>
         <loc>https://plusopinion.com/PUBLIC%20POV%20PROFILE.HTML</loc>
-        <lastmod>2026-02-13</lastmod>
+        <lastmod>2026-03-02</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
@@ -36,7 +36,7 @@
     <!-- Support Page - Medium Priority -->
     <url>
         <loc>https://plusopinion.com/SUPPORT.HTML</loc>
-        <lastmod>2026-02-13</lastmod>
+        <lastmod>2026-03-02</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -44,7 +44,7 @@
     <!-- About Page - Medium Priority -->
     <url>
         <loc>https://plusopinion.com/ABOUT.HTML</loc>
-        <lastmod>2026-02-13</lastmod>
+        <lastmod>2026-03-02</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
