@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: FEB26_VIDEO_FIX_V8.3.1
+// Updated at: MAR01_AUTH_FIX_V8.3.2
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260226_VIDEOFIX_V8.3.2';
+  : 'BUILD_20260301_AUTHFIX_V8.3.3';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
@@ -173,28 +173,27 @@ self.addEventListener("fetch", (event) => {
         return;
       }
 
-      // VIDEO or REST: proxy through production Cloudflare worker
-      // This correctly handles:
-      //   - HTTP Range requests (video seeking/streaming) → 206 Partial Content
-      //   - CORS headers (Access-Control-Allow-Origin)
-      //   - Full response body streaming for <video> elements
+      // VIDEO or REST/Auth: proxy through production Cloudflare worker
+      // Localhost python server CANNOT proxy POST/OPTIONS requests properly
+      // so we MUST send these directly to the live proxy.
       const prodProxyUrl = PROD_PROXY_BASE + url.pathname + url.search;
       event.respondWith(
         fetch(prodProxyUrl, {
           method: event.request.method,
-          headers: event.request.headers,  // Forward Range, Authorization, etc.
+          headers: event.request.headers,
           body: ['GET', 'HEAD'].includes(event.request.method) ? undefined : event.request.body,
           mode: 'cors',
           credentials: 'omit'
         }).catch(err => {
           console.warn('[SW] Localhost prod-proxy failed:', err.message);
           return new Response(
-            isVideoUrl(url.pathname)
-              ? null
-              : JSON.stringify({ error: 'proxy_failed' }),
+            isVideoUrl(url.pathname) ? null : JSON.stringify({ error: 'proxy_failed', details: err.message }),
             {
               status: 502,
-              headers: { 'Content-Type': isVideoUrl(url.pathname) ? 'video/mp4' : 'application/json' }
+              headers: {
+                'Content-Type': isVideoUrl(url.pathname) ? 'video/mp4' : 'application/json',
+                'Access-Control-Allow-Origin': '*'
+              }
             }
           );
         })
