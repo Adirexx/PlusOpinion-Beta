@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR01_AUTH_FIX_V8.3.2
+// Updated at: MAR01_AUTH_FIX_V3.8.2
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260301_AUTHFIX_V8.3.3';
+  : 'BUILD_20260301_AUTHFIX_V3.8.3';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
