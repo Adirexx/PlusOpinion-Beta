@@ -1653,9 +1653,15 @@
 
             doubled.forEach(file => {
                 const img = document.createElement('img');
-                // Clean underscore filenames — no encoding needed, works on Cloudflare Pages + localhost
-                img.src = `previews/${file}`;
-                img.onerror = function () { this.style.display = 'none'; };
+                // Use absolute path from root — required for Cloudflare Pages deployment
+                // Relative paths like 'previews/...' can silently fail when routes are rewritten
+                img.src = `/previews/${file}`;
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.onerror = function () {
+                    console.warn('[BG] Preview image failed to load:', this.src);
+                    this.style.display = 'none';
+                };
 
                 // Random aspect ratios/heights for masonry look
                 const heightType = Math.random();
