@@ -208,7 +208,7 @@
 
         @media (max-width: 768px) {
             .drift-column img {
-                filter: blur(0.2px) brightness(0.45) contrast(1.0);
+                filter: blur(0.2px) brightness(0.1) contrast(1.0);
             }
         }
 
@@ -1314,19 +1314,9 @@
                                 letters, numbers & symbols.</div>
 
                             <div class="form-group" style="position: relative;">
-                                <input type="text" class="form-input" aria-label="Date of Birth" required
-                                    placeholder="DD/MM/YYYY" onfocus="(this.type='date')"
-                                    onblur="if(!this.value) this.type='text'"
+                                <input type="date" class="form-input" aria-label="Date of Birth" required
                                     style="font-family: 'Inter', sans-serif; font-weight: 400; width: 100%; box-sizing: border-box;"
                                     title="Date of Birth">
-                                <svg style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: 0.5;"
-                                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                                </svg>
                             </div>
 
                             <button type="submit" class="btn-primary">Continue</button>
