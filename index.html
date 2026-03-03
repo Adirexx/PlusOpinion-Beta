@@ -1653,14 +1653,16 @@
 
             doubled.forEach(file => {
                 const img = document.createElement('img');
-                // Use absolute path from root — required for Cloudflare Pages deployment
-                // Relative paths like 'previews/...' can silently fail when routes are rewritten
                 img.src = `/previews/${file}`;
                 img.loading = 'lazy';
                 img.decoding = 'async';
                 img.onerror = function () {
-                    console.warn('[BG] Preview image failed to load:', this.src);
-                    this.style.display = 'none';
+                    if (this.src.includes('/previews/')) {
+                        console.warn('[BG] Retrying image from root:', file);
+                        this.src = `/${file}`;
+                    } else {
+                        this.style.display = 'none';
+                    }
                 };
 
                 // Random aspect ratios/heights for masonry look
