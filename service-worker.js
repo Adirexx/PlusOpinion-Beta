@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR02_DUPLEX_FIX_V3.8.5
+// Updated at: MAR03_BG_ANIM_FIX_V3.8.6
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260302_DUPLEXFIX_V3.8.6';
+  : 'BUILD_20260303_BGANIM_V3.8.7';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
