@@ -1,25 +1,28 @@
 /**
- * Auth Guard - Simple Onboarding Enforcement
- * 
+ * Auth Guard - Onboarding Enforcement
+ *
  * Logic:
- * - On auth pages (onboarding, reset-password, change-password): skip all checks
+ * - On auth pages (reset-password, change-password, index): skip all checks
  * - No user logged in: redirect to index.html
- * - User logged in but onboarding incomplete: redirect to onboarding.html
- * - User logged in and onboarding complete: allow access
+ * - User logged in but profile incomplete: redirect to index.html (profile setup overlay handles it)
+ * - User logged in and profile complete: allow access
  */
 
 window.checkOnboardingStatus = async function () {
     try {
-        // Skip checks on auth pages - let them handle their own logic
         const path = window.location.pathname.toLowerCase();
         const searchParams = new URLSearchParams(window.location.search);
         const isPostDeepLink = searchParams.has('post') || path.startsWith('/post/');
         const isProfileDeepLink = path.startsWith('/profile/');
 
-        if (path.includes('onboarding') ||
+        // Skip checks on these pages — they handle their own logic
+        const isIndexPage = path === '/' ||
+            path === '/index.html' ||
+            path === '/index';
+
+        if (isIndexPage ||
             path.includes('reset-password') ||
             path.includes('change-password') ||
-            path.includes('index') ||
             isProfileDeepLink ||
             (isPostDeepLink && (path.includes('feed') || path.includes('homepage_final') || path.startsWith('/post/')))) {
             return true;
@@ -32,7 +35,7 @@ window.checkOnboardingStatus = async function () {
             return false;
         }
 
-        // Check if onboarding is complete
+        // Check if profile is fully complete
         const { data: profile, error } = await window.supabase
             .from('profiles')
             .select('terms_accepted, profile_completed, username, full_name')
@@ -40,7 +43,8 @@ window.checkOnboardingStatus = async function () {
             .single();
 
         if (error || !profile) {
-            window.navigateTo('onboarding.html');
+            // Profile missing → go to index, profile setup overlay will show
+            window.navigateTo('index.html');
             return false;
         }
 
@@ -50,15 +54,15 @@ window.checkOnboardingStatus = async function () {
             && profile.full_name;
 
         if (!isComplete) {
-            window.navigateTo('onboarding.html');
+            // Incomplete profile → go to index, overlay will detect and show profile setup
+            window.navigateTo('index.html');
             return false;
         }
 
         return true;
 
     } catch (err) {
-        console.error('Auth guard error:', err);
-        // On error, redirect to login - don't create loops
+        console.error('[AuthGuard] Error:', err);
         window.navigateTo('index.html');
         return false;
     }
@@ -85,28 +89,47 @@ window.hasAcceptedTerms = async function () {
 };
 
 /**
- * Accept terms for current user
+ * Accept terms for current user — uses direct fetch() to bypass SW proxy CORS issues
  */
 window.acceptTerms = async function () {
     try {
         const user = await window.getCurrentUser();
         if (!user) return false;
 
-        const { error } = await window.supabase
-            .from('profiles')
-            .update({ terms_accepted: true })
-            .eq('id', user.id);
+        const { data: sessionData } = await window.supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) return false;
 
-        if (error) throw error;
-        return true;
+        const SUPABASE_URL = 'https://ogqyemyrxogpnwitumsr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM';
+
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    terms_accepted: true,
+                    terms_accepted_at: new Date().toISOString()
+                })
+            }
+        );
+
+        return res.ok;
     } catch (err) {
-        console.error('Error accepting terms:', err);
+        console.error('[AuthGuard] Error accepting terms:', err.message);
         return false;
     }
 };
 
+
 /**
- * Get current user's profile
+ * Get current user's full profile
  */
 window.getMyProfile = async function () {
     try {
