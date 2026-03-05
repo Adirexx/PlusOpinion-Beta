@@ -35,7 +35,8 @@ export default {
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with, x-supabase-api-version, accept-profile',
+                    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with, x-supabase-api-version, accept-profile, content-profile, x-supabase-auth-token, cache-control, pragma',
+                    'Access-Control-Expose-Headers': 'content-range, range, x-supabase-api-version',
                     'Access-Control-Max-Age': '86400'
                 }
             });
@@ -143,8 +144,8 @@ export default {
                 const corsHeaders = new Headers(response.headers);
                 corsHeaders.set('Access-Control-Allow-Origin', '*');
                 corsHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-                corsHeaders.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with, x-supabase-api-version, accept-profile');
-                corsHeaders.set('Access-Control-Expose-Headers', 'content-range, range');
+                corsHeaders.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type, x-client-info, prefer, range, x-upsert, x-requested-with, x-supabase-api-version, accept-profile, content-profile, x-supabase-auth-token, cache-control, pragma');
+                corsHeaders.set('Access-Control-Expose-Headers', 'content-range, range, x-supabase-api-version');
 
                 return new Response(response.body, {
                     status: response.status,
