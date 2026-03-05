@@ -15,6 +15,7 @@
     <meta name="author" content="PlusOpinion">
 
     <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="PlusOpinion">
     <meta property="og:type" content="website">
     <meta property="og:title" content="PlusOpinion - Authentic Product Reviews & Consumer Opinions">
     <meta property="og:description"
@@ -4048,12 +4049,24 @@
                         isClosable={!isGuest}
                     />
 
-                    {/* ONBOARDING MODAL POPUP for logged in users */}
+                    {/* ONBOARDING MODAL POPUP for logged in users with incomplete profile */}
                     {showOnboardingModal && !isGuest && (
                         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                            <div className="absolute inset-0 bg-black/80 backdrop-blur-lg"></div>
-                            <div className="relative w-full max-w-2xl h-[90vh] bg-[#0F1627] rounded-2xl shadow-2xl border border-white/10 overflow-hidden">
-                                <iframe src="onboarding.html" className="w-full h-full" title="Complete Your Profile" />
+                            <div className="absolute inset-0 bg-black/90 backdrop-blur-lg"></div>
+                            <div className="relative flex flex-col items-center gap-6 text-center">
+                                <div className="w-16 h-16 rounded-full bg-neon/10 border border-neon/30 flex items-center justify-center">
+                                    <Icon icon="User" size={32} className="text-neon" />
+                                </div>
+                                <div>
+                                    <h2 className="text-white font-heading font-bold text-xl mb-2">Complete Your Profile</h2>
+                                    <p className="text-muted text-sm max-w-xs">You need to set up your profile before using PlusOpinion.</p>
+                                </div>
+                                <button
+                                    onClick={() => { window.location.href = 'index.html'; }}
+                                    className="px-8 py-3 bg-neon text-black font-bold rounded-full text-sm hover:opacity-90 transition-opacity active:scale-95"
+                                >
+                                    Set Up Profile →
+                                </button>
                             </div>
                         </div>
                     )}
@@ -4067,6 +4080,7 @@
             const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState(null);
+            const [inlineEmailError, setInlineEmailError] = useState(null);
 
             if (!isOpen) return null;
 
@@ -4074,6 +4088,7 @@
                 e.preventDefault();
                 setLoading(true);
                 setError(null);
+                setInlineEmailError(null);
                 vibrate(10);
 
                 if (mode === 'signup' && formData.password !== formData.confirmPassword) {
@@ -4089,7 +4104,7 @@
                         if (signupData.error) throw signupData.error;
 
                         if (signupData?.session) {
-                            window.location.href = 'onboarding.html';
+                            window.location.href = 'index.html'; // onboarding now integrated into index.html
                         } else {
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
@@ -4100,14 +4115,24 @@
                         const user = await window.signInUser(formData.email, formData.password);
                         if (user) {
                             if (user.onboardingRequired) {
-                                window.location.href = 'onboarding.html';
+                                window.location.href = 'index.html'; // onboarding now integrated into index.html
                             } else {
                                 window.location.reload();
                             }
                         }
                     }
                 } catch (err) {
-                    setError(err.message || 'Authentication failed');
+                    const msg = err.message || 'Authentication failed';
+                    const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+                    const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+                    
+                    if (isSignupEmailErr) {
+                        setInlineEmailError('This email is already registered. Please log in.');
+                    } else if (isLoginEmailErr) {
+                        setInlineEmailError('Email not registered or incorrect password.');
+                    } else {
+                        setError(msg);
+                    }
                 } finally {
                     setLoading(false);
                 }
