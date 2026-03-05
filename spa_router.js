@@ -28,9 +28,9 @@
             this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
 
             // Pages that MUST use full reload (auth flows, special cases)
+            // NOTE: onboarding.html removed — onboarding is now integrated into index.html
             this.forceReloadPages = new Set([
                 'index.html',
-                'onboarding.html',
                 'reset-password.html',
                 'change-password.html'
             ]);
@@ -349,12 +349,13 @@
                     return false;
                 }
 
-                // Check onboarding status  
+                // Check onboarding status
                 const needsOnboarding = await window.checkOnboardingStatus();
 
                 if (needsOnboarding === false) {
-                    console.warn('⚠️ Onboarding incomplete - redirecting');
-                    window.location.href = 'onboarding.html';
+                    console.warn('⚠️ Profile incomplete - redirecting to index.html for setup');
+                    // Onboarding is now integrated into index.html — no separate onboarding page
+                    window.location.href = 'index.html';
                     return false;
                 }
 
