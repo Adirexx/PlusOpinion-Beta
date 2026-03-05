@@ -1,18 +1,18 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR03_BG_ANIM_FIX_V3.8.6
+// Updated at: MAR05_AUDIT_V3.8.7
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260303_BGANIM_V3.8.7';
+  : 'BUILD_20260305_AUDIT_V.0.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
 const PROD_PROXY_BASE = 'https://plusopinion.com/supabase-api';
 
 // Complete list of files to cache for offline support
+// NOTE: onboarding.html removed — onboarding is now integrated into index.html
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
-  "/onboarding.html",
   "/HOMEPAGE_FINAL.HTML",
   "/BOOKMARKS.HTML",
   "/CATAGORYPAGE.HTML",
@@ -91,7 +91,7 @@ function isImageUrl(pathname) {
 // ─────────────────────────────────────────────────────────────────
 const CLEAN_TO_PHYSICAL_MAP = {
   "/feed": "/HOMEPAGE_FINAL.HTML",
-  "/onboarding": "/onboarding.html",
+  // /onboarding is now a 301 redirect to /index.html (handled by _redirects / Worker)
   "/reset-password": "/reset-password.html",
   "/change-password": "/change-password.html",
   "/bookmarks": "/BOOKMARKS.HTML",
