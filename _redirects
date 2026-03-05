@@ -1,6 +1,6 @@
 # ============================
 # PlusOpinion - Cloudflare Pages Redirects
-# v2.8.0 - Deep Links First Order
+# v4.0.0 - Deep Links First Order
 # ============================
 
 # --- Static Assets (serve directly, never redirect) ---
@@ -27,9 +27,6 @@
 /myprofile /PRIVATE%20OWNER%20PROFILE.HTML 200
 
 # --- AUTH PAGES ---
-/onboarding /onboarding.html 200
-/reset-password /reset-password.html 200
-/change-password /change-password.html 200
 
 # --- STATIC / LEGAL PAGES ---
 /about /ABOUT.HTML 200
