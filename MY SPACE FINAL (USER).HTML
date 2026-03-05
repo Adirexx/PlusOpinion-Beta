@@ -2322,6 +2322,7 @@
             const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState(null);
+            const [inlineEmailError, setInlineEmailError] = useState(null);
 
             if (!isOpen) return null;
 
@@ -2329,6 +2330,7 @@
                 e.preventDefault();
                 setLoading(true);
                 setError(null);
+                setInlineEmailError(null);
                 vibrate(10);
 
                 if (mode === 'signup' && formData.password !== formData.confirmPassword) {
@@ -2344,7 +2346,7 @@
                         if (signupData.error) throw signupData.error;
 
                         if (signupData?.session) {
-                            window.location.href = 'onboarding.html';
+                            window.location.href = 'index.html'; // onboarding now integrated into index.html
                         } else {
                             window.dispatchEvent(new CustomEvent('toast', {
                                 detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
@@ -2355,14 +2357,24 @@
                         const user = await window.signInUser(formData.email, formData.password);
                         if (user) {
                             if (user.onboardingRequired) {
-                                window.location.href = 'onboarding.html';
+                                window.location.href = 'index.html'; // onboarding now integrated into index.html
                             } else {
                                 window.location.reload();
                             }
                         }
                     }
                 } catch (err) {
-                    setError(err.message || 'Authentication failed');
+                    const msg = err.message || 'Authentication failed';
+                    const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+                    const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+                    
+                    if (isSignupEmailErr) {
+                        setInlineEmailError('This email is already registered. Please log in.');
+                    } else if (isLoginEmailErr) {
+                        setInlineEmailError('Email not registered or incorrect password.');
+                    } else {
+                        setError(msg);
+                    }
                 } finally {
                     setLoading(false);
                 }
