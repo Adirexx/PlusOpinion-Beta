@@ -223,7 +223,8 @@ class RouteCleaner {
             '/ABOUT.HTML': '/about',
             '/SUPPORT.HTML': '/support',
             '/PRIVACY_POLICY.HTML': '/privacy-policy',
-            '/TERMS_AND_CONDITIONS.HTML': '/t&c'
+            '/TERMS_AND_CONDITIONS.HTML': '/t&c',
+            '/COOKIES.HTML': '/cookies-policy',
         };
 
         // Create reverse mapping for lookup
