@@ -1,26 +1,25 @@
 // ============================================
-// AUTH.JS - Simple Authentication Module
+// AUTH.JS - Authentication Module
 // ============================================
-// Flow: Signup → Onboarding → Homepage
-//       Login  → Homepage (if onboarding done)
-//       Login  → Onboarding (if onboarding not done)
+// Flow: Signup → OTP Verify → Profile Setup → Homepage (all on index.html)
+//       Login  → Homepage (if profile complete)
+//       Login  → Profile Setup overlay on index.html (if incomplete)
 // ============================================
 
 // Note: window.supabase is the initialized client (set by supabase.js)
-// We reference it via window.supabase directly (not cached) to handle async module loading
 
 // Create authReadyPromise so any inline script can await window.authReadyPromise
 window.authReadyPromise = new Promise(resolve => {
   window._resolveAuthReady = resolve;
 });
+
 /* ============================
    SIGN UP (Email + Password)
+   Returns user object. Session will be null until OTP verified.
 ============================ */
 async function signUpUser(email, password, name, dob) {
-  const redirectPath = '/onboarding.html'; // FORCE .html extension
-
   // Build user metadata — full_name is used by the DB trigger on_auth_user_created
-  // dob (date_of_birth) is stored in user_metadata for retrieval during onboarding
+  // dob (date_of_birth) is stored in user_metadata for retrieval during profile setup
   const metadata = { full_name: name };
   if (dob) metadata.date_of_birth = dob; // format: YYYY-MM-DD
 
@@ -28,7 +27,7 @@ async function signUpUser(email, password, name, dob) {
     email,
     password,
     options: {
-      emailRedirectTo: window.location.origin + redirectPath,
+      // NO emailRedirectTo — we use OTP verification flow, not magic links
       data: metadata
     }
   });
@@ -36,10 +35,86 @@ async function signUpUser(email, password, name, dob) {
   if (error) throw error;
 
   // Profile row is created by the DB trigger 'on_auth_user_created'.
-  // After the user verifies email and lands on onboarding, the onboarding
-  // flow should read dob from auth.users.raw_user_meta_data and write it
-  // to profiles.date_of_birth if not already set.
+  // After the user verifies their OTP, the profile setup step reads
+  // dob from auth.users.raw_user_meta_data and writes it to profiles.date_of_birth.
   return data;
+}
+
+/* ============================
+   AUTO ACCEPT TERMS (silent, called on signup Continue / Google SSO)
+   The index page already shows "By clicking Continue, you agree to Terms, Privacy, Cookies"
+   so consent is implicit and we update the DB record automatically.
+   
+   Uses direct fetch() to Supabase REST API — bypasses the service worker proxy.
+   The proxy (window.supabase.from().update()) adds a 'content-profile' header that
+   was missing from the Cloudflare Worker CORS allowlist, causing this call to fail silently.
+   Direct fetch() with the session access_token works on ALL environments.
+============================ */
+async function autoAcceptTerms(userId) {
+  try {
+    // Get the current session token for authenticated REST call
+    const { data: sessionData } = await window.supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+
+    if (!accessToken) {
+      console.warn('[Auth] autoAcceptTerms: no session token, skipping');
+      return;
+    }
+
+    const SUPABASE_URL = 'https://ogqyemyrxogpnwitumsr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM';
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${accessToken}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          terms_accepted: true,
+          terms_accepted_at: new Date().toISOString()
+        })
+      }
+    );
+
+    if (!res.ok) {
+      console.warn('[Auth] Terms auto-accept failed (non-critical): HTTP', res.status);
+    } else {
+      console.log('[Auth] ✅ Terms auto-accepted for user:', userId);
+    }
+  } catch (err) {
+    console.warn('[Auth] Terms auto-accept exception (non-critical):', err.message);
+  }
+}
+
+
+/* ============================
+   VERIFY EMAIL OTP
+   Called after user submits the 6-digit code we sent to their email.
+============================ */
+async function verifyEmailOtp(email, token) {
+  const { data, error } = await window.supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email'   // 'email' type for signup email confirmation OTP
+  });
+  if (error) throw error;
+  return data; // contains { session, user }
+}
+
+/* ============================
+   RESEND SIGNUP OTP
+============================ */
+async function resendSignupOtp(email) {
+  const { error } = await window.supabase.auth.resend({
+    type: 'signup',
+    email: email
+  });
+  if (error) throw error;
 }
 
 /* ============================
@@ -53,7 +128,7 @@ async function signInUser(email, password) {
 
   if (error) throw error;
 
-  // Simple onboarding check
+  // Check profile completion
   try {
     const { data: profile } = await window.supabase
       .from('profiles')
@@ -67,8 +142,9 @@ async function signInUser(email, password) {
       && profile?.full_name;
 
     data.user.onboardingRequired = !isComplete;
+    data.user._profile = profile; // carry profile data for routing
 
-    // Update last login
+    // Update last login (fire and forget)
     window.supabase.from('profiles')
       .update({ last_login_at: new Date().toISOString() })
       .eq('id', data.user.id)
@@ -76,7 +152,7 @@ async function signInUser(email, password) {
       .catch(() => { });
 
   } catch (err) {
-    console.error('Profile check error:', err);
+    console.error('[Auth] Profile check error:', err);
     data.user.onboardingRequired = true;
   }
 
@@ -97,16 +173,11 @@ async function signOutUser() {
 ============================ */
 async function getCurrentUser() {
   try {
-    // 1. Check local session first (silent, no network/error noise)
     const { data: { session } } = await window.supabase.auth.getSession();
     if (session?.user) return session.user;
-
-    // 2. Only if session exists in storage but user object is missing, 
-    // try getUser() to verify/refresh (might throw if session expired)
     const { data: { user } } = await window.supabase.auth.getUser();
     return user || null;
   } catch (err) {
-    // Silence all errors including AuthSessionMissingError
     return null;
   }
 }
@@ -115,20 +186,10 @@ async function getCurrentUser() {
    PASSWORD RESET
 ============================ */
 async function resetPassword(email) {
-  const hostname = window.location.hostname;
-  const isLocalhost = hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname === '0.0.0.0' ||
-    hostname.startsWith('192.168.') ||
-    hostname.startsWith('10.') ||
-    hostname.endsWith('.local');
-
-  // FORCE .html extension for reliability
   const redirectPath = '/reset-password.html';
   const redirectTo = window.location.origin + redirectPath;
 
-  console.log(`[Auth] Requesting password reset for ${email}`);
-  console.log(`[Auth] Redirect URL: ${redirectTo} (isLocalhost: ${isLocalhost})`);
+  console.log(`[Auth] Requesting password reset for ${email}, redirect: ${redirectTo}`);
 
   const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
     redirectTo: redirectTo
@@ -157,7 +218,7 @@ async function getUserProfileByUsername(username) {
     if (error || !data) return null;
     return data;
   } catch (err) {
-    console.error('Exception fetching profile by username:', err);
+    console.error('[Auth] Exception fetching profile by username:', err);
     return null;
   }
 }
@@ -197,14 +258,16 @@ async function uploadAvatar(userId, file) {
   if (uploadError) throw uploadError;
 
   const { data } = window.supabase.storage.from('Avatars').getPublicUrl(fileName);
-  // FIX #3: Rewrite to proxy URL so avatar loads even if ISP blocks supabase.co
-  const finalUrl = window.rewriteMediaUrl ? window.rewriteMediaUrl(data.publicUrl) : data.publicUrl;
-  await updateUserProfile(userId, { avatar_url: finalUrl });
-  return finalUrl;
+
+  // Store RAW supabase.co URL in DB — rewriteMediaUrl applied at display time
+  await updateUserProfile(userId, { avatar_url: data.publicUrl });
+
+  const displayUrl = window.rewriteMediaUrl ? window.rewriteMediaUrl(data.publicUrl) : data.publicUrl;
+  return displayUrl;
 }
 
 /* ============================
-   CHECK USERNAME
+   CHECK USERNAME AVAILABILITY
 ============================ */
 async function checkUsernameAvailable(username) {
   const { data, error } = await window.supabase
@@ -219,7 +282,6 @@ async function checkUsernameAvailable(username) {
 /* ============================
    GOOGLE IDENTITY SERVICES
 ============================ */
-// Switch from Server OAuth to Client-Side GIS to bypass ISP blocking of .supabase.co callbacks
 const GOOGLE_CLIENT_ID = '409858133156-vho68t8ci9mob650b1lokl9drgqr2eih.apps.googleusercontent.com';
 
 let gisInitialized = false;
@@ -246,7 +308,7 @@ function initGoogleIdentityServices() {
   document.head.appendChild(script);
 }
 
-// Observe DOM to automatically render buttons when React modals mount
+// Observe DOM to automatically render Google buttons when modals mount
 const observer = new MutationObserver(() => {
   if (gisInitialized) scanAndRenderGoogleButtons();
 });
@@ -264,7 +326,6 @@ function scanAndRenderGoogleButtons() {
   const containers = document.querySelectorAll('.google-sso-container:not([data-rendered="true"])');
   containers.forEach(el => {
     const action = el.dataset.action || 'signin';
-    // Make wrapper full width for the button
     el.style.width = '100%';
     el.style.display = 'flex';
     el.style.justifyContent = 'center';
@@ -275,88 +336,98 @@ function scanAndRenderGoogleButtons() {
       type: 'standard',
       shape: 'pill',
       text: action === 'signup' ? 'signup_with' : 'signin_with',
-      width: 320 // Good default width matching original design
+      width: 320
     });
     el.dataset.rendered = 'true';
   });
 }
 
 async function handleGoogleCredentialResponse(response) {
-  try {
-    console.log("GIS Token received. Authenticating with Supabase...");
-    // Show simple loading UI
-    const loadingDiv = document.createElement('div');
+  // Show loading overlay
+  let loadingDiv = document.getElementById('google-auth-loader');
+  if (!loadingDiv) {
+    loadingDiv = document.createElement('div');
     loadingDiv.id = 'google-auth-loader';
-    loadingDiv.innerHTML = '<div style="position:fixed;inset:0;background:rgba(2,4,8,0.9);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:sans-serif;backdrop-filter:blur(8px);"><div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;"></div><h3 style="margin-top:20px;font-weight:600;">Authenticating...</h3><style>@keyframes spin { to { transform: rotate(360deg); } }</style></div>';
+    loadingDiv.innerHTML = '<div style="position:fixed;inset:0;background:rgba(2,4,8,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-family:Inter,sans-serif;backdrop-filter:blur(12px);"><div style="width:44px;height:44px;border:3px solid rgba(255,255,255,0.08);border-top-color:#2F8BFF;border-radius:50%;animation:gSpinner 0.9s linear infinite;"></div><p style="margin-top:18px;font-size:15px;font-weight:500;color:rgba(255,255,255,0.7);">Signing in...</p><style>@keyframes gSpinner{to{transform:rotate(360deg)}}</style></div>';
     document.body.appendChild(loadingDiv);
+  }
+
+  try {
+    console.log('[Auth] Google credential received, authenticating with Supabase...');
 
     const { data, error } = await window.supabase.auth.signInWithIdToken({
       provider: 'google',
       token: response.credential
     });
 
-    console.log("Supabase Auth Response:", { data, error });
-
     if (error) throw error;
 
-    // Safety check - make sure we actually got a user object back
     if (!data || !data.user || !data.user.id) {
-      throw new Error("No user returned from Supabase ID token exchange.");
+      throw new Error('No user returned from Supabase ID token exchange.');
     }
 
-    // Check if user has already completed onboarding
-    // We gracefully fallback to onboarding if this query fails
+    // Check if user has a complete profile
     let isComplete = false;
+    let profileData = null;
     try {
-      console.log("Checking profile status for user:", data.user.id);
       const { data: profile, error: profileError } = await window.supabase
         .from('profiles')
         .select('profile_completed, terms_accepted, username, full_name')
         .eq('id', data.user.id)
         .single();
 
-      console.log("Profile data retrieved:", profile);
+      profileData = profile;
 
-      if (profileError) {
-        console.warn("Profile fetch returned error (expected for brand new users):", profileError.message);
-      }
-
-      if (profile && profile.profile_completed && profile.terms_accepted && profile.username && profile.full_name) {
+      if (!profileError && profile?.profile_completed && profile?.terms_accepted && profile?.username && profile?.full_name) {
         isComplete = true;
       }
     } catch (profileErr) {
-      console.log('Profile check exception (routing to onboarding):', profileErr);
+      console.warn('[Auth] Profile check exception (will show profile setup):', profileErr);
     }
-
-    console.log("Routing to:", isComplete ? "HOMEPAGE_FINAL.HTML" : "onboarding.html");
 
     if (isComplete) {
+      // Existing complete user → go straight to homepage
+      console.log('[Auth] ✅ Google user complete → HOMEPAGE_FINAL.HTML');
       window.location.href = window.location.origin + '/HOMEPAGE_FINAL.HTML';
     } else {
-      window.location.href = window.location.origin + '/onboarding.html';
+      // New or incomplete user → auto-accept terms, then show profile setup
+      console.log('[Auth] 🆕 Google user needs profile setup → index.html profile overlay');
+      await autoAcceptTerms(data.user.id);
+
+      // Remove loader first
+      if (loadingDiv) loadingDiv.remove();
+
+      // Fire event — index.html listens for this to show the profile completion overlay
+      window.dispatchEvent(new CustomEvent('auth:profileSetupRequired', {
+        detail: { user: data.user }
+      }));
     }
   } catch (err) {
-    console.error('Google Sign-In Error caught in catch block:', err);
-    alert('Google Sign-In failed: ' + (err.message || 'Unknown error'));
-    const loader = document.getElementById('google-auth-loader');
-    if (loader) loader.remove();
+    console.error('[Auth] Google Sign-In Error:', err);
+    // Remove loader
+    if (loadingDiv) loadingDiv.remove();
+    // Show error in the page context
+    if (window.showAuthError) {
+      window.showAuthError('Google Sign-In failed: ' + (err.message || 'Unknown error'));
+    } else {
+      alert('Google Sign-In failed: ' + (err.message || 'Unknown error'));
+    }
   }
 }
 
 // Kick off GIS loading immediately
 initGoogleIdentityServices();
 
-// Keep stub for backwards compatibility during migration
+// Backwards compatibility stub
 async function signInWithProvider(provider) {
   if (provider === 'google') {
     if (gisInitialized) {
-      window.google.accounts.id.prompt(); // Show One Tap
+      window.google.accounts.id.prompt();
     } else {
-      alert("Google Sign-In is initializing. Please wait a second and try again.");
+      alert('Google Sign-In is initializing. Please wait a moment and try again.');
     }
   }
 }
-
 
 /* ============================
    EXPOSE TO BROWSER
@@ -371,7 +442,9 @@ window.getUserProfile = getUserProfile;
 window.updateUserProfile = updateUserProfile;
 window.uploadAvatar = uploadAvatar;
 window.checkUsernameAvailable = checkUsernameAvailable;
-// Expose Google Identity Services helpers for pages that need to trigger re-scan
+window.autoAcceptTerms = autoAcceptTerms;
+window.verifyEmailOtp = verifyEmailOtp;
+window.resendSignupOtp = resendSignupOtp;
 window.initGoogleIdentityServices = initGoogleIdentityServices;
 window.scanAndRenderGoogleButtons = scanAndRenderGoogleButtons;
 
@@ -381,4 +454,4 @@ if (window._resolveAuthReady) {
   window._resolveAuthReady();
 }
 
-console.log('✅ Auth functions loaded');
+console.log('✅ Auth module loaded (OTP flow enabled)');
