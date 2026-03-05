@@ -2736,6 +2736,7 @@
             const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState(null);
+            const [inlineEmailError, setInlineEmailError] = useState(null);
 
             if (!isOpen) return null;
 
@@ -2743,6 +2744,7 @@
                 e.preventDefault();
                 setLoading(true);
                 setError(null);
+                setInlineEmailError(null);
                 vibrate(10);
 
                 if (mode === 'signup' && formData.password !== formData.confirmPassword) {
@@ -2789,7 +2791,17 @@
                         }
                     }
                 } catch (err) {
-                    setError(err.message || 'Authentication failed');
+                    const msg = err.message || 'Authentication failed';
+                    const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+                    const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+                    
+                    if (isSignupEmailErr) {
+                        setInlineEmailError('This email is already registered. Please log in.');
+                    } else if (isLoginEmailErr) {
+                        setInlineEmailError('Email not registered or incorrect password.');
+                    } else {
+                        setError(msg);
+                    }
                 } finally {
                     setLoading(false);
                 }
@@ -2879,11 +2891,17 @@
                                 <input
                                     required
                                     value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={e => { setFormData({ ...formData, email: e.target.value }); setInlineEmailError(null); }}
                                     type="email"
                                     placeholder="john@example.com"
-                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    className={`w-full bg-[#050a15] border ${inlineEmailError ? 'border-red-500 text-red-500' : 'border-white/10 text-white'} px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-sm transition-all`}
                                 />
+                                {inlineEmailError && (
+                                    <div className="flex items-center gap-1.5 mt-2 ml-1 text-red-500 text-[13px] font-medium">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        <span>{inlineEmailError}</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div>
