@@ -2,7 +2,22 @@
 // SUPABASE CLIENT INITIALIZATION
 // PlusOpinion — ISP-Bypass Enabled
 // ============================================
-// FIX #1: Save UMD library reference BEFORE we overwrite window.supabase
+// HOW THE PROXY WORKS:
+// ─────────────────────────────────────────────
+// The Supabase JS client MUST be initialized with the real supabase.co URL.
+// Supabase uses that URL internally to build auth, storage, and realtime paths.
+// If you swap this for the proxy URL, the client builds wrong token/storage endpoints.
+//
+// THE PROXY IS APPLIED TRANSPARENTLY:
+//   Localhost  → Service Worker intercepts supabase.co fetches → routes to https://plusopinion.com/supabase-api
+//   Production → Service Worker intercepts supabase.co fetches → routes to /supabase-api (same-origin Cloudflare Worker)
+//   Cloudflare Worker → strips /supabase-api prefix → forwards to real supabase.co
+//
+// This means ALL Supabase API calls go through our proxy automatically — auth, REST, storage, realtime.
+// The client never needs to know about the proxy at all.
+// ─────────────────────────────────────────────
+
+// FIX: Save UMD library reference BEFORE we overwrite window.supabase
 // The Supabase UMD bundle sets window.supabase = { createClient, ... }
 // We MUST save it under a private key first, or we destroy the library.
 window._supabaseLib = window.supabase;
@@ -19,19 +34,6 @@ const _isLocalhost = _hostname === 'localhost' ||
   _hostname.startsWith('10.') ||
   _hostname.endsWith('.local');
 
-// FIX #2: Realtime WebSocket Proxy
-// In production, route WebSocket through Cloudflare — same origin as the REST proxy.
-// Cloudflare Workers propagate WebSocket Upgrade headers natively.
-// In localhost dev, we must use the direct Supabase URL since localhost can't proxy WS.
-const SUPABASE_REST_URL = _isLocalhost
-  ? 'https://plusopinion.com/supabase-api'     // Dev: piggyback on live production proxy
-  : window.location.origin + '/supabase-api';  // Production: same-origin Cloudflare proxy
-
-// The Supabase JS client derives its Realtime WebSocket URL from the project URL.
-// We force it to go through our proxy by using a custom 'global.fetch' and 'realtime' params.
-// For WebSocket: Supabase uses the restUrl's hostname to build the WSS URL.
-// By pointing restUrl to our proxy, realtime ALSO uses our proxy path.
-
 function initializeSupabase() {
   if (!window._supabaseLib || !window._supabaseLib.createClient) {
     console.error('[Supabase] UMD library not loaded! Cannot initialize client.');
@@ -39,7 +41,9 @@ function initializeSupabase() {
   }
 
   const client = window._supabaseLib.createClient(
-    SUPABASE_REST_URL,
+    // Always pass the real Supabase project URL — the Service Worker proxies it transparently.
+    // Passing the proxy URL here would cause internal client paths (auth, storage, realtime) to break.
+    SUPABASE_PROJECT_URL,
     SUPABASE_ANON_KEY,
     {
       auth: {
@@ -47,39 +51,41 @@ function initializeSupabase() {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storage: window.localStorage,
-        flowType: 'implicit'  // Implicit works correctly with Google One Tap (signInWithIdToken)
-        // Do NOT use 'pkce' here — PKCE redirects back to the current URL path, which on
-        // localhost becomes /onboarding (without .html) from the route cleaner → 404.
+        // 'implicit' flow is required for Google One Tap (signInWithIdToken).
+        // PKCE redirects to the current URL path — on localhost this becomes /onboarding
+        // (without .html) from the route cleaner → 404. Keep implicit.
+        flowType: 'implicit'
       },
       global: {
         headers: {
-          // Ensure our proxy can identify requests if needed
           'X-Client-Info': 'plusopinion-web'
         }
       },
       realtime: {
         params: {
-          eventsPerSecond: 10,
-          // Route realtime through our proxy endpoint in production
-          // In production, the worker handles 'wss://<domain>/supabase-api/realtime/v1/websocket'
+          eventsPerSecond: 10
         },
-        // Only route through proxy in production — localhost can't proxy WebSockets
-        ...(
-          !_isLocalhost && {
-            url: window.location.origin.replace(/^http/, 'ws') + '/supabase-api/realtime/v1'
-          }
-        )
+        // In production, route WebSocket through Cloudflare Worker.
+        // The SW can't upgrade HTTP→WS on localhost, so we let the client
+        // connect directly to supabase.co for realtime on localhost.
+        ...(!_isLocalhost && {
+          url: window.location.origin.replace(/^http/, 'ws') + '/supabase-api/realtime/v1'
+        })
       }
     }
   );
 
-  // FIX #1 (cont): Expose the initialized CLIENT (not the library) as window.supabase
-  // This is safe now because we saved the library under window._supabaseLib
+  // Expose the initialized CLIENT (not the library) as window.supabase
   window.supabase = client;
   return client;
 }
 
 // Initialize immediately when script loads
-initializeSupabase();
+const _supabaseClient = initializeSupabase();
 
-console.log('[Supabase] ✅ Client initialized via ISP-bypass proxy →', SUPABASE_REST_URL);
+// Log which path is being used (service worker will handle the actual proxying)
+const _proxyMode = _isLocalhost
+  ? 'localhost → SW → https://plusopinion.com/supabase-api'
+  : 'production → SW → /supabase-api (Cloudflare Worker)';
+console.log('[Supabase] ✅ Client initialized via ISP-bypass proxy →', _proxyMode);
+
