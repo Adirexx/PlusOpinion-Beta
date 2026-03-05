@@ -1083,189 +1083,238 @@
             const handleRemoveAvatar = (e) => {
                 e.stopPropagation();
                 if (!confirm('Remove profile picture?')) return;
-
-                // Only update local state, defer DB update to handleSave
                 setAvatarFile(null);
                 setAvatarPreview(null);
-                setCurrentProfile(prev => ({ ...prev, avatar_url: '' }));
+                // setCurrentProfile is not in scope — we track removal via avatarPreview=null in handleSave
             };
 
             const handleRemoveBanner = (e) => {
                 e.stopPropagation();
                 if (!confirm('Remove banner image?')) return;
-
-                // Only update local state, defer DB update to handleSave
                 setBannerFile(null);
                 setBannerPreview(null);
-                setCurrentProfile(prev => ({ ...prev, banner_url: '' }));
+                // setCurrentProfile is not in scope — we track removal via bannerPreview=null in handleSave
             };
 
             const handleSave = async () => {
                 try {
                     setSaving(true);
 
+                    // Get session + access token — required for authenticated REST calls
                     const { data: { session } } = await window.supabase.auth.getSession();
-                    if (!session) return;
+                    if (!session) {
+                        alert('Session expired. Please log in again.');
+                        return;
+                    }
+                    const accessToken = session.access_token;
+                    const userId = session.user.id;
 
-                    // Determine final URLs based on state
-                    // If preview is null, it means user removed it -> save as null
-                    // If file is new, upload it -> save new URL
-                    // Else keep existing URL
-                    let avatarUrl = currentProfile.avatar_url;
-                    if (!avatarPreview) avatarUrl = null;
+                    const SUPABASE_URL = 'https://ogqyemyrxogpnwitumsr.supabase.co';
+                    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM';
 
-                    let bannerUrl = currentProfile.banner_url;
-                    if (!bannerPreview) bannerUrl = null;
+                    // Determine final media URLs
+                    // avatarPreview=null means removed; new file means re-upload; else keep existing
+                    let avatarUrl = avatarPreview === null ? null : currentProfile.avatar_url;
+                    let bannerUrl = bannerPreview === null ? null : currentProfile.banner_url;
 
-                    // Upload new avatar if changed
+                    // Upload new avatar if user picked a new file (non-fatal)
                     if (avatarFile) {
-                        const avatarPath = `${session.user.id}/${Date.now()}.${avatarFile.name.split('.').pop()}`;
-                        avatarUrl = await uploadFile(avatarFile, 'Avatars', avatarPath);
+                        try {
+                            const ext = avatarFile.name.split('.').pop().toLowerCase();
+                            const path = `${userId}/${Date.now()}.${ext}`;
+                            const { error: avErr } = await window.supabase.storage
+                                .from('Avatars').upload(path, avatarFile, { upsert: true });
+                            if (!avErr) {
+                                const { data: { publicUrl } } = window.supabase.storage
+                                    .from('Avatars').getPublicUrl(path);
+                                avatarUrl = publicUrl;
+                            } else {
+                                console.warn('[EditProfile] Avatar upload failed (non-fatal):', avErr.message);
+                            }
+                        } catch (e) {
+                            console.warn('[EditProfile] Avatar upload exception (non-fatal):', e.message);
+                        }
                     }
 
-                    // Upload new banner if changed
+                    // Upload new banner if user picked a new file (non-fatal)
                     if (bannerFile) {
-                        const bannerPath = `banners/${session.user.id}/${Date.now()}.${bannerFile.name.split('.').pop()}`;
-                        bannerUrl = await uploadFile(bannerFile, 'profiles', bannerPath);
+                        try {
+                            const ext = bannerFile.name.split('.').pop().toLowerCase();
+                            const path = `banners/${userId}/${Date.now()}.${ext}`;
+                            const { error: bnErr } = await window.supabase.storage
+                                .from('profiles').upload(path, bannerFile, { upsert: true });
+                            if (!bnErr) {
+                                const { data: { publicUrl } } = window.supabase.storage
+                                    .from('profiles').getPublicUrl(path);
+                                bannerUrl = publicUrl;
+                            } else {
+                                console.warn('[EditProfile] Banner upload failed (non-fatal):', bnErr.message);
+                            }
+                        } catch (e) {
+                            console.warn('[EditProfile] Banner upload exception (non-fatal):', e.message);
+                        }
                     }
 
-                    // Update profile in database
-                    const { error } = await window.supabase
-                        .from('profiles')
-                        .update({
-                            full_name: formData.full_name.trim(),
-                            bio: formData.bio.trim() || null,
-                            location: formData.location.trim() || null,
-                            website: formData.website.trim() || null,
-                            avatar_url: avatarUrl,
-                            banner_url: bannerUrl
-                        })
-                        .eq('id', session.user.id);
+                    // Build the update payload
+                    const updates = {
+                        full_name: formData.full_name?.trim() || null,
+                        bio: formData.bio?.trim() || null,
+                        location: formData.location?.trim() || null,
+                        website: formData.website?.trim() || null,
+                        avatar_url: avatarUrl,
+                        banner_url: bannerUrl
+                    };
 
-                    if (error) throw error;
+                    // ── Direct REST PATCH — bypasses service worker proxy ──
+                    // window.supabase.from().update() goes through the SW proxy which fails
+                    // on localhost (502) and is CORS-blocked in prod due to content-profile header.
+                    // Direct fetch() to supabase.co works everywhere with the access_token.
+                    const patchRes = await fetch(
+                        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+                        {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify(updates)
+                        }
+                    );
 
-                    // Reload profile data
+                    if (!patchRes.ok) {
+                        let body = '';
+                        try { body = await patchRes.text(); } catch (_) { }
+                        throw new Error(`Profile update failed (${patchRes.status}): ${body}`);
+                    }
+
+                    console.log('[EditProfile] ✅ Profile updated successfully');
+
+                    // Reload parent profile state and close modal
                     await onSave();
                     onClose();
+
                 } catch (error) {
                     console.error('Error updating profile:', error);
-                    alert('Failed to update profile. Please try again.');
+                    alert('Failed to update profile: ' + (error.message || 'Please try again.'));
                 } finally {
                     setSaving(false);
                 }
             };
 
-            return (
-                <div className="absolute inset-0 bg-[#020205] z-50 flex flex-col animate-enter overflow-y-auto">
-                    {/* Header */}
-                    <div className="h-[60px] header-glass sticky top-0 flex items-center justify-between px-4 z-10 shrink-0">
-                        <button onClick={onClose} disabled={saving} className="text-white text-sm font-medium hover:text-white/80">Cancel</button>
-                        <span className="font-heading font-bold text-white">Edit Profile</span>
-                        <button onClick={handleSave} disabled={saving} className="text-neon text-sm font-bold disabled:opacity-50">
-                            {saving ? 'Saving...' : 'Done'}
-                        </button>
-                    </div>
 
-                    <div className="p-5 space-y-6">
-                        {/* Avatar Uploader */}
-                        <div className="flex flex-col items-center gap-4 relative">
-                            <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                                <div className="w-24 h-24 rounded-full border-4 border-white/5 overflow-hidden bg-black">
-                                    {avatarPreview ? (
-                                        <img src={avatarPreview} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                                            <Icon icon="User" size={32} className="text-neon" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                                    <Icon icon="Camera" size={24} className="text-white drop-shadow-lg" />
-                                </div>
+        return (
+            <div className="absolute inset-0 bg-[#020205] z-50 flex flex-col animate-enter overflow-y-auto">
+                {/* Header */}
+                <div className="h-[60px] header-glass sticky top-0 flex items-center justify-between px-4 z-10 shrink-0">
+                    <button onClick={onClose} disabled={saving} className="text-white text-sm font-medium hover:text-white/80">Cancel</button>
+                    <span className="font-heading font-bold text-white">Edit Profile</span>
+                    <button onClick={handleSave} disabled={saving} className="text-neon text-sm font-bold disabled:opacity-50">
+                        {saving ? 'Saving...' : 'Done'}
+                    </button>
+                </div>
 
-                                {/* Remove Avatar Button */}
-                                {avatarPreview && (
-                                    <button
-                                        onClick={handleRemoveAvatar}
-                                        className="absolute -top-1 -right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
-                                        title="Remove Avatar"
-                                    >
-                                        <Icon icon="Trash" size={12} />
-                                    </button>
+                <div className="p-5 space-y-6">
+                    {/* Avatar Uploader */}
+                    <div className="flex flex-col items-center gap-4 relative">
+                        <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                            <div className="w-24 h-24 rounded-full border-4 border-white/5 overflow-hidden bg-black">
+                                {avatarPreview ? (
+                                    <img src={avatarPreview} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                                        <Icon icon="User" size={32} className="text-neon" />
+                                    </div>
                                 )}
                             </div>
-                            <input
-                                ref={avatarInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleAvatarChange}
-                                className="hidden"
-                            />
-                            <button onClick={() => avatarInputRef.current?.click()} className="text-neon text-xs font-bold">
-                                Change Profile Photo
-                            </button>
-                        </div>
-
-                        {/* Banner Uploader */}
-                        <div className="relative h-32 rounded-xl overflow-hidden bg-white/5 border border-white/10 group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
-                            {bannerPreview ? (
-                                <img src={bannerPreview} className="w-full h-full object-cover" />
-                            ) : null}
-                            <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/80 flex items-center justify-center gap-2 group-hover:bg-black/60 transition-colors">
-                                <Icon icon="Camera" size={20} className="text-white" />
-                                <span className="text-xs font-bold text-white">Edit Banner</span>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                                <Icon icon="Camera" size={24} className="text-white drop-shadow-lg" />
                             </div>
 
-                            {/* Remove Banner Button */}
-                            {bannerPreview && (
+                            {/* Remove Avatar Button */}
+                            {avatarPreview && (
                                 <button
-                                    onClick={handleRemoveBanner}
-                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
-                                    title="Remove Banner"
+                                    onClick={handleRemoveAvatar}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
+                                    title="Remove Avatar"
                                 >
-                                    <Icon icon="Trash" size={14} />
+                                    <Icon icon="Trash" size={12} />
                                 </button>
                             )}
                         </div>
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                        />
+                        <button onClick={() => avatarInputRef.current?.click()} className="text-neon text-xs font-bold">
+                            Change Profile Photo
+                        </button>
                     </div>
-                    <input
-                        ref={bannerInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBannerChange}
-                        className="hidden"
-                    />
 
-                    {/* Fields */}
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Full Name</label>
-                            <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                    {/* Banner Uploader */}
+                    <div className="relative h-32 rounded-xl overflow-hidden bg-white/5 border border-white/10 group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
+                        {bannerPreview ? (
+                            <img src={bannerPreview} className="w-full h-full object-cover" />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/80 flex items-center justify-center gap-2 group-hover:bg-black/60 transition-colors">
+                            <Icon icon="Camera" size={20} className="text-white" />
+                            <span className="text-xs font-bold text-white">Edit Banner</span>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Bio</label>
-                            <textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
-                        </div>
+                        {/* Remove Banner Button */}
+                        {bannerPreview && (
+                            <button
+                                onClick={handleRemoveBanner}
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
+                                title="Remove Banner"
+                            >
+                                <Icon icon="Trash" size={14} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+                <input
+                    ref={bannerInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerChange}
+                    className="hidden"
+                />
 
-                        <div className="space-y-1">
-                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Location</label>
-                            <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="MapPin" size={16} /></div>
-                                <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
-                            </div>
-                        </div>
+                {/* Fields */}
+                <div className="space-y-4">
+                    <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Full Name</label>
+                        <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                    </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Website</label>
-                            <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="Link" size={16} /></div>
-                                <input type="text" value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
-                            </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Bio</label>
+                        <textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Location</label>
+                        <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="MapPin" size={16} /></div>
+                            <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Website</label>
+                        <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="Link" size={16} /></div>
+                            <input type="text" value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
                         </div>
                     </div>
                 </div>
-            );
+            </div>
+        );
         };
 
         // --- OPINION CARD (INTERACTIVE) ---
@@ -3356,6 +3405,7 @@
             const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState(null);
+            const [inlineEmailError, setInlineEmailError] = useState(null);
 
             if (!isOpen) return null;
 
@@ -3363,6 +3413,7 @@
                 e.preventDefault();
                 setLoading(true);
                 setError(null);
+                setInlineEmailError(null);
                 vibrate(10);
 
                 if (mode === 'signup' && formData.password !== formData.confirmPassword) {
@@ -3396,7 +3447,17 @@
                         }
                     }
                 } catch (err) {
-                    setError(err.message || 'Authentication failed');
+                    const msg = err.message || 'Authentication failed';
+                    const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+                    const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+                    
+                    if (isSignupEmailErr) {
+                        setInlineEmailError('This email is already registered. Please log in.');
+                    } else if (isLoginEmailErr) {
+                        setInlineEmailError('Email not registered or incorrect password.');
+                    } else {
+                        setError(msg);
+                    }
                 } finally {
                     setLoading(false);
                 }
