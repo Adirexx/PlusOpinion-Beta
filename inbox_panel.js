@@ -875,11 +875,35 @@
         function renderDecryptedPayload(parsed) {
             let html = '';
 
-            // 1. Reply block (placeholder)
+            // 1. Reply block
             if (parsed.reply_to) {
-                html += `<div class="msg-reply-block" data-reply-id="${escHtml(parsed.reply_to.id || '')}">
-                    <div class="reply-name" style="font-size:11px; font-weight:700; color:#4ade80; margin-bottom:2px;">${escHtml(parsed.reply_to.name || 'Reply')}</div>
-                    <div class="reply-text" style="font-size:12px; opacity:0.8; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 6px; margin-bottom: 6px; line-height: 1.2;">${escHtml(parsed.reply_to.text || '')}</div>
+                let previewContent = escHtml(parsed.reply_to.text || '');
+                let extraAttrs = '';
+                if (parsed.reply_to.type === 'image') {
+                    const path = parsed.reply_to.url || '';
+                    if (path.startsWith('chat_images/')) {
+                        extraAttrs = ` data-media-path="${escHtml(path)}"`;
+                        previewContent = `<div style="display:flex; align-items:center; gap: 6px;">
+                            <img src="" style="width:24px; height:24px; object-fit:cover; border-radius:4px;" alt="📷">
+                            <span style="font-size:12px; opacity:0.8; font-weight:500;">Photo</span>
+                        </div>`;
+                    } else {
+                        previewContent = `<div style="display:flex; align-items:center; gap: 6px;">
+                            <img src="${escHtml(path)}" style="width:24px; height:24px; object-fit:cover; border-radius:4px;" onerror="this.style.display='none'" alt="📷">
+                            <span style="font-size:12px; opacity:0.8; font-weight:500;">Photo</span>
+                        </div>`;
+                    }
+                }
+                else if (parsed.reply_to.type === 'post') {
+                     previewContent = `<div style="display:flex; align-items:center; gap: 6px; color:#3b82f6;">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                         <span style="font-weight:600;">Shared Post</span>
+                     </div>`;
+                }
+
+                html += `<div class="msg-reply-block" data-reply-id="${escHtml(parsed.reply_to.id || '')}" style="cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1" ${extraAttrs}>
+                    <div class="reply-name" style="font-size:11px; font-weight:700; color:#4ade80; margin-bottom:4px;">${escHtml(parsed.reply_to.name || 'Reply')}</div>
+                    <div class="reply-text" style="font-size:12px; opacity:0.8; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 6px; margin-bottom: 6px; line-height: 1.2;">${previewContent}</div>
                 </div>`;
             }
 
@@ -1255,15 +1279,28 @@
         let pendingImages = []; // Array of { file, objectURL }
         S.replyToMsg = null;
 
-        function showReplyBanner(msgJson) {
-            S.replyToMsg = msgJson;
+        function showReplyBanner(msgJson, visualThumbUrl) {
+            S.replyToMsg = { ...msgJson };
             document.getElementById('chat-reply-name').textContent = msgJson.name || 'User';
-            // Extract raw text or use a fallback
-            let preview = msgJson.text || 'Message';
-            // Strip HTML if it exists (like shared post loaders)
-            const tmp = document.createElement('div'); tmp.innerHTML = preview;
-            preview = tmp.textContent || tmp.innerText || '';
-            document.getElementById('chat-reply-text').textContent = preview;
+            
+            const replyTextEl = document.getElementById('chat-reply-text');
+            if (msgJson.type === 'image') {
+                const path = msgJson.url || '';
+                replyTextEl.innerHTML = `<div style="display:flex; align-items:center; gap: 8px;">
+                    <img src="${escHtml(visualThumbUrl || path)}" style="height:28px; width:28px; object-fit:cover; border-radius:4px;" onerror="this.style.display='none'">
+                    <span style="font-weight: 500;">Photo</span>
+                </div>`;
+            } else if (msgJson.type === 'post') {
+                replyTextEl.innerHTML = `<div style="display:flex; align-items:center; gap: 8px; color:#3b82f6;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span style="font-weight: 600;">Shared Post</span>
+                </div>`;
+            } else {
+                let preview = msgJson.text || 'Message';
+                if (preview.length > 80) preview = preview.substring(0, 80) + '…';
+                replyTextEl.textContent = preview;
+            }
+            
             document.getElementById('inbox-reply-banner-container').style.display = 'block';
             document.getElementById('chat-text-input').focus();
         }
@@ -1318,11 +1355,38 @@
                 if (targetMsg.classList.contains('reply-active')) {
                     targetMsg.classList.remove('reply-active');
 
-                    const payloadEl = targetMsg.querySelector('.chat-msg-payload');
-                    const rawPayload = payloadEl ? payloadEl.innerHTML : '';
+                    let msgType = targetMsg.dataset.msgType || 'text';
+                    let previewData = {};
+                    let visualThumbUrl = '';
+                    
+                    if (msgType === 'image') {
+                        let path = targetMsg.dataset.mediaPath || '';
+                        const img = targetMsg.querySelector('img');
+                        visualThumbUrl = img ? img.src : path; 
+                        previewData = { type: 'image', url: path };
+                    } else if (targetMsg.classList.contains('shared-post-only')) {
+                        let postContainer = targetMsg.querySelector('.shared-post-container');
+                        previewData = { type: 'post', postId: postContainer?.dataset.postId || '' };
+                    } else {
+                        const payloadEl = targetMsg.querySelector('.chat-msg-payload');
+                        if (payloadEl) {
+                            const clone = payloadEl.cloneNode(true);
+                            const replyBlock = clone.querySelector('.msg-reply-block');
+                            if (replyBlock) replyBlock.remove();
+                            let txt = clone.textContent.trim();
+                            
+                            if (!txt && clone.querySelector('.shared-post-container')) {
+                                let postContainer = clone.querySelector('.shared-post-container');
+                                previewData = { type: 'post', postId: postContainer?.dataset.postId || '' };
+                            } else {
+                                previewData = { type: 'text', text: txt };
+                            }
+                        }
+                    }
+
                     const senderName = targetMsg.classList.contains('mine') ? 'You' : S.currentConv.otherName;
 
-                    showReplyBanner({ id: targetMsg.dataset.msgId, name: senderName, text: rawPayload });
+                    showReplyBanner({ id: targetMsg.dataset.msgId, name: senderName, ...previewData }, visualThumbUrl);
                     vibrate(10);
                 }
                 targetMsg = null;
@@ -1331,8 +1395,100 @@
             document.getElementById('chat-reply-close-btn')?.addEventListener('click', hideReplyBanner);
         }
 
+        function openChatImageViewer(src) {
+            if (!src || src.startsWith('data:image/gif')) return;
+            
+            let viewer = document.getElementById('chat-fullscreen-viewer');
+            if (!viewer) {
+                viewer = document.createElement('div');
+                viewer.id = 'chat-fullscreen-viewer';
+                viewer.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                    background: rgba(0,0,0,0.95); z-index: 100000;
+                    display: flex; align-items: center; justify-content: center;
+                    opacity: 0; transition: opacity 0.25s ease; cursor: pointer;
+                `;
+                
+                const closeBtn = document.createElement('div');
+                closeBtn.innerHTML = '✕';
+                closeBtn.style.cssText = `
+                    position: absolute; top: 20px; right: 20px;
+                    color: white; font-size: 24px; font-weight: bold;
+                    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+                    background: rgba(0,0,0,0.5); border-radius: 50%; padding-bottom: 2px; transition: background 0.2s;
+                `;
+                closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(255,255,255,0.2)';
+                closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(0,0,0,0.5)';
+                
+                const img = document.createElement('img');
+                img.id = 'chat-fullscreen-img';
+                img.style.cssText = `
+                    max-width: 95vw; max-height: 90vh; object-fit: contain;
+                    border-radius: 8px; transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+                `;
+                
+                viewer.appendChild(img);
+                viewer.appendChild(closeBtn);
+                
+                viewer.addEventListener('click', () => {
+                    viewer.style.opacity = '0';
+                    img.style.transform = 'scale(0.95)';
+                    setTimeout(() => viewer.style.display = 'none', 250);
+                });
+                
+                document.body.appendChild(viewer);
+            }
+            
+            const img = document.getElementById('chat-fullscreen-img');
+            img.src = src;
+            viewer.style.display = 'flex';
+            viewer.offsetHeight; // trigger reflow
+            viewer.style.opacity = '1';
+            img.style.transform = 'scale(1)';
+        }
+
+        function initChatInteractions() {
+            const list = document.getElementById('chat-messages-list');
+            if (!list) return;
+
+            list.addEventListener('click', (e) => {
+                // 1. Reply block click
+                const replyBlock = e.target.closest('.msg-reply-block');
+                if (replyBlock) {
+                    const replyId = replyBlock.dataset.replyId;
+                    if (replyId) {
+                        const targetMsg = document.querySelector(`.chat-msg[data-msg-id="${replyId}"]`);
+                        if (targetMsg) {
+                            targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            targetMsg.style.transition = 'background-color 0.4s ease';
+                            const oldBg = targetMsg.style.backgroundColor;
+                            targetMsg.style.backgroundColor = 'rgba(74, 222, 128, 0.25)';
+                            setTimeout(() => {
+                                targetMsg.style.backgroundColor = oldBg;
+                                setTimeout(() => targetMsg.style.transition = '', 400);
+                            }, 1200);
+                        } else {
+                            // Message is higher up and unloaded. For now just shake or ignore
+                            replyBlock.style.transform = 'translateX(2px)';
+                            setTimeout(() => replyBlock.style.transform = 'translateX(-2px)', 100);
+                            setTimeout(() => replyBlock.style.transform = '', 200);
+                        }
+                    }
+                    return;
+                }
+
+                // 2. Image click (fullscreen)
+                const imgMsg = e.target.closest('.direct-img');
+                if (imgMsg && e.target.tagName === 'IMG') {
+                    openChatImageViewer(e.target.src);
+                    return;
+                }
+            });
+        }
+
         function initChatInput() {
             initSwipeToReply();
+            initChatInteractions();
 
             const textInput = document.getElementById('chat-text-input');
             const sendBtn = document.getElementById('chat-send-btn');
