@@ -126,6 +126,7 @@ window.createPost = async function (postData) {
             brand_name: postData.brand_name || null,
             media_url: postData.media_url || null,
             media_type: postData.media_type || null,
+            images: postData.images || null,
             is_verified_purchase: postData.is_verified_purchase || false,
             verification_proof_url: postData.verification_proof_url || null,
             is_draft: postData.is_draft || false
@@ -340,7 +341,6 @@ window.getCategories = async function () {
     }
 };
 
-/**
 /**
  * Get sub-categories for a category
  */
