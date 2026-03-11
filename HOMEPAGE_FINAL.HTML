@@ -23,6 +23,7 @@
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "PlusOpinion",
+      "alternateName": "PlusOpinion",
       "url": "https://plusopinion.com/",
       "potentialAction": {
         "@type": "SearchAction",
@@ -138,6 +139,9 @@
     <!-- Framer Motion (Optional - dependency removed from logic to prevent crash) -->
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
     <script src="/pwa_installer.js" defer></script>
+
+    <!-- Inbox E2EE Crypto Module (loads before inbox) -->
+    <script src="/inbox_crypto.js" defer></script>
 
     <!-- Professional Update & Maintenance System -->
     <script src="/updater.js"></script>
@@ -525,22 +529,7 @@
         }
     </style>
 
-    <!-- 🔒 MANDATORY ONBOARDING CHECK - Runs before page renders -->
-    <script>
-        // Check onboarding status immediately on page load
-        (async function () {
-            // Wait for auth modules to load
-            let attempts = 0;
-            while (!window.getCurrentUser && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
 
-            if (window.checkOnboardingStatus) {
-                await window.checkOnboardingStatus();
-            }
-        })();
-    </script>
 
 
 
@@ -721,6 +710,25 @@
             Search: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
             ThumbsUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" /></svg>,
             MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>,
+            InboxTray: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>,
+            MessagesDuo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z" /><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1" /></svg>,
+            InboxArchive: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2" /><path d="M3 10v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9" /><path d="M10 12h4" /></svg>,
+            MailOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.2 8.4c.5.3.8.8.8 1.4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.8c0-.6.3-1.1.8-1.4l7.5-4.5a2 2 0 0 1 2.4 0l7.5 4.5Z" /><path d="m22 9-10 7L2 9" /><path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4" /></svg>,
+            Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
+            PaperPlane: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 15 22l-4-9L2 9z" /><path d="M22 2 11 13v6l4-3" /></svg>,
+            PlusOpinionInbox: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <polyline points="3 5 12 11 21 5" />
+                </svg>
+            ),
+            PlusOpinionInboxFilled: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <polyline points="3 5 12 11 21 5" fill="none" stroke="#020205" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            ),
+            ActiveChat: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><circle cx="8" cy="10" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="10" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1.5" fill="currentColor" stroke="none" /></svg>,
             Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
             Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
             MoreVertical: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>,
@@ -871,25 +879,58 @@
             </button>
         );
 
-        const BottomNav = ({ activeTab, setActiveTab, isVisible = true, isGuest, onAuthRequired }) => {
+        const BottomNav = ({ activeTab, setActiveTab, isVisible = true, isGuest, onAuthRequired, unreadInboxCount, setUnreadInboxCount }) => {
             // Initialize with cached value to prevent flicker
             const [unreadCount, setUnreadCount] = useState(() => {
                 return window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0;
             });
 
             useEffect(() => {
+                const getUnreadCount = () => {
+                    return window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0;
+                };
+
+                const updateTitle = (notifCount, inboxCount) => {
+                    let displayStr = '';
+                    const total = notifCount + inboxCount;
+                    if (total > 0) {
+                        displayStr = `(${total})`;
+                    }
+                    const baseTitle = "PlusOpinion - Your Local Network";
+                    document.title = displayStr ? `${displayStr} ${baseTitle}` : baseTitle;
+                };
+
                 // Subscribe to real-time unread count
                 const unsubscribe = window.subscribeToUnreadCount && window.subscribeToUnreadCount((count) => {
                     setUnreadCount(count);
+                    updateTitle(count, unreadInboxCount);
                 });
+
+                // Subscribe to real-time inbox unread count
+                const unsubscribeInbox = window.subscribeToInboxUnreadCount && window.subscribeToInboxUnreadCount((count) => {
+                    setUnreadInboxCount(count);
+                    const nCount = getUnreadCount();
+                    updateTitle(nCount, count);
+                });
+
+                const handleInboxUnread = (e) => {
+                    const iCount = e.detail || 0;
+                    setUnreadInboxCount(iCount);
+                    const nCount = getUnreadCount();
+                    updateTitle(nCount, iCount);
+                };
+
+                window.addEventListener('inbox_unread_changed', handleInboxUnread);
 
                 return () => {
                     if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
+                    if (unsubscribeInbox && typeof unsubscribeInbox === 'function') unsubscribeInbox();
+                    window.removeEventListener('inbox_unread_changed', handleInboxUnread);
                 };
-            }, []);
+            }, [unreadInboxCount, setUnreadInboxCount]);
 
             return (
-                <div className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-[50] transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                <div id="bottom-nav-bar" className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-[50] transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
                     <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
                     <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
                     <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} onClick={() => !isGuest ? console.log('myspace') : onAuthRequired()} />
@@ -907,28 +948,54 @@
 
 
 
-        // --- Clickable @mention renderer ---
+        // --- Clickable @mention and URL renderer ---
         const renderTextWithMentions = (text) => {
             if (!text) return text;
-            const parts = text.split(/(@[\w.]+)/g);
-            return parts.map((part, i) => {
-                if (/@[\w.]+/.test(part)) {
-                    const username = part.slice(1);
+            
+            // First split by URL to identify links
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const mentionRegex = /(@[\w.]+)/g;
+            
+            // Split by both URLs and mentions
+            // We'll use a single pass approach by splitting on spaces and checking each token
+            const tokens = text.split(/(\s+)/);
+            
+            return tokens.map((token, i) => {
+                // Check for URL
+                if (urlRegex.test(token)) {
+                    return (
+                        <a
+                            key={i}
+                            href={token}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#2f8bff] underline hover:text-blue-400 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {token}
+                        </a>
+                    );
+                }
+                
+                // Check for Mention
+                if (mentionRegex.test(token)) {
+                    const username = token.match(/@([\w.]+)/)[1];
                     return (
                         <span
                             key={i}
                             className="text-neon font-semibold cursor-pointer hover:underline"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                vibrate(5);
+                                if (typeof vibrate === 'function') vibrate(5);
                                 window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
                             }}
                         >
-                            {part}
+                            {token}
                         </span>
                     );
                 }
-                return part;
+                
+                return token;
             });
         };
 
@@ -997,7 +1064,7 @@
                                 {likesCount > 0 && <span className="text-[9px]">{likesCount}</span>}
                             </button>
                         </div>
-                        <p className="text-gray-300 text-[11px] leading-relaxed mt-0.5">{renderTextWithMentions(reply.text)}</p>
+                        <p className="text-gray-300 text-[11px] leading-relaxed mt-0.5" style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithMentions(reply.text)}</p>
                         <button
                             onClick={() => onReply && onReply(reply)}
                             className="text-[9px] text-muted hover:text-white transition-colors mt-0.5"
@@ -1090,7 +1157,7 @@
                                     {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
                                 </button>
                             </div>
-                            <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{renderTextWithMentions(comment.text)}</p>
+                            <p className="text-gray-300 text-xs leading-relaxed mt-0.5" style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithMentions(comment.text)}</p>
                             <div className="flex items-center gap-3 mt-1">
                                 <button
                                     onClick={() => onReply && onReply(comment)}
@@ -1189,7 +1256,7 @@
             return `${diffMonths}mo`;
         };
 
-        const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAddComment, onImageClick, onRemove, onEdit, onBookmark, userProfile, savedPosts, isGuest, onAuthRequired }) => {
+        const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAddComment, onImageClick, onRemove, onEdit, onBookmark, userProfile, savedPosts, isGuest, onAuthRequired, hideActions }) => {
             const [isLiked, setIsLiked] = useState(false);
             const [localLikes, setLocalLikes] = useState(post.agrees);
             const [showComments, setShowComments] = useState(false);
@@ -1651,6 +1718,7 @@
 
             return (
                 <div
+                    id={`post-${post.id}`}
                     className={`glass-panel rounded-2xl p-4 mb-4 relative transition-all duration-300 animate-stagger ${showMoreMenu ? 'z-50' : 'z-0'}`}
                     style={{ animationDelay: `${Math.min(index * 50, 1000)}ms` }}
                 >
@@ -1765,9 +1833,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute top-4 right-4 touch-scale text-muted/60 hover:text-white group z-10" onClick={toggleMoreMenu} ref={moreButtonRef}>
-                            <Icon icon="MoreVertical" size={18} />
-                        </div>
+                        {!hideActions && (
+                            <div className="absolute top-4 right-4 touch-scale text-muted/60 hover:text-white group z-10" onClick={toggleMoreMenu} ref={moreButtonRef}>
+                                <Icon icon="MoreVertical" size={18} />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex items-center flex-wrap gap-2 mb-3 mt-1">
@@ -1785,63 +1855,68 @@
                         )}
                     </div>
 
-                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{renderTextWithMentions(post.text)}</p>
+                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2" style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithMentions(post.text)}</p>
 
-                    {post.media && (
-                        <ZoomableMedia
+                    {(post.media || (post.images && post.images.length > 0)) && (
+                        <SmartMedia
                             src={post.media}
                             type={post.media_type}
+                            images={post.images}
                             onImageClick={onImageClick}
                         />
                     )}
 
-                    <div className="flex items-end justify-between pt-3 mt-1 relative">
-                        <div className="flex items-center gap-6">
-                            <button
-                                onClick={handleLike}
-                                className="flex items-center gap-1.5 touch-scale group relative"
-                            >
-                                <div className={isLiked ? "animate-pop" : ""}>
-                                    {/* UPDATED: Agree Button - White Fill, 3D Drop Shadow, Visible Stroke */}
-                                    <Icon icon="ThumbsUp" size={20}
-                                        className={`transition-all duration-300 stroke-[1.5px] ${isLiked ? 'fill-white stroke-black/80 filter drop-shadow-[0_2px_0_rgba(255,255,255,0.4)]' : ''}`}
-                                        style={isLiked ? {
-                                            fill: 'white',
-                                            stroke: '#000',
-                                            strokeWidth: '1.5px',
-                                            filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
-                                        } : {}}
-                                    />
+                    {!hideActions && (
+                        <>
+                            <div className="flex items-end justify-between pt-3 mt-1 relative">
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={handleLike}
+                                        className="flex items-center gap-1.5 touch-scale group relative"
+                                    >
+                                        <div className={isLiked ? "animate-pop" : ""}>
+                                            {/* UPDATED: Agree Button - White Fill, 3D Drop Shadow, Visible Stroke */}
+                                            <Icon icon="ThumbsUp" size={20}
+                                                className={`transition-all duration-300 stroke-[1.5px] ${isLiked ? 'fill-white stroke-black/80 filter drop-shadow-[0_2px_0_rgba(255,255,255,0.4)]' : ''}`}
+                                                style={isLiked ? {
+                                                    fill: 'white',
+                                                    stroke: '#000',
+                                                    strokeWidth: '1.5px',
+                                                    filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
+                                                } : {}}
+                                            />
+                                        </div>
+                                        <span className="text-xs font-medium">{localLikes}</span>
+                                    </button>
+                                    <button className={`flex items-center gap-1.5 touch-scale transition-transform group relative ${showComments ? 'text-white' : 'text-muted hover:text-white'}`} onClick={toggleComments}>
+                                        <Icon icon="MessageCircle" size={20} className="stroke-[1.5]" />
+                                        {/* BUG FIX: Use localComments length if comments are loaded/shown, otherwise fallback to prop count which might be stale */}
+                                        <span className="text-xs font-medium">{showComments ? localComments.length : Math.max(localCommentCount, localComments.length)}</span>
+                                    </button>
+                                    <button className="text-muted hover:text-white transition-colors touch-scale group relative" onClick={handleShareClick}>
+                                        <Icon icon="Share" size={20} />
+                                    </button>
                                 </div>
-                                <span className="text-xs font-medium">{localLikes}</span>
-                            </button>
-                            <button className={`flex items-center gap-1.5 touch-scale transition-transform group relative ${showComments ? 'text-white' : 'text-muted hover:text-white'}`} onClick={toggleComments}>
-                                <Icon icon="MessageCircle" size={20} className="stroke-[1.5]" />
-                                {/* BUG FIX: Use localComments length if comments are loaded/shown, otherwise fallback to prop count which might be stale */}
-                                <span className="text-xs font-medium">{showComments ? localComments.length : Math.max(localCommentCount, localComments.length)}</span>
-                            </button>
-                            <button className="text-muted hover:text-white transition-colors touch-scale group relative" onClick={handleShareClick}>
-                                <Icon icon="Share" size={20} />
-                            </button>
-                        </div>
 
-                        <div className="flex items-center gap-3">
-                            {post.seenBy && (
-                                <span className="group relative text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 cursor-default flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
-                                    Seen by {post.seenBy}
-                                </span>
-                            )}
-                            <button className="text-muted/40 hover:text-red-400 transition-colors touch-scale group relative" onClick={handleReport}>
-                                <Icon icon="AlertTriangle" size={18} />
-                            </button>
-                        </div>
-                    </div>
+                                <div className="flex items-center gap-3">
+                                    {post.seenBy && (
+                                        <span className="group relative text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 cursor-default flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
+                                            Seen by {post.seenBy}
+                                        </span>
+                                    )}
+                                    <button className="text-muted/40 hover:text-red-400 transition-colors touch-scale group relative" onClick={handleReport}>
+                                        <Icon icon="AlertTriangle" size={18} />
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[10px] text-muted/40 font-medium">
-                        <Icon icon="Clock" size={12} />
-                        <span>{post.time === 'Just now' ? 'Posted Just now' : `Posted ${post.time} ago`}</span>
-                    </div>
+                            <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[10px] text-muted/40 font-medium">
+                                <Icon icon="Clock" size={12} />
+                                <span>{post.time === 'Just now' ? 'Posted Just now' : `Posted ${post.time} ago`}</span>
+                            </div>
+                        </>
+                    )}
 
                     {/* Inline Comment Section */}
                     {showComments && (
@@ -1928,186 +2003,487 @@
             );
         };
 
-        // PREMIUM ZOOMABLE MEDIA COMPONENT (Instagram Style)
-        const ZoomableMedia = ({ src, type, onImageClick }) => {
-            const [scale, setScale] = useState(1);
-            const [origin, setOrigin] = useState({ x: 0, y: 0 });
-            const [isPinching, setIsPinching] = useState(false);
+        // ─── SMART MEDIA RATIO DETECTION HELPER ────────────────────────────────────
+        // Decodes the image/video ratio and returns CSS aspect-ratio class
+        const getAspectClass = (ratio) => {
+            if (ratio >= 1.55) return 'aspect-[16/9]';      // Landscape → 16:9
+            if (ratio >= 0.89) return 'aspect-square';       // Square / near-square → 1:1
+            return 'aspect-[4/5]';                           // Portrait → 4:5 (covers tall too)
+        };
+
+        // ─── SMART MEDIA COMPONENT ─────────────────────────────────────────────────
+        // Replaces ZoomableMedia. Handles: single image, single video, multi-image carousel
+        // Props: src (string), type ('image'|'video'), images (string[]), onImageClick
+        const SmartMedia = ({ src, type, images, onImageClick }) => {
+            const isVideo = type === 'video' || type?.startsWith('video/') || src?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
+            const isMulti = images && images.length > 1;
+            const imageList = isMulti ? images : [src].filter(Boolean);
+
+            // Global mute state
+            const [isMuted, setIsMuted] = useState(() => {
+                const stored = localStorage.getItem('globalVideoMuted');
+                return stored ? stored === 'true' : false; // default unmuted
+            });
+            const [isInView, setIsInView] = useState(false);
+
+            useEffect(() => {
+                const handleMuteChange = (e) => setIsMuted(e.detail.isMuted);
+                window.addEventListener('globalMuteToggle', handleMuteChange);
+                return () => window.removeEventListener('globalMuteToggle', handleMuteChange);
+            }, []);
+
+            useEffect(() => {
+                if (!isVideo || !containerRef.current) return;
+                const observer = new IntersectionObserver(([entry]) => {
+                    setIsInView(entry.isIntersecting);
+                }, { threshold: 0.6 });
+
+                observer.observe(containerRef.current);
+                return () => observer.disconnect();
+            }, [isVideo]);
+
+            const toggleMute = (e) => {
+                e.stopPropagation();
+                const newMuted = !isMuted;
+                setIsMuted(newMuted);
+                localStorage.setItem('globalVideoMuted', newMuted);
+                window.dispatchEvent(new CustomEvent('globalMuteToggle', { detail: { isMuted: newMuted } }));
+            };
+
+            // Aspect ratio state
+            const [aspectClass, setAspectClass] = useState('aspect-[4/5]');
+            const [ratioDetected, setRatioDetected] = useState(false);
+
+            // Carousel state
+            const [activeIdx, setActiveIdx] = useState(0);
+            const [dragDelta, setDragDelta] = useState(0);
+            const [isDragging, setIsDragging] = useState(false);
+            const dragStart = useRef(null);
             const containerRef = useRef(null);
+
+            // Pinch-zoom state (single media only)
+            const [scale, setScale] = useState(1);
+            const [pinchOrigin, setPinchOrigin] = useState({ x: 50, y: 50 });
+            const [isPinching, setIsPinching] = useState(false);
             const initialDist = useRef(null);
 
-            const handleTouchStart = (e) => {
+            // Detect ratio from the first image/video
+            const handleMediaLoad = (e) => {
+                if (ratioDetected) return;
+                const el = e.target;
+                const w = el.naturalWidth || el.videoWidth || el.clientWidth;
+                const h = el.naturalHeight || el.videoHeight || el.clientHeight;
+                if (w && h) {
+                    setAspectClass(getAspectClass(w / h));
+                    setRatioDetected(true);
+                }
+            };
+
+            // ── Carousel touch/drag handlers ──────────────────────────────────────
+            const SWIPE_THRESHOLD = 40;
+
+            const onCarouselTouchStart = (e) => {
+                e.stopPropagation();
+                if (e.touches.length !== 1) return;
+                dragStart.current = e.touches[0].clientX;
+                setIsDragging(true);
+            };
+
+            const onCarouselTouchMove = (e) => {
+                e.stopPropagation();
+                if (!isDragging || dragStart.current === null) return;
+                const delta = e.touches[0].clientX - dragStart.current;
+                // Clamp: don't allow dragging past edges
+                if ((activeIdx === 0 && delta > 0) || (activeIdx === imageList.length - 1 && delta < 0)) {
+                    setDragDelta(delta * 0.2); // Rubber-band
+                } else {
+                    setDragDelta(delta);
+                }
+            };
+
+            const onCarouselTouchEnd = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+                    setActiveIdx(i => i + 1);
+                } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+                    setActiveIdx(i => i - 1);
+                }
+                setDragDelta(0);
+                dragStart.current = null;
+            };
+
+            // ── Pinch-zoom handlers (single media) ──────────────────────────────────
+            const onSingleTouchStart = (e) => {
                 if (e.touches.length === 2) {
                     setIsPinching(true);
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-                    initialDist.current = dist;
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        const mx = (t1.pageX + t2.pageX) / 2;
+                        const my = (t1.pageY + t2.pageY) / 2;
+                        setPinchOrigin({ x: ((mx - rect.left) / rect.width) * 100, y: ((my - rect.top) / rect.height) * 100 });
+                    }
+                }
+            };
+            const onSingleTouchMove = (e) => {
+                if (e.touches.length === 2 && isPinching && initialDist.current) {
+                    e.preventDefault();
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    setScale(Math.min(Math.max(d / initialDist.current, 1), 4));
+                }
+            };
+            const onSingleTouchEnd = () => { setIsPinching(false); setScale(1); initialDist.current = null; };
 
-                    // Calculate mid point for origin
-                    const midX = (touch1.pageX + touch2.pageX) / 2;
-                    const midY = (touch1.pageY + touch2.pageY) / 2;
-                    const rect = containerRef.current.getBoundingClientRect();
-                    setOrigin({
-                        x: ((midX - rect.left) / rect.width) * 100,
-                        y: ((midY - rect.top) / rect.height) * 100
-                    });
+            const handleClick = () => {
+                if (isPinching || (isMulti && Math.abs(dragDelta) > 5)) return;
+                if (isMulti) onImageClick(null, 'images', imageList, activeIdx);
+                else onImageClick(src, type);
+            };
+
+            // ── Desktop Mouse Drag handlers ───────────────────────────────────────
+            const onCarouselMouseDown = (e) => {
+                if (e.button !== 0) return; // Only left click
+                dragStart.current = e.clientX;
+                setIsDragging(true);
+            };
+
+            const onCarouselMouseMove = (e) => {
+                if (!isDragging || dragStart.current === null) return;
+                const delta = e.clientX - dragStart.current;
+                if ((activeIdx === 0 && delta > 0) || (activeIdx === imageList.length - 1 && delta < 0)) {
+                    setDragDelta(delta * 0.2);
+                } else {
+                    setDragDelta(delta);
                 }
             };
 
-            const handleTouchMove = (e) => {
-                if (e.touches.length === 2 && isPinching) {
-                    e.preventDefault(); // Prevent scroll while pinching
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-                    const newScale = Math.min(Math.max(dist / initialDist.current, 1), 4);
-                    setScale(newScale);
+            const onCarouselMouseUp = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+                    setActiveIdx(i => i + 1);
+                } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+                    setActiveIdx(i => i - 1);
                 }
+                setDragDelta(0);
+                dragStart.current = null;
             };
 
-            const handleTouchEnd = () => {
-                setIsPinching(false);
-                setScale(1);
-                initialDist.current = null;
-            };
-
+            // ── Render ──────────────────────────────────────────────────────────────
             return (
                 <div
                     ref={containerRef}
-                    className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 group cursor-pointer overflow-hidden touch-pan-y"
-                    onClick={() => !isPinching && onImageClick(src, type)}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
+                    className={`w-full rounded-xl mb-3 border border-white/5 relative bg-black overflow-hidden cursor-pointer select-none media-zoom-effect ${aspectClass}`}
                     style={{ zIndex: isPinching ? 50 : 1 }}
+                    onClick={handleClick}
                 >
-                    <div
-                        className={`w-full h-full transition-all duration-700 ease-out ${!isPinching ? 'group-hover:scale-110' : ''}`}
-                        style={{
-                            transform: isPinching ? `scale(${scale})` : undefined,
-                            transformOrigin: `${origin.x}% ${origin.y}%`
-                        }}
-                    >
-                        {type === 'video' ? (
+                    {isVideo ? (
+                        /* ── SINGLE VIDEO ─────────────────────────────── */
+                        <div
+                            className="absolute inset-0"
+                            onTouchStart={onSingleTouchStart}
+                            onTouchMove={onSingleTouchMove}
+                            onTouchEnd={onSingleTouchEnd}
+                            style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
+                        >
                             <video
                                 src={src}
-                                className="w-full max-h-[500px] object-contain bg-black pointer-events-none"
-                                playsInline
-                                loop
-                                muted
-                                autoPlay
+                                className="w-full h-full object-cover pointer-events-none"
+                                playsInline loop muted={isMuted || !isInView} autoPlay
+                                onLoadedMetadata={handleMediaLoad}
                             />
-                        ) : (
+                            {/* Mute/Unmute button */}
+                            <button
+                                onClick={toggleMute}
+                                className="absolute bottom-3 right-3 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full p-2 text-white transition-all z-10 pointer-events-auto">
+                                {isMuted ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                                ) : (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                )}
+                            </button>
+                        </div>
+                    ) : isMulti ? (
+                        /* ── MULTI-IMAGE CAROUSEL ──────────────────────── */
+                        <>
+                            <div
+                                className="absolute inset-0 flex"
+                                style={{
+                                    transform: `translateX(calc(${-activeIdx * (100 / imageList.length)}% + ${dragDelta}px))`,
+                                    transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    width: `${imageList.length * 100}%`
+                                }}
+                                onTouchStart={onCarouselTouchStart}
+                                onTouchMove={onCarouselTouchMove}
+                                onTouchEnd={onCarouselTouchEnd}
+                                onMouseDown={onCarouselMouseDown}
+                                onMouseMove={onCarouselMouseMove}
+                                onMouseUp={onCarouselMouseUp}
+                                onMouseLeave={onCarouselMouseUp}
+                            >
+                                {imageList.map((imgSrc, idx) => (
+                                    <div key={idx} className="h-full flex-shrink-0" style={{ width: `${100 / imageList.length}%` }}>
+                                        <img
+                                            src={imgSrc}
+                                            alt={`Image ${idx + 1}`}
+                                            loading={idx === 0 ? 'eager' : 'lazy'}
+                                            className="w-full h-full object-cover pointer-events-none"
+                                            onLoad={idx === 0 ? handleMediaLoad : undefined}
+                                            draggable="false"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 pointer-events-none z-10">
+                                {imageList.map((_, idx) => (
+                                    <div key={idx} className="transition-all duration-300" style={{
+                                        width: idx === activeIdx ? '18px' : '6px',
+                                        height: '6px',
+                                        borderRadius: '3px',
+                                        background: idx === activeIdx ? 'white' : 'rgba(255,255,255,0.4)'
+                                    }} />
+                                ))}
+                            </div>
+                            {/* Image count badge */}
+                            <div className="absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] text-white font-bold pointer-events-none z-10">
+                                {activeIdx + 1}/{imageList.length}
+                            </div>
+                        </>
+                    ) : (
+                        /* ── SINGLE IMAGE ──────────────────────────────── */
+                        <div
+                            className="absolute inset-0"
+                            onTouchStart={onSingleTouchStart}
+                            onTouchMove={onSingleTouchMove}
+                            onTouchEnd={onSingleTouchEnd}
+                            style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
+                        >
                             <img
                                 src={src}
                                 alt="Post media"
                                 loading="lazy"
-                                className="w-full h-auto max-h-[500px] object-contain bg-black pointer-events-none"
+                                className="w-full h-full object-cover pointer-events-none"
+                                onLoad={handleMediaLoad}
+                                draggable="false"
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             );
         };
 
-        const ImageViewer = ({ src, type, onClose }) => {
-            if (!src) return null;
+        // ─── FULL-SCREEN IMAGE VIEWER (multi-image swipe + pinch-zoom) ─────────────
+        const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
+            // Normalize: images[] takes priority; fall back to single src
+            const imgList = (images && images.length > 0) ? images : (src && type !== 'video' ? [src] : []);
+            const isVideo = type === 'video' && (!images || images.length === 0);
+            const isMulti = imgList.length > 1;
+
+            const [currentIdx, setCurrentIdx] = useState(initialIndex || 0);
             const [scale, setScale] = useState(1);
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [isPinching, setIsPinching] = useState(false);
-            const imageRef = useRef(null);
-            const lastTouch = useRef({ x: 0, y: 0 });
+            const [isDragging, setIsDragging] = useState(false);
+            const [dragDelta, setDragDelta] = useState(0);
             const initialDist = useRef(null);
             const lastScale = useRef(1);
+            const lastTouch = useRef({ x: 0, y: 0 });
+            const dragStart = useRef(null);
+            const SWIPE_THRESHOLD = 50;
 
+            if (!src && imgList.length === 0) return null;
+
+            const resetZoom = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+
+            // ── Touch handlers (pinch + pan + swipe) ────────────────────────────────
             const handleTouchStart = (e) => {
                 if (e.touches.length === 2) {
                     setIsPinching(true);
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    initialDist.current = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
                     lastScale.current = scale;
-                } else if (e.touches.length === 1 && scale > 1) {
-                    lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+                } else if (e.touches.length === 1) {
+                    if (scale > 1) {
+                        lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+                    } else if (isMulti) {
+                        dragStart.current = e.touches[0].clientX;
+                        setIsDragging(true);
+                    }
                 }
             };
 
             const handleTouchMove = (e) => {
-                if (e.touches.length === 2 && isPinching) {
+                if (e.touches.length === 2 && isPinching && initialDist.current) {
                     e.preventDefault();
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-                    const newScale = Math.min(Math.max((dist / initialDist.current) * lastScale.current, 1), 5);
-                    setScale(newScale);
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    setScale(Math.min(Math.max((d / initialDist.current) * lastScale.current, 1), 5));
                 } else if (e.touches.length === 1 && scale > 1) {
                     const newX = e.touches[0].pageX - lastTouch.current.x;
                     const newY = e.touches[0].pageY - lastTouch.current.y;
-
-                    // Limit panning boundaries based on scale
                     const limitX = (scale - 1) * (window.innerWidth / 2);
                     const limitY = (scale - 1) * (window.innerHeight / 2);
-
-                    setPosition({
-                        x: Math.min(Math.max(newX, -limitX), limitX),
-                        y: Math.min(Math.max(newY, -limitY), limitY)
-                    });
+                    setPosition({ x: Math.min(Math.max(newX, -limitX), limitX), y: Math.min(Math.max(newY, -limitY), limitY) });
+                } else if (e.touches.length === 1 && isDragging && isMulti && scale <= 1) {
+                    const delta = e.touches[0].clientX - dragStart.current;
+                    if ((currentIdx === 0 && delta > 0) || (currentIdx === imgList.length - 1 && delta < 0)) {
+                        setDragDelta(delta * 0.2);
+                    } else {
+                        setDragDelta(delta);
+                    }
                 }
             };
 
             const handleTouchEnd = () => {
                 setIsPinching(false);
-                if (scale <= 1) {
-                    setPosition({ x: 0, y: 0 });
+                if (scale <= 1) setPosition({ x: 0, y: 0 });
+                if (isDragging) {
+                    setIsDragging(false);
+                    if (dragDelta < -SWIPE_THRESHOLD && currentIdx < imgList.length - 1) {
+                        setCurrentIdx(i => i + 1);
+                        resetZoom();
+                    } else if (dragDelta > SWIPE_THRESHOLD && currentIdx > 0) {
+                        setCurrentIdx(i => i - 1);
+                        resetZoom();
+                    }
+                    setDragDelta(0);
+                    dragStart.current = null;
                 }
             };
 
             const handleDoubleTap = (e) => {
                 e.stopPropagation();
-                if (scale > 1) {
-                    setScale(1);
-                    setPosition({ x: 0, y: 0 });
-                } else {
-                    setScale(2.5);
-                }
+                if (scale > 1) { resetZoom(); } else { setScale(2.5); }
             };
 
             return (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in overflow-hidden touch-pan-y"
-                    onClick={onClose}
+                    className="fixed inset-0 z-[100] bg-black animate-fade-in overflow-hidden"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                 >
-                    <button className="absolute top-5 right-5 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 z-50">
-                        <Icon icon="X" size={24} />
+                    {/* Close button */}
+                    <button
+                        className="absolute top-5 right-5 p-2.5 bg-white/10 rounded-full text-white z-50 backdrop-blur-sm"
+                        onClick={onClose}
+                    >
+                        <Icon icon="X" size={22} />
                     </button>
 
-                    <div
-                        className="w-full h-full flex items-center justify-center transition-transform duration-100 ease-out"
-                        style={{
-                            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
-                        }}
-                        onDoubleClick={handleDoubleTap}
-                    >
-                        {type === 'video' ? (
+                    {/* Counter */}
+                    {isMulti && (
+                        <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-bold z-50">
+                            {currentIdx + 1} / {imgList.length}
+                        </div>
+                    )}
+
+                    {isVideo ? (
+                        /* ── Full-screen video ─────────── */
+                        <div className="w-full h-full flex items-center justify-center p-4" onClick={onClose}>
                             <video
                                 src={src}
-                                className="max-w-full max-h-full object-contain p-2"
-                                controls={scale === 1}
-                                autoPlay
-                                onClick={(e) => e.stopPropagation()}
+                                className="max-w-full max-h-full object-contain"
+                                controls autoPlay
+                                onClick={e => e.stopPropagation()}
                             />
-                        ) : (
+                        </div>
+                    ) : isMulti ? (
+                        /* ── Multi-image swipeable fullscreen ── */
+                        <>
+                            <div
+                                className="absolute inset-0 flex items-center"
+                                style={{
+                                    transform: `translateX(calc(${-currentIdx * (100 / imgList.length)}% + ${dragDelta}px))`,
+                                    transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    width: `${imgList.length * 100}%`
+                                }}
+                            >
+                                {imgList.map((imgSrc, idx) => (
+                                    <div key={idx} className="h-full flex items-center justify-center flex-shrink-0" style={{ width: `${100 / imgList.length}%` }}>
+                                        <img
+                                            src={imgSrc}
+                                            alt={`Image ${idx + 1}`}
+                                            className="max-w-full max-h-full object-contain select-none p-2"
+                                            style={idx === currentIdx ? { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s' } : {}}
+                                            onDoubleClick={idx === currentIdx ? handleDoubleTap : undefined}
+                                            draggable="false"
+                                            onClick={e => e.stopPropagation()}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 pointer-events-none z-50">
+                                {imgList.map((_, idx) => (
+                                    <div key={idx} style={{
+                                        width: idx === currentIdx ? '20px' : '6px',
+                                        height: '6px', borderRadius: '3px',
+                                        background: idx === currentIdx ? 'white' : 'rgba(255,255,255,0.4)',
+                                        transition: 'all 0.3s'
+                                    }} />
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        /* ── Single image ──────────────── */
+                        <div
+                            className="w-full h-full flex items-center justify-center"
+                            onClick={onClose}
+                        >
                             <img
-                                src={src}
+                                src={imgList[0] || src}
                                 className="max-w-full max-h-full object-contain p-2 select-none"
-                                onClick={(e) => e.stopPropagation()}
+                                style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s ease-out' }}
+                                onDoubleClick={handleDoubleTap}
+                                onClick={e => e.stopPropagation()}
                                 draggable="false"
                             />
-                        )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // ─── FULL-SCREEN POST VIEWER ──────────────────────────────────────────────
+        const FullPostViewer = ({ post, onClose, userProfile, savedPosts, toggleSave, handleRemovePost, handleEditPost, handleAddComment, handleShare, postComments, setViewingImage, setShowOnboardingModal, isGuest }) => {
+            if (!post) return null;
+
+            return (
+                <div className="fixed inset-0 z-[110] bg-[#070A12] animate-fade-in flex flex-col overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 h-[60px] border-b border-white/5 bg-[#070A12]/80 backdrop-blur-xl shrink-0">
+                        <button 
+                            onClick={() => { vibrate(5); onClose(); }}
+                            className="text-white/60 hover:text-white transition-colors p-2 -ml-2 active:scale-90"
+                        >
+                            <Icon icon="ArrowLeft" size={24} className="stroke-[2.5px]" />
+                        </button>
+                        <span className="font-heading font-bold text-lg tracking-wide text-white">Opinions</span>
+                        <div className="w-10"></div> {/* Spacer for symmetry */}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto px-4 py-6 no-scrollbar pb-20">
+                        <div className="max-w-2xl mx-auto">
+                            <PostCard
+                                post={post}
+                                onRemove={handleRemovePost}
+                                onEdit={handleEditPost}
+                                onBookmark={toggleSave}
+                                onShare={handleShare}
+                                userProfile={userProfile}
+                                savedPosts={savedPosts}
+                                comments={postComments[post.id] || []}
+                                isGuest={isGuest}
+                                onAuthRequired={() => setShowOnboardingModal(true)}
+                                onImageClick={(src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 })}
+                            />
+                        </div>
                     </div>
                 </div>
             );
@@ -2482,6 +2858,7 @@
                     text: post.text_content,
                     media: post.media_url,
                     media_type: post.media_type || 'image',
+                    images: post.images || null,
                     time: formatTime(post.created_at),
                     agrees: post.agrees_count || 0,
                     comments: post.comments_count || 0,
@@ -2794,7 +3171,7 @@
                     const msg = err.message || 'Authentication failed';
                     const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
                     const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
-                    
+
                     if (isSignupEmailErr) {
                         setInlineEmailError('This email is already registered. Please log in.');
                     } else if (isLoginEmailErr) {
@@ -3143,7 +3520,7 @@
             }, [isOpen]);
 
             const MIN_CHARS = 20;
-            const MAX_CHARS = 200;
+            const MAX_CHARS = 400;
             const canPublish = text.length >= MIN_CHARS && text.length <= MAX_CHARS;
 
             const handleTextChange = (e) => {
@@ -3202,24 +3579,57 @@
             };
 
 
-            const handleFileSelect = (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    const file = e.target.files[0];
+            const MAX_IMAGES = 4;
+            const imageInputRef = useRef(null);
+            const videoInputRef = useRef(null);
+            const hasVideo = mediaFiles.some(f => f.type?.startsWith('video/'));
+            const hasImages = mediaFiles.some(f => !f.type?.startsWith('video/'));
 
-                    // Validation
-                    const isVideo = file.type.startsWith('video/');
-                    const maxSize = isVideo ? 20 * 1024 * 1024 : 5 * 1024 * 1024; // 20MB video, 5MB image
-
-                    if (file.size > maxSize) {
-                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: `File too large. Max ${isVideo ? '20MB' : '5MB'}`, icon: 'AlertTriangle', isSuccess: false } }));
+            // Handle multi-image selection (up to 4, images only)
+            const handleImageSelect = (e) => {
+                const files = Array.from(e.target.files || []);
+                if (hasVideo) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Remove the video before adding images', icon: 'AlertTriangle', isSuccess: false } }));
+                    e.target.value = '';
+                    return;
+                }
+                const remaining = MAX_IMAGES - mediaFiles.filter(f => !f.type?.startsWith('video/')).length;
+                if (files.length > remaining) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: `Max ${MAX_IMAGES} images. ${remaining} slot(s) remaining.`, icon: 'AlertTriangle', isSuccess: false } }));
+                }
+                const toAdd = files.slice(0, remaining);
+                toAdd.forEach(file => {
+                    if (file.size > 5 * 1024 * 1024) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: `${file.name} is too large. Max 5MB per image.`, icon: 'AlertTriangle', isSuccess: false } }));
                         return;
                     }
-
-                    // Keep local preview
                     const url = URL.createObjectURL(file);
-                    setMediaFiles(prev => [...prev, { url, file, type: file.type }]); // Store file object for upload
+                    setMediaFiles(prev => [...prev, { url, file, type: file.type }]);
                     setMediaCount(prev => prev + 1);
+                });
+                e.target.value = '';
+            };
+
+            // Handle single video selection (no images allowed when video is set)
+            const handleVideoSelect = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    if (hasImages) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Remove all images before adding a video', icon: 'AlertTriangle', isSuccess: false } }));
+                        e.target.value = '';
+                        return;
+                    }
+                    if (file.size > 20 * 1024 * 1024) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Video too large. Max 20MB', icon: 'AlertTriangle', isSuccess: false } }));
+                        e.target.value = '';
+                        return;
+                    }
+                    // Replace any existing video (only 1 allowed)
+                    const url = URL.createObjectURL(file);
+                    setMediaFiles([{ url, file, type: file.type }]);
+                    setMediaCount(1);
                 }
+                e.target.value = '';
             };
 
             const removeMedia = (index) => {
@@ -3253,20 +3663,48 @@
                         }
                     }
 
-                    // Upload Media
-                    let mediaUrl = mediaItem?.url; // Default to local blob if no upload needed (shouldn't happen for public post)
-                    let mediaType = mediaItem?.type?.startsWith('video/') ? 'video' : 'image';
+                    // ── Upload Media ──────────────────────────────────
+                    const imageItems = mediaFiles.filter(f => !f.type?.startsWith('video/'));
+                    const videoItem = mediaFiles.find(f => f.type?.startsWith('video/'));
 
-                    if (mediaItem?.file) {
-                        try {
-                            mediaUrl = await window.uploadMedia(mediaItem.file);
-                        } catch (mediaErr) {
-                            console.error("Media upload failed", mediaErr);
-                            throw new Error("Media upload failed: " + mediaErr.message);
+                    let mediaUrl = null;
+                    let mediaType = null;
+                    let imagesArray = null;
+
+                    if (videoItem) {
+                        // Single video
+                        mediaType = 'video';
+                        if (videoItem.file) {
+                            try { mediaUrl = await window.uploadMedia(videoItem.file); }
+                            catch (err) { throw new Error('Video upload failed: ' + err.message); }
+                        } else if (initialPost?.media) {
+                            mediaUrl = initialPost.media;
                         }
-                    } else if (mediaItem && !mediaItem.file && initialPost?.media) {
-                        // PRESERVE EXISTING MEDIA URL
+                    } else if (imageItems.length > 0) {
+                        // Multiple images → upload all, save to images[]
+                        mediaType = 'image';
+                        const uploadedUrls = [];
+                        for (const imgItem of imageItems) {
+                            if (imgItem.file) {
+                                try { uploadedUrls.push(await window.uploadMedia(imgItem.file)); }
+                                catch (err) { throw new Error('Image upload failed: ' + err.message); }
+                            } else {
+                                uploadedUrls.push(imgItem.url); // Existing URL (edit mode)
+                            }
+                        }
+                        if (uploadedUrls.length === 1) {
+                            // Single image — use legacy media_url for backward compat
+                            mediaUrl = uploadedUrls[0];
+                        } else {
+                            // Multiple images — save to images array
+                            imagesArray = uploadedUrls;
+                            mediaUrl = uploadedUrls[0]; // Keep first as fallback
+                        }
+                    } else if (initialPost?.media) {
+                        // Preserve existing media when editing with no new upload
                         mediaUrl = initialPost.media;
+                        mediaType = initialPost.media_type || 'image';
+                        imagesArray = initialPost.images || null;
                     }
 
                     const postData = {
@@ -3277,6 +3715,7 @@
                         verification_proof_url: proofUrl,
                         media_url: mediaUrl,
                         media_type: mediaType,
+                        images: imagesArray,
                         is_draft: false
                     };
 
@@ -3477,10 +3916,36 @@
                                         <div className="flex gap-3">
                                             <button onClick={handleTagToggle} className={`p-2 rounded-full transition-all duration-300 ${tagName || showTagInput ? 'text-[#2f8bff] bg-[#2f8bff]/10' : 'text-[#2f8bff] hover:bg-white/10'}`}><Icon icon="Tag" size={20} className={`${tagName || showTagInput ? "fill-[#2f8bff]" : ""} stroke-current`} /></button>
 
-                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+                                            {/* Hidden file inputs */}
+                                            <input type="file" ref={imageInputRef} className="hidden" accept="image/jpeg, image/png, image/webp, image/gif, image/heic, image/heif, image/*" multiple="multiple" onChange={handleImageSelect} />
+                                            <input type="file" ref={videoInputRef} className="hidden" accept="video/*" onChange={handleVideoSelect} />
 
-                                            <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full text-slate-400 hover:text-white transition-colors"><Icon icon="Image" size={18} /></button>
-                                            <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full text-slate-400 hover:text-white transition-colors"><Icon icon="Video" size={18} /></button>
+                                            {/* Image button — disabled if video exists or max images reached */}
+                                            <button
+                                                onClick={() => imageInputRef.current?.click()}
+                                                disabled={hasVideo || mediaFiles.filter(f => !f.type?.startsWith('video/')).length >= MAX_IMAGES}
+                                                className={`p-2 rounded-full transition-colors flex items-center gap-1 ${hasVideo || mediaFiles.filter(f => !f.type?.startsWith('video/')).length >= MAX_IMAGES
+                                                    ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'
+                                                    }`}
+                                                title={hasVideo ? 'Remove video first' : `Add images (${mediaFiles.filter(f => !f.type?.startsWith('video/')).length}/${MAX_IMAGES})`}
+                                            >
+                                                <Icon icon="Image" size={18} />
+                                                {mediaFiles.filter(f => !f.type?.startsWith('video/')).length > 0 && (
+                                                    <span className="text-[9px] font-bold text-neon">{mediaFiles.filter(f => !f.type?.startsWith('video/')).length}</span>
+                                                )}
+                                            </button>
+
+                                            {/* Video button — disabled if images exist or video already selected */}
+                                            <button
+                                                onClick={() => videoInputRef.current?.click()}
+                                                disabled={hasImages || hasVideo}
+                                                className={`p-2 rounded-full transition-colors ${hasImages || hasVideo
+                                                    ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'
+                                                    }`}
+                                                title={hasImages ? 'Remove images first' : hasVideo ? '1 video selected' : 'Add video'}
+                                            >
+                                                <Icon icon="Video" size={18} />
+                                            </button>
                                         </div>
                                         <button disabled={!canPublish} onClick={handlePublish} className={`px-6 py-2 rounded-full font-bold text-sm transition-all duration-300 ${canPublish ? 'bg-white text-black hover:scale-105 shadow-lg shadow-white/10' : 'bg-white/10 text-white/30 cursor-not-allowed'}`}>Publish</button>
                                     </div>
@@ -3517,6 +3982,111 @@
 
         // SHARE MODAL (New Visual Interface)
         const ShareModal = ({ isOpen, onClose, post }) => {
+            const [recentContacts, setRecentContacts] = useState([]);
+            const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+            const [selectedContacts, setSelectedContacts] = useState(new Set());
+            const [isSending, setIsSending] = useState(false);
+
+            useEffect(() => {
+                const fetchContacts = async () => {
+                    if (!isOpen || !window.getCurrentUser) return;
+                    setIsLoadingContacts(true);
+                    try {
+                        const user = await window.getCurrentUser();
+                        if (!user) return;
+
+                        const { data } = await window.supabase
+                            .from('conversations')
+                            .select(`
+                                id,
+                                participant_1_id,
+                                participant_2_id
+                            `)
+                            .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+                            .order('last_message_at', { ascending: false })
+                            .limit(10);
+
+                        if (data && data.length > 0) {
+                            const otherIds = [...new Set(data.map(c => c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id))];
+
+                            const { data: profiles } = await window.supabase
+                                .from('profiles')
+                                .select('id, full_name, avatar_url, username')
+                                .in('id', otherIds);
+
+                            if (profiles) {
+                                const profileMap = {};
+                                profiles.forEach(p => profileMap[p.id] = p);
+
+                                const contacts = data.map(c => {
+                                    const otherId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id;
+                                    const profile = profileMap[otherId];
+                                    if (!profile) return null;
+                                    return { convId: c.id, ...profile };
+                                }).filter(Boolean);
+
+                                if (window.rewriteMediaUrl) {
+                                    contacts.forEach(c => {
+                                        if (c.avatar_url) c.avatar_url = window.rewriteMediaUrl(c.avatar_url);
+                                    });
+                                }
+                                setRecentContacts(contacts);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to load contacts for share menu', e);
+                    } finally {
+                        setIsLoadingContacts(false);
+                    }
+                };
+                fetchContacts();
+            }, [isOpen]);
+
+            const toggleContact = (contact) => {
+                const next = new Set(selectedContacts);
+                if (next.has(contact.id)) next.delete(contact.id);
+                else next.add(contact.id);
+                setSelectedContacts(next);
+                vibrate(5);
+            };
+
+            const handleBatchSend = async () => {
+                if (selectedContacts.size === 0 || isSending) return;
+
+                if (!window.sendPostToUser) {
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Sharing system initializing...', icon: 'Clock', isSuccess: false }
+                    }));
+                    return;
+                }
+
+                setIsSending(true);
+                vibrate(10);
+
+                const contactsToSend = recentContacts.filter(c => selectedContacts.has(c.id));
+                let successCount = 0;
+
+                for (const contact of contactsToSend) {
+                    try {
+                        await window.sendPostToUser(contact.convId, contact.id, contact.full_name || contact.username, contact.avatar_url, post);
+                        successCount++;
+                    } catch (e) {
+                        console.error(`Failed to send to ${contact.username}`, e);
+                    }
+                }
+
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: `Post shared with ${successCount} profile${successCount > 1 ? 's' : ''}`,
+                        icon: 'Send',
+                        isSuccess: true
+                    }
+                }));
+
+                setIsSending(false);
+                onClose();
+            };
+
             if (!isOpen || !post) return null;
 
             const shareUrl = `https://plusopinion.com/post/${post.id}`;
@@ -3547,8 +4117,6 @@
                         onClose();
                     } catch (e) { }
                 } else {
-                    // Try to trigger custom URL scheme (only works if app installed and OS supports)
-                    // But unreliable on web. Best fallback is Copy Link.
                     await navigator.clipboard.writeText(shareUrl);
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied! Open Instagram to share.', icon: 'Instagram', isSuccess: true } }));
                     if (window.trackShare) window.trackShare(post.id);
@@ -3572,7 +4140,7 @@
             return (
                 <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
-                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col">
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[90vh] flex flex-col">
                         {/* Drag Bar */}
                         <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
 
@@ -3583,122 +4151,118 @@
                             </button>
                         </div>
 
-                        {/* Post Preview Card - EXACT PLATFORM REPLICA */}
-                        <div className="glass-panel rounded-2xl p-5 mb-6 border border-white/5 relative overflow-hidden group flex flex-col animate-fade-in">
-                            {/* Platform Logo - Top Right (Minimalist X-Style Etched Look) */}
-                            <div className="absolute top-6 right-6 z-20 group/logo">
-                                <img
-                                    src="/icon-192.png"
-                                    className="w-10 h-10 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40"
-                                    style={{
-                                        filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
-                                        mixBlendMode: 'luminosity'
-                                    }}
-                                    alt="PlusOpinion Logo"
-                                />
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                            {/* Post Preview Card - REPLACED WITH PostCard */}
+                            <div className="mb-6 shrink-0 transform scale-[0.98] origin-top">
+                                <PostCard post={post} isGuest={true} hideActions={true} />
                             </div>
 
-                            <div className="flex justify-between items-start mb-2">
-                                <div className="flex gap-3 w-full">
-                                    <div className="relative">
-                                        <img src={post.avatar || DEFAULT_AVATAR} className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
-                                        {post.verified && (
-                                            <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-[#121212]">
-                                                <Icon icon="Check" size={8} className="text-white" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0 pr-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-heading font-bold text-white text-sm truncate">{post.name}</span>
-                                            <div className="rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0">
-                                                <span className="font-heading font-bold text-[9px] text-white tracking-wide">RQS {post.rqs}</span>
-                                            </div>
-                                        </div>
-                                        <div className="text-xs text-muted truncate">@{post.username}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center flex-wrap gap-2 mb-3 mt-1">
-                                <div className="border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium whitespace-nowrap overflow-hidden max-w-full">
-                                    <span className="text-neon truncate">{post.category || 'Others'}</span>
-                                    <span className="mx-1.5 opacity-30">|</span>
-                                    <span className="truncate">plus opinion</span>
-                                </div>
-                            </div>
-
-                            <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light line-clamp-3">{post.text}</p>
-
-                            {post.media && (
-                                <div className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 overflow-hidden">
-                                    {post.media_type === 'video' ? (
-                                        <div className="w-full h-40 flex items-center justify-center">
-                                            <video src={post.media} className="w-full h-full object-cover opacity-60" />
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
-                                                    <Icon icon="Video" size={20} className="text-white" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <img src={post.media} className="w-full h-auto max-h-40 object-cover opacity-90" />
+                            {/* Internal Share Strip (PLATFORM) */}
+                            <div className="mb-8 overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Share to Profiles</span>
+                                    {selectedContacts.size > 0 && (
+                                        <button onClick={() => setSelectedContacts(new Set())} className="text-[10px] text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase">Clear Selection ({selectedContacts.size})</button>
                                     )}
                                 </div>
-                            )}
+                                <div className="flex gap-4 overflow-x-auto select-none custom-scrollbar pb-2 px-1">
+                                    {/* Search Button - Fixed functionality */}
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            if (window.openInbox) {
+                                                window.openInbox();
+                                                setTimeout(() => {
+                                                    if (window._inboxBootPhase1 && window._inboxBootPhase1.openSearchOverlay) {
+                                                        window._inboxBootPhase1.openSearchOverlay();
+                                                    }
+                                                }, 500);
+                                            }
+                                        }}
+                                        className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-lg">
+                                            <Icon icon="Search" size={24} className="text-white/70 group-hover:text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-white/70 group-hover:text-white truncate w-14 text-center">Search</span>
+                                    </button>
 
-                            <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/5">
-                                <div className="flex items-center gap-5">
-                                    <div className="flex items-center gap-1.5 text-muted hover:text-white transition-colors">
-                                        <Icon icon="ThumbsUp" size={18} />
-                                        <span className="text-xs font-medium">{post.agrees || 0}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-muted hover:text-white transition-colors">
-                                        <Icon icon="MessageCircle" size={18} />
-                                        <span className="text-xs font-medium">{post.comments || 0}</span>
-                                    </div>
+                                    {isLoadingContacts && <div className="text-white/40 text-xs py-3 px-4">Loading...</div>}
+
+                                    {!isLoadingContacts && recentContacts.map(c => {
+                                        const isSelected = selectedContacts.has(c.id);
+                                        return (
+                                            <button
+                                                key={c.id}
+                                                onClick={() => toggleContact(c)}
+                                                className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                            >
+                                                <div className={`w-14 h-14 rounded-full border-2 transition-all duration-300 relative ${isSelected ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/10 hover:border-white/30'}`}>
+                                                    <Avatar src={c.avatar_url} className="w-full h-full rounded-full object-cover" fallbackSize={24} />
+                                                    {isSelected && (
+                                                        <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-[#121212] animate-pop">
+                                                            <Icon icon="Check" size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[10px] truncate w-14 text-center transition-colors ${isSelected ? 'text-blue-400 font-bold' : 'text-white/70 group-hover:text-white'}`}>
+                                                    {c.full_name?.split(' ')[0] || c.username}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-
-                                {post.seenBy && (
-                                    <span className="text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 flex items-center gap-1.5">
-                                        <div className="w-1 h-1 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
-                                        Seen by {post.seenBy}
-                                    </span>
-                                )}
                             </div>
 
-                            <div className="flex items-center justify-end mt-3 text-[9px] text-muted/40 font-medium uppercase tracking-widest">
-                                <div className="text-white/20 font-bold">PLUSOPINION.COM</div>
+                            {/* External Share Grid (OUTSIDE PLATFORM) */}
+                            <div className="mt-2 mb-20">
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-4">Share Everywhere</span>
+                                <div className="grid grid-cols-4 gap-4 mb-4">
+                                    <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="Link" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">Copy Link</span>
+                                    </button>
+                                    <button onClick={handleWhatsApp} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="WhatsApp" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">WhatsApp</span>
+                                    </button>
+                                    <button onClick={handleInstagram} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="Instagram" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">Instagram</span>
+                                    </button>
+                                    <button onClick={handleMore} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="MoreHorizontal" size={24} className="text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">More</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Share Grid */}
-                        <div className="grid grid-cols-4 gap-4 mb-4">
-                            <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
-                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
-                                    <Icon icon="Link" size={24} className="text-white" />
-                                </div>
-                                <span className="text-xs text-muted">Copy Link</span>
-                            </button>
-                            <button onClick={handleWhatsApp} className="flex flex-col items-center gap-2 group">
-                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
-                                    <Icon icon="WhatsApp" size={24} className="text-white" />
-                                </div>
-                                <span className="text-xs text-muted">WhatsApp</span>
-                            </button>
-                            <button onClick={handleInstagram} className="flex flex-col items-center gap-2 group">
-                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
-                                    <Icon icon="Instagram" size={24} className="text-white" />
-                                </div>
-                                <span className="text-xs text-muted">Instagram</span>
-                            </button>
-                            <button onClick={handleMore} className="flex flex-col items-center gap-2 group">
-                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
-                                    <Icon icon="MoreHorizontal" size={24} className="text-blue-400" />
-                                </div>
-                                <span className="text-xs text-muted">More</span>
-                            </button>
-                        </div>
+                        {/* Batch Send Confirmation Bar */}
+                        {selectedContacts.size > 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#121212] border-t border-white/10 animate-slide-up z-20">
+                                <button
+                                    onClick={handleBatchSend}
+                                    disabled={isSending}
+                                    className="w-full py-4 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/10"
+                                >
+                                    {isSending ? (
+                                        <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Icon icon="Send" size={20} />
+                                    )}
+                                    <span>Send to {selectedContacts.size} profile{selectedContacts.size > 1 ? 's' : ''}</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -3869,6 +4433,9 @@
             const [isGuest, setIsGuest] = useState(false);
             const [deepLinkedPost, setDeepLinkedPost] = useState(null);
             const [feedFilters, setFeedFilters] = useState({ source: 'All', type: 'All', category: null });
+            
+            // Inbox count state for the top header badge
+            const [unreadInboxCount, setUnreadInboxCount] = useState(0);
 
             // Listen for Hash Changes (Category Filter)
             useEffect(() => {
@@ -3906,6 +4473,9 @@
             const [savedPosts, setSavedPosts] = useState(new Set());
             const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
             const [hiddenItems, setHiddenItems] = useState({ posts: [], brands: [], categories: [] });
+
+            // Portals for internal messaging payloads
+            const [sharedPostsToRender, setSharedPostsToRender] = useState({});
             const [isEditModalOpen, setIsEditModalOpen] = useState(false);
             const [editingPost, setEditingPost] = useState(null);
 
@@ -3945,6 +4515,101 @@
             // Report Data State
             const [reportData, setReportData] = useState({});
 
+            // Listen for internal chat post rendering
+            useEffect(() => {
+                const handleRenderSharedPost = async (e) => {
+                    const { postId, containerId } = e.detail;
+                    if (!postId || !containerId) return;
+
+                    setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: true, post: null } }));
+
+                    try {
+                        const fullPost = await window.getPost(postId);
+                        if (fullPost && fullPost.id) {
+                            const uiPost = {
+                                id: fullPost.id,
+                                user_id: fullPost.user_id,
+                                name: fullPost.profiles?.full_name || 'User',
+                                username: fullPost.profiles?.username || 'user',
+                                avatar: fullPost.profiles?.avatar_url || "",
+                                rqs: fullPost.profiles?.rqs_score || 0,
+                                verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+                                category: fullPost.category,
+                                product: fullPost.product_name,
+                                text: fullPost.text_content,
+                                media: fullPost.media_url,
+                                media_type: fullPost.media_type || 'image',
+                                images: fullPost.images || null,
+                                time: "Shared",
+                                agrees: fullPost.agrees_count || 0,
+                                comments: fullPost.comments_count || 0,
+                                seenBy: fullPost.seen_by_brand
+                            };
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, post: uiPost } }));
+                        } else {
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                        }
+                    } catch (err) {
+                        setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                    }
+                };
+                window.addEventListener('render_shared_post', handleRenderSharedPost);
+
+                // Expose openFullPost globally (formerly scrollToPost)
+                window.openFullPost = async (postId) => {
+                    if (window.closeInbox) window.closeInbox();
+                    
+                    try {
+                        // Check if we already have it in local posts or sharedPostsToRender
+                        let post = posts.find(p => p.id === postId);
+                        if (!post) {
+                            // Try sharedPostsToRender
+                            const shared = Object.values(sharedPostsToRender).find(s => s.post?.id === postId);
+                            if (shared) post = shared.post;
+                        }
+
+                        if (!post) {
+                            // Fetch from DB
+                            const fullPost = await window.getPost(postId);
+                            if (fullPost) {
+                                post = {
+                                    id: fullPost.id,
+                                    user_id: fullPost.user_id,
+                                    name: fullPost.profiles?.full_name || 'User',
+                                    username: fullPost.profiles?.username || 'user',
+                                    avatar: fullPost.profiles?.avatar_url || "",
+                                    rqs: fullPost.profiles?.rqs_score || 0,
+                                    verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+                                    category: fullPost.category,
+                                    product: fullPost.product_name,
+                                    text: fullPost.text_content,
+                                    media: fullPost.media_url,
+                                    media_type: fullPost.media_type || 'image',
+                                    images: fullPost.images || null,
+                                    time: "Shared Post",
+                                    agrees: fullPost.agrees_count || 0,
+                                    comments: fullPost.comments_count || 0,
+                                    seenBy: fullPost.seen_by_brand
+                                };
+                            }
+                        }
+
+                        if (post) {
+                            setViewingFullPost(post);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { msg: 'Post not found', icon: 'AlertTriangle', isSuccess: false }
+                            }));
+                        }
+                    } catch (err) {
+                        console.error("Error opening full post:", err);
+                    }
+                };
+                window.scrollToPost = window.openFullPost;
+
+                return () => window.removeEventListener('render_shared_post', handleRenderSharedPost);
+            }, []);
+
             // --- EXPOSE TOGGLES GLOBALLY ---
             useEffect(() => {
                 window.toggleSidebar = () => { vibrate(5); setIsMenuOpen(prev => !prev); };
@@ -3970,6 +4635,7 @@
             const [toastMessage, setToastMessage] = useState(null);
 
             const [viewingImage, setViewingImage] = useState(null); // Fullscreen image
+            const [viewingFullPost, setViewingFullPost] = useState(null); // Full-screen post viewer
             const [showOnboardingModal, setShowOnboardingModal] = useState(false); // Onboarding popup
 
 
@@ -4049,6 +4715,7 @@
                         text: post.text_content,
                         media: post.media_url,
                         media_type: post.media_type || 'image',
+                        images: post.images || null,
                         time: formatTime(post.created_at),
                         isHidden: hiddenIds.has(String(post.id)),
                         agrees: post.agrees_count || 0,
@@ -4110,6 +4777,8 @@
                                     product: fullPost.product_name,
                                     text: fullPost.text_content,
                                     media: fullPost.media_url,
+                                    media_type: fullPost.media_type || 'image',
+                                    images: fullPost.images || null,
                                     time: "Just now",
                                     agrees: 0,
                                     comments: 0,
@@ -4228,6 +4897,7 @@
                                     text: post.text_content,
                                     media: post.media_url,
                                     media_type: post.media_type || 'image',
+                                    images: post.images || null,
                                     time: "Recent",
                                     isHidden: false,
                                     agrees: post.agrees_count || 0,
@@ -4375,6 +5045,7 @@
                         text: newPost.text_content,
                         media: newPost.media_url,
                         media_type: newPost.media_type || 'image',
+                        images: newPost.images || null,
                         time: "Just now",
                         agrees: newPost.agrees_count || 0,
                         comments: newPost.comments_count || 0,
@@ -4652,20 +5323,34 @@
                     {/* TOP NAV - FIXED */}
                     <div className={`fixed top-0 left-0 w-full h-[60px] top-nav-glass flex items-center justify-between px-5 z-40 transition-transform duration-500 ease-out ${getMainContentTransform()} ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
                         <div className="flex items-center z-10">
-                            <button className="text-white/80 hover:text-white touch-scale transition-transform" onClick={() => { vibrate(5); setIsMenuOpen(true); }}>
+                            <button className="text-white touch-scale transition-transform" onClick={() => { vibrate(5); setIsMenuOpen(true); }}>
                                 <Icon icon="Menu" size={22} className="stroke-[2.5px] scale-110" />
                             </button>
                         </div>
 
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                            <span className="font-heading font-bold text-lg tracking-wide text-white">PlusOpinion</span>
+                            <h1 className="font-heading font-bold text-lg tracking-wide text-white m-0">PlusOpinion</h1>
                             <div className="border border-[#2f8bff] px-2 py-0.5 rounded-md bg-[#2f8bff]/10 shadow-[0_0_10px_rgba(47,139,255,0.1)] flex items-center justify-center">
                                 <span className="text-[10px] font-bold text-[#2f8bff] tracking-[0.2em] uppercase">BETA</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-6">
 
+                            <button className={`relative touch-scale transition-transform text-white group`} onClick={() => {
+                                vibrate(5);
+                                if (window.openInbox) window.openInbox();
+                            }}>
+                                <Icon icon={unreadInboxCount > 0 ? "PlusOpinionInboxFilled" : "PlusOpinionInbox"} size={24} className={`scale-105 transition-all duration-300 ${unreadInboxCount > 0 ? '' : 'stroke-[1.5px] group-hover:stroke-[2.5px]'}`} />
+                                {unreadInboxCount > 0 && (
+                                    <div className="absolute -top-1.5 -right-2 flex items-center justify-center min-w-[18px] h-[18px] bg-blue-500 rounded-full border-2 border-[#020205] z-50 animate-pulse-subtle">
+                                        <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                                        <span className="relative text-[10px] font-bold text-white px-1 leading-none">
+                                            {unreadInboxCount > 99 ? '99+' : unreadInboxCount}
+                                        </span>
+                                    </div>
+                                )}
+                            </button>
 
                             <button className="text-white touch-scale transition-transform" onClick={() => {
                                 console.log('Lens button clicked!');
@@ -4751,7 +5436,7 @@
                                                     comments={postComments[deepLinkedPost.id] || []}
                                                     isGuest={isGuest}
                                                     onAuthRequired={() => setShowOnboardingModal(true)}
-                                                    onImageClick={(src, type) => setViewingImage({ src, type })}
+                                                    onImageClick={(src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 })}
                                                 />
                                                 <div className="mt-12 p-8 rounded-3xl text-center bg-white/5 border border-white/10">
                                                     <h3 className="text-lg font-bold text-white mb-2">Want to see more?</h3>
@@ -4785,7 +5470,7 @@
                                                             comments={postComments[deepLinkedPost.id] || []}
                                                             isGuest={false}
                                                             onAuthRequired={() => setShowOnboardingModal(true)}
-                                                            onImageClick={(src, type) => setViewingImage({ src, type })}
+                                                            onImageClick={(src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 })}
                                                         />
                                                     </div>
                                                 )}
@@ -4805,7 +5490,7 @@
                                                                 comments={postComments[post.id] || []}
                                                                 isGuest={isGuest}
                                                                 onAuthRequired={() => setShowOnboardingModal(true)}
-                                                                onImageClick={(src, type) => setViewingImage({ src, type })}
+                                                                onImageClick={(src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 })}
                                                             />
                                                         </div>
                                                     ))}
@@ -4867,6 +5552,8 @@
                         isGuest={isGuest}
                         onAuthRequired={() => setShowOnboardingModal(true)}
                         isVisible={navVisible && !isOverlayOpen && !isAnySidePanelOpen && !viewingImage}
+                        unreadInboxCount={unreadInboxCount}
+                        setUnreadInboxCount={setUnreadInboxCount}
                     />
 
                     {/* OVERLAYS & SHEETS */}
@@ -4887,7 +5574,7 @@
                         handleRemove={handleRemovePost}
                         onAddComment={handleAddComment}
                         onSave={toggleSave}
-                        onImageClick={(src, type) => setViewingImage({ src, type })}
+                        onImageClick={(src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 })}
                         onEdit={handleEditPost}
                         userProfile={userProfile}
                         savedPosts={savedPosts}
@@ -4942,7 +5629,26 @@
                     }} />
 
                     {/* FULLSCREEN IMAGE VIEWER */}
-                    <ImageViewer src={viewingImage?.src} type={viewingImage?.type} onClose={() => setViewingImage(null)} />
+                    <ImageViewer src={viewingImage?.src} type={viewingImage?.type} images={viewingImage?.images} initialIndex={viewingImage?.initialIndex || 0} onClose={() => setViewingImage(null)} />
+                    
+                    {/* FULLSCREEN POST VIEWER */}
+                    {viewingFullPost && (
+                        <FullPostViewer 
+                            post={viewingFullPost} 
+                            onClose={() => setViewingFullPost(null)}
+                            userProfile={userProfile}
+                            savedPosts={savedPosts}
+                            toggleSave={toggleSave}
+                            handleRemovePost={handleRemovePost}
+                            handleEditPost={(post) => { setEditingPost(post); setIsEditModalOpen(true); }}
+                            handleAddComment={handleAddComment}
+                            handleShare={handleShare}
+                            postComments={postComments}
+                            setViewingImage={setViewingImage}
+                            setShowOnboardingModal={setShowOnboardingModal}
+                            isGuest={isGuest}
+                        />
+                    )}
 
                     {/* AUTH MODAL POPUP (Replaces Onboarding Iframe) */}
                     <AuthModal
@@ -4950,6 +5656,39 @@
                         onClose={() => setShowOnboardingModal(false)}
                         isClosable={!isGuest || !!deepLinkedPost}
                     />
+
+                    {/* IN-CHAT REACT PORTALS */}
+                    {Object.entries(sharedPostsToRender).map(([containerId, data]) => {
+                        const el = document.getElementById(containerId);
+                        if (!el) return null;
+
+                        if (data.isLoading) {
+                            return ReactDOM.createPortal(
+                                <div className="p-4 text-center opacity-70 text-xs text-white">Loading post...</div>,
+                                el
+                            );
+                        }
+
+                        if (data.error || !data.post) {
+                            return ReactDOM.createPortal(
+                                <div className="p-4 text-center opacity-70 text-xs text-red-400">Post unavailable</div>,
+                                el
+                            );
+                        }
+
+                        return ReactDOM.createPortal(
+                            <div className="w-full shrink-0 pointer-events-auto" onClick={(e) => { e.stopPropagation(); window.scrollToPost(data.post.id); }}>
+                                <PostCard
+                                    post={data.post}
+                                    isGuest={isGuest}
+                                    onShare={handleShare}
+                                    hideActions={true}
+                                    onImageClick={(src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 })}
+                                />
+                            </div>,
+                            el
+                        );
+                    })}
 
                 </div>
             );
@@ -4959,6 +5698,15 @@
         root.render(<App />);
     </script>
     <!-- TEST_UPDATE_TOY_END -->
+
+    <!-- ===================================================== -->
+    <!-- INBOX PANEL — Loaded after React mounts                -->
+    <!-- inbox.js: CSS + HTML shell + gesture engine            -->
+    <!-- inbox_panel.js: data layer, rendering, realtime        -->
+    <!-- ===================================================== -->
+    <script src="/inbox.js"></script>
+    <script src="/inbox_panel.js"></script>
+
 </body>
 
 
