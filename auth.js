@@ -183,6 +183,78 @@ async function getCurrentUser() {
 }
 
 /* ============================
+   PROACTIVE SESSION REFRESH
+   Keeps the token alive indefinitely — users stay logged in until
+   they explicitly call signOutUser(). The Supabase client's built-in
+   autoRefreshToken handles the actual token rotation; the heartbeat
+   below is a safety net for long idle periods.
+
+   ⚠️  IMPORTANT: Never call refreshSession() inside onAuthStateChange.
+       refreshSession() fires a NEW onAuthStateChange(TokenRefreshed) event,
+       which would call refreshSession() again → infinite loop that blocks
+       every login attempt.
+============================ */
+
+// Track heartbeat so we can stop it on logout
+let sessionHeartbeatInterval = null;
+
+// onAuthStateChange only tracks sign-in / sign-out — NO refreshSession() calls here
+window.supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    console.log('[Auth] ✅ Session active:', event);
+    // Start the safety-net heartbeat if not already running
+    if (!sessionHeartbeatInterval) startSessionHeartbeat();
+  }
+
+  if (event === 'SIGNED_OUT') {
+    console.log('[Auth] 👋 User signed out — stopping heartbeat.');
+    if (sessionHeartbeatInterval) {
+      clearInterval(sessionHeartbeatInterval);
+      sessionHeartbeatInterval = null;
+    }
+  }
+});
+
+// Safety-net heartbeat: every 15 minutes, check if the token is close to
+// expiry and nudge Supabase to refresh it. This covers the case where the
+// app has been open but idle for a long time (e.g. overnight on a desk).
+// Supabase's autoRefreshToken already handles most cases — this is an extra
+// layer so sessions survive very long idle periods.
+async function startSessionHeartbeat() {
+    if (sessionHeartbeatInterval) return; // already running
+
+    sessionHeartbeatInterval = setInterval(async () => {
+        try {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session) {
+                // Session gone — user was logged out elsewhere; clean up
+                clearInterval(sessionHeartbeatInterval);
+                sessionHeartbeatInterval = null;
+                return;
+            }
+            // Only refresh if within 10 minutes of expiry (Supabase normally
+            // refreshes at the 60-second mark; this catches edge cases)
+            const expiresAt = session.expires_at
+                ? new Date(session.expires_at * 1000).getTime()
+                : 0;
+            const msUntilExpiry = expiresAt - Date.now();
+            if (msUntilExpiry > 0 && msUntilExpiry < 10 * 60 * 1000) {
+                console.log('[Auth] Heartbeat: token expiring soon, refreshing...');
+                await window.supabase.auth.refreshSession();
+            }
+        } catch (e) {
+            console.warn('[Auth] Heartbeat refresh failed (non-critical):', e.message);
+        }
+    }, 15 * 60 * 1000); // every 15 minutes
+}
+
+// Kick off the heartbeat immediately if the user is already logged in
+// (page reload / returning visitor path)
+getCurrentUser().then(user => {
+    if (user) startSessionHeartbeat();
+});
+
+/* ============================
    PASSWORD RESET
 ============================ */
 async function resetPassword(email) {
