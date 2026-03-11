@@ -99,10 +99,6 @@
             "destination": "/PUBLIC POV PROFILE.HTML"
         },
         {
-            "source": "/onboarding",
-            "destination": "/onboarding.html"
-        },
-        {
             "source": "/reset-password",
             "destination": "/reset-password.html"
         },
