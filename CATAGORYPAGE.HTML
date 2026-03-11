@@ -12,6 +12,17 @@
     <meta name="keywords"
         content="product categories, electronics reviews, fashion reviews, food reviews, automotive reviews, category browse, product types">
 
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PlusOpinion",
+      "alternateName": "PlusOpinion",
+      "url": "https://plusopinion.com/"
+    }
+    </script>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-D42E61TP4M"></script>
     <script>
@@ -718,7 +729,301 @@
 
 
 
+        // SHARE MODAL (New Visual Interface)
+        const ShareModal = ({ isOpen, onClose, post }) => {
+            const [recentContacts, setRecentContacts] = useState([]);
+            const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+            const [selectedContacts, setSelectedContacts] = useState(new Set());
+            const [isSending, setIsSending] = useState(false);
+
+            useEffect(() => {
+                const fetchContacts = async () => {
+                    if (!isOpen || !window.getCurrentUser) return;
+                    setIsLoadingContacts(true);
+                    try {
+                        const user = await window.getCurrentUser();
+                        if (!user) return;
+
+                        const { data } = await window.supabase
+                            .from('conversations')
+                            .select(`
+                                id,
+                                participant_1_id,
+                                participant_2_id
+                            `)
+                            .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+                            .order('last_message_at', { ascending: false })
+                            .limit(10);
+
+                        if (data && data.length > 0) {
+                            const otherIds = [...new Set(data.map(c => c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id))];
+
+                            const { data: profiles } = await window.supabase
+                                .from('profiles')
+                                .select('id, full_name, avatar_url, username')
+                                .in('id', otherIds);
+
+                            if (profiles) {
+                                const profileMap = {};
+                                profiles.forEach(p => profileMap[p.id] = p);
+
+                                const contacts = data.map(c => {
+                                    const otherId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id;
+                                    const profile = profileMap[otherId];
+                                    if (!profile) return null;
+                                    return { convId: c.id, ...profile };
+                                }).filter(Boolean);
+
+                                if (window.rewriteMediaUrl) {
+                                    contacts.forEach(c => {
+                                        if (c.avatar_url) c.avatar_url = window.rewriteMediaUrl(c.avatar_url);
+                                    });
+                                }
+                                setRecentContacts(contacts);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to load contacts for share menu', e);
+                    } finally {
+                        setIsLoadingContacts(false);
+                    }
+                };
+                fetchContacts();
+            }, [isOpen]);
+
+            const toggleContact = (contact) => {
+                const next = new Set(selectedContacts);
+                if (next.has(contact.id)) next.delete(contact.id);
+                else next.add(contact.id);
+                setSelectedContacts(next);
+                vibrate(5);
+            };
+
+            const handleBatchSend = async () => {
+                if (selectedContacts.size === 0 || isSending) return;
+
+                if (!window.sendPostToUser) {
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Sharing system initializing...', icon: 'Clock', isSuccess: false }
+                    }));
+                    return;
+                }
+
+                setIsSending(true);
+                vibrate(10);
+
+                const contactsToSend = recentContacts.filter(c => selectedContacts.has(c.id));
+                let successCount = 0;
+
+                for (const contact of contactsToSend) {
+                    try {
+                        await window.sendPostToUser(contact.convId, contact.id, contact.full_name || contact.username, contact.avatar_url, post);
+                        successCount++;
+                    } catch (e) {
+                        console.error(`Failed to send to ${contact.username}`, e);
+                    }
+                }
+
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: `Post shared with ${successCount} profile${successCount > 1 ? 's' : ''}`,
+                        icon: 'Send',
+                        isSuccess: true
+                    }
+                }));
+
+                setIsSending(false);
+                onClose();
+            };
+
+            if (!isOpen || !post) return null;
+
+            const shareUrl = `https://plusopinion.com/post/${post.id}`;
+            const shareText = `Check out this opinion by @${post.username}`;
+
+            const handleCopy = async () => {
+                try {
+                    const cleanText = `Check out this opinion on PlusOpinion:\n\n"${post.text ? post.text.substring(0, 100) + '...' : ''}"\n\nRead more at: ${shareUrl}`;
+                    await navigator.clipboard.writeText(cleanText);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link & Preview copied', icon: 'Link', isSuccess: true } }));
+                    if (window.trackShare) window.trackShare(post.id);
+                    onClose();
+                } catch (err) { console.error(err); }
+            };
+
+            const handleWhatsApp = () => {
+                const waText = `🔥 *New Opinion on PlusOpinion!*\n\n"@${post.username}: ${post.text ? post.text.substring(0, 80) : ''}..."\n\nRead full POV here:\n${shareUrl}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
+                if (window.trackShare) window.trackShare(post.id);
+                onClose();
+            };
+
+            const handleInstagram = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'Top Opinion', text: shareText, url: shareUrl });
+                        if (window.trackShare) window.trackShare(post.id);
+                        onClose();
+                    } catch (e) { }
+                } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied! Open Instagram to share.', icon: 'Instagram', isSuccess: true } }));
+                    if (window.trackShare) window.trackShare(post.id);
+                    setTimeout(() => { window.open('https://instagram.com', '_blank'); }, 1000);
+                    onClose();
+                }
+            };
+
+            const handleMore = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        if (window.trackShare) window.trackShare(post.id);
+                        onClose();
+                    } catch (err) { }
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Web Share not supported', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[90vh] flex flex-col">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg">Share Opinion</span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors">
+                                <Icon icon="X" size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                            {/* Post Preview Card - REPLACED WITH PostCard */}
+                            <div className="mb-6 shrink-0 transform scale-[0.98] origin-top">
+                                <PostCard post={post} isGuest={true} hideActions={true} />
+                            </div>
+
+                            {/* Internal Share Strip (PLATFORM) */}
+                            <div className="mb-8 overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Share to Profiles</span>
+                                    {selectedContacts.size > 0 && (
+                                        <button onClick={() => setSelectedContacts(new Set())} className="text-[10px] text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase">Clear Selection ({selectedContacts.size})</button>
+                                    )}
+                                </div>
+                                <div className="flex gap-4 overflow-x-auto select-none custom-scrollbar pb-2 px-1">
+                                    {/* Search Button - Fixed functionality */}
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            if (window.openInbox) {
+                                                window.openInbox();
+                                                setTimeout(() => {
+                                                    if (window._inboxBootPhase1 && window._inboxBootPhase1.openSearchOverlay) {
+                                                        window._inboxBootPhase1.openSearchOverlay();
+                                                    }
+                                                }, 500);
+                                            }
+                                        }}
+                                        className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-lg">
+                                            <Icon icon="Search" size={24} className="text-white/70 group-hover:text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-white/70 group-hover:text-white truncate w-14 text-center">Search</span>
+                                    </button>
+
+                                    {isLoadingContacts && <div className="text-white/40 text-xs py-3 px-4">Loading...</div>}
+
+                                    {!isLoadingContacts && recentContacts.map(c => {
+                                        const isSelected = selectedContacts.has(c.id);
+                                        return (
+                                            <button
+                                                key={c.id}
+                                                onClick={() => toggleContact(c)}
+                                                className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                            >
+                                                <div className={`w-14 h-14 rounded-full border-2 transition-all duration-300 relative ${isSelected ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/10 hover:border-white/30'}`}>
+                                                    <Avatar src={c.avatar_url} className="w-full h-full rounded-full object-cover" fallbackSize={24} />
+                                                    {isSelected && (
+                                                        <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-[#121212] animate-pop">
+                                                            <Icon icon="Check" size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[10px] truncate w-14 text-center transition-colors ${isSelected ? 'text-blue-400 font-bold' : 'text-white/70 group-hover:text-white'}`}>
+                                                    {c.full_name?.split(' ')[0] || c.username}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* External Share Grid (OUTSIDE PLATFORM) */}
+                            <div className="mt-2 mb-20">
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-4">Share Everywhere</span>
+                                <div className="grid grid-cols-4 gap-4 mb-4">
+                                    <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="Link" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">Copy Link</span>
+                                    </button>
+                                    <button onClick={handleWhatsApp} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="WhatsApp" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">WhatsApp</span>
+                                    </button>
+                                    <button onClick={handleInstagram} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="Instagram" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">Instagram</span>
+                                    </button>
+                                    <button onClick={handleMore} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="MoreHorizontal" size={24} className="text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">More</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Batch Send Confirmation Bar */}
+                        {selectedContacts.size > 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#121212] border-t border-white/10 animate-slide-up z-20">
+                                <button
+                                    onClick={handleBatchSend}
+                                    disabled={isSending}
+                                    className="w-full py-4 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/10"
+                                >
+                                    {isSending ? (
+                                        <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Icon icon="Send" size={20} />
+                                    )}
+                                    <span>Send to {selectedContacts.size} profile{selectedContacts.size > 1 ? 's' : ''}</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // REPORT MODAL (2-Step Flow)
+        
+
         const App = () => {
+            const [sharedPostsToRender, setSharedPostsToRender] = useState({});
+            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+            const [sharePostData, setSharePostData] = useState(null);
             const [isGuest, setIsGuest] = useState(false);
             const [showAuthModal, setShowAuthModal] = useState(false);
             const [userProfile, setUserProfile] = useState(null);
@@ -816,6 +1121,57 @@
                 };
                 loadAllData();
                 return () => { isMounted = false; };
+            }, []);
+
+            // Listen for internal chat post rendering
+            useEffect(() => {
+                const handleRenderSharedPost = async (e) => {
+                    const { postId, containerId } = e.detail;
+                    if (!postId || !containerId) return;
+
+                    setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: true, post: null } }));
+
+                    try {
+                        const fullPost = await window.getPost(postId);
+                        if (fullPost && fullPost.id) {
+                            const uiPost = {
+                                id: fullPost.id,
+                                user_id: fullPost.user_id,
+                                name: fullPost.profiles?.full_name || 'User',
+                                username: fullPost.profiles?.username || 'user',
+                                avatar: fullPost.profiles?.avatar_url || "",
+                                rqs: fullPost.profiles?.rqs_score || 0,
+                                verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+                                category: fullPost.category,
+                                product: fullPost.product_name,
+                                text: fullPost.text_content,
+                                media: fullPost.media_url,
+                                media_type: fullPost.media_type || 'image',
+                                images: fullPost.images || null,
+                                time: "Shared",
+                                agrees: fullPost.agrees_count || 0,
+                                comments: fullPost.comments_count || 0,
+                                seenBy: fullPost.seen_by_brand
+                            };
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, post: uiPost } }));
+                        } else {
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                        }
+                    } catch (err) {
+                        setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                    }
+                };
+                window.addEventListener('render_shared_post', handleRenderSharedPost);
+                
+                // Expose openFullPost globally
+                window.openFullPost = async (postId) => {
+                    if (window.closeInbox) window.closeInbox();
+                    // Implementation depends on page structure, simple redirect for non-homepage:
+                    window.location.href = `POST_VIEWER_HTML_OR_SIMILAR?id=${postId}`;
+                };
+                window.scrollToPost = window.openFullPost;
+
+                return () => window.removeEventListener('render_shared_post', handleRenderSharedPost);
             }, []);
 
             // Setup pull-to-refresh handler
@@ -921,6 +1277,7 @@
                     </div>
 
                     {/* 4. Bottom Nav - FIXED */}
+                    <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
                     <BottomNav activeTab={activeTab} isVisible={navVisible} />
 
                     <AuthModal
@@ -951,7 +1308,7 @@
             }, []);
 
             return (
-                <div className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                <div id="bottom-nav-bar" className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
                     <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
                     <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => { }} />
                     <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} />
@@ -1188,6 +1545,20 @@
     <script>
         window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
     </script>
+
+    <!-- ===================================================== -->
+    <!-- INBOX PANEL — Loaded after React mounts                -->
+    <!-- inbox.js: CSS + HTML shell + gesture engine            -->
+    <!-- inbox_panel.js: data layer, rendering, realtime        -->
+    <!-- ===================================================== -->
+    
+    
+    
+
+    <!-- Crypto, Realtime, Profile Integration -->
+    <script src="inbox_crypto.js"></script>
+    <script src="inbox.js"></script>
+    <script src="inbox_panel.js"></script>
 </body>
 
 
