@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR05_AUDIT_V3.8.7
+// Updated at: MAR11_PRELAUNCH_V9.0.0
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260305_AUDIT_V.0.0';
+  : 'BUILD_20260311_PRELAUNCH_V9.0.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
@@ -157,7 +157,10 @@ self.addEventListener("fetch", (event) => {
       // ALL OTHER (REST/auth) → Production proxy
       // ──────────────────────────────────────────────────────────────
 
-      if (isImageUrl(url.pathname)) {
+      // Do not use wsrv.nl for private chat-media to preserve privacy and avoid CDN errors with signed URLs
+      const isPrivateMedia = url.pathname.includes('/storage/v1/object/sign/chat-media');
+
+      if (event.request.method === 'GET' && isImageUrl(url.pathname) && !isPrivateMedia) {
         // IMAGE: wsrv.nl CDN — compresses & serves as WebP instantly
         const imgProxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(url.toString())}&w=900&fit=cover&output=webp&q=80`;
         event.respondWith(
