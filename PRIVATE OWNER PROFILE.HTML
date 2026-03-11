@@ -19,6 +19,17 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#020205">
 
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PlusOpinion",
+      "alternateName": "PlusOpinion",
+      "url": "https://plusopinion.com/"
+    }
+    </script>
+
     <!-- Favicon for browser tabs -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
@@ -440,6 +451,18 @@
             ThumbsUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" /></svg>,
             Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
             MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>,
+            MessagesDuo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z" /><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1" /></svg>,
+            InboxArchive: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2" /><path d="M3 10v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9" /><path d="M10 12h4" /></svg>,
+            MailOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.2 8.4c.5.3.8.8.8 1.4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.8c0-.6.3-1.1.8-1.4l7.5-4.5a2 2 0 0 1 2.4 0l7.5 4.5Z" /><path d="m22 9-10 7L2 9" /><path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4" /></svg>,
+            Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
+            PaperPlane: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 15 22l-4-9L2 9z" /><path d="M22 2 11 13v6l4-3" /></svg>,
+            PlusOpinionInbox: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <polyline points="3 5 12 11 21 5" />
+                </svg>
+            ),
+            ActiveChat: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><circle cx="8" cy="10" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="10" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1.5" fill="currentColor" stroke="none" /></svg>,
             WhatsApp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" /></svg>,
             AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>,
             Instagram: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>,
@@ -744,185 +767,448 @@
         };
 
         // PREMIUM ZOOMABLE MEDIA COMPONENT (Instagram Style)
-        const ZoomableMedia = ({ src, type, onImageClick }) => {
-            const [scale, setScale] = useState(1);
-            const [origin, setOrigin] = useState({ x: 0, y: 0 });
-            const [isPinching, setIsPinching] = useState(false);
+        // ─── SMART MEDIA RATIO DETECTION HELPER ────────────────────────────────────
+        // Decodes the image/video ratio and returns CSS aspect-ratio class
+        const getAspectClass = (ratio) => {
+            if (ratio >= 1.55) return 'aspect-[16/9]';      // Landscape → 16:9
+            if (ratio >= 0.89) return 'aspect-square';       // Square / near-square → 1:1
+            return 'aspect-[4/5]';                           // Portrait → 4:5 (covers tall too)
+        };
+
+        // ─── SMART MEDIA COMPONENT ─────────────────────────────────────────────────
+        // Replaces ZoomableMedia. Handles: single image, single video, multi-image carousel
+        // Props: src (string), type ('image'|'video'), images (string[]), onImageClick
+        const SmartMedia = ({ src, type, images, onImageClick }) => {
+            const isVideo = type === 'video' || type?.startsWith('video/') || src?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
+            const isMulti = images && images.length > 1;
+            const imageList = isMulti ? images : [src].filter(Boolean);
+
+            // Global mute state
+            const [isMuted, setIsMuted] = useState(() => {
+                const stored = localStorage.getItem('globalVideoMuted');
+                return stored ? stored === 'true' : false; // default unmuted
+            });
+            const [isInView, setIsInView] = useState(false);
+
+            useEffect(() => {
+                const handleMuteChange = (e) => setIsMuted(e.detail.isMuted);
+                window.addEventListener('globalMuteToggle', handleMuteChange);
+                return () => window.removeEventListener('globalMuteToggle', handleMuteChange);
+            }, []);
+
+            useEffect(() => {
+                if (!isVideo || !containerRef.current) return;
+                const observer = new IntersectionObserver(([entry]) => {
+                    setIsInView(entry.isIntersecting);
+                }, { threshold: 0.6 });
+
+                observer.observe(containerRef.current);
+                return () => observer.disconnect();
+            }, [isVideo]);
+
+            const toggleMute = (e) => {
+                e.stopPropagation();
+                const newMuted = !isMuted;
+                setIsMuted(newMuted);
+                localStorage.setItem('globalVideoMuted', newMuted);
+                window.dispatchEvent(new CustomEvent('globalMuteToggle', { detail: { isMuted: newMuted } }));
+            };
+
+            // Aspect ratio state (determined after first media loads)
+            const [aspectClass, setAspectClass] = useState('aspect-[4/5]');
+            const [ratioDetected, setRatioDetected] = useState(false);
+
+            // Carousel state
+            const [activeIdx, setActiveIdx] = useState(0);
+            const [dragDelta, setDragDelta] = useState(0);
+            const [isDragging, setIsDragging] = useState(false);
+            const dragStart = useRef(null);
             const containerRef = useRef(null);
+
+            // Pinch-zoom state (single media only)
+            const [scale, setScale] = useState(1);
+            const [pinchOrigin, setPinchOrigin] = useState({ x: 50, y: 50 });
+            const [isPinching, setIsPinching] = useState(false);
             const initialDist = useRef(null);
 
-            const handleTouchStart = (e) => {
+            // Detect ratio from the first image/video
+            const handleMediaLoad = (e) => {
+                if (ratioDetected) return;
+                const el = e.target;
+                const w = el.naturalWidth || el.videoWidth || el.clientWidth;
+                const h = el.naturalHeight || el.videoHeight || el.clientHeight;
+                if (w && h) {
+                    setAspectClass(getAspectClass(w / h));
+                    setRatioDetected(true);
+                }
+            };
+
+            // ── Carousel touch/drag handlers ──────────────────────────────────────
+            const SWIPE_THRESHOLD = 40;
+
+            const onCarouselTouchStart = (e) => {
+                e.stopPropagation();
+                if (e.touches.length !== 1) return;
+                dragStart.current = e.touches[0].clientX;
+                setIsDragging(true);
+            };
+
+            const onCarouselTouchMove = (e) => {
+                e.stopPropagation();
+                if (!isDragging || dragStart.current === null) return;
+                const delta = e.touches[0].clientX - dragStart.current;
+                // Clamp: don't allow dragging past edges
+                if ((activeIdx === 0 && delta > 0) || (activeIdx === imageList.length - 1 && delta < 0)) {
+                    setDragDelta(delta * 0.2); // Rubber-band
+                } else {
+                    setDragDelta(delta);
+                }
+            };
+
+            const onCarouselTouchEnd = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+                    setActiveIdx(i => i + 1);
+                } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+                    setActiveIdx(i => i - 1);
+                }
+                setDragDelta(0);
+                dragStart.current = null;
+            };
+
+            // ── Pinch-zoom handlers (single media) ──────────────────────────────────
+            const onSingleTouchStart = (e) => {
                 if (e.touches.length === 2) {
                     setIsPinching(true);
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-                    initialDist.current = dist;
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        const mx = (t1.pageX + t2.pageX) / 2;
+                        const my = (t1.pageY + t2.pageY) / 2;
+                        setPinchOrigin({ x: ((mx - rect.left) / rect.width) * 100, y: ((my - rect.top) / rect.height) * 100 });
+                    }
+                }
+            };
+            const onSingleTouchMove = (e) => {
+                if (e.touches.length === 2 && isPinching && initialDist.current) {
+                    e.preventDefault();
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    setScale(Math.min(Math.max(d / initialDist.current, 1), 4));
+                }
+            };
+            const onSingleTouchEnd = () => { setIsPinching(false); setScale(1); initialDist.current = null; };
 
-                    // Calculate mid point for origin
-                    const midX = (touch1.pageX + touch2.pageX) / 2;
-                    const midY = (touch1.pageY + touch2.pageY) / 2;
-                    const rect = containerRef.current.getBoundingClientRect();
-                    setOrigin({
-                        x: ((midX - rect.left) / rect.width) * 100,
-                        y: ((midY - rect.top) / rect.height) * 100
-                    });
+            const handleClick = () => {
+                if (isPinching || (isMulti && Math.abs(dragDelta) > 5)) return;
+                if (isMulti) onImageClick(null, 'images', imageList, activeIdx);
+                else onImageClick(src, type);
+            };
+
+            // ── Desktop Mouse Drag handlers ───────────────────────────────────────
+            const onCarouselMouseDown = (e) => {
+                if (e.button !== 0) return; // Only left click
+                dragStart.current = e.clientX;
+                setIsDragging(true);
+            };
+
+            const onCarouselMouseMove = (e) => {
+                if (!isDragging || dragStart.current === null) return;
+                const delta = e.clientX - dragStart.current;
+                if ((activeIdx === 0 && delta > 0) || (activeIdx === imageList.length - 1 && delta < 0)) {
+                    setDragDelta(delta * 0.2);
+                } else {
+                    setDragDelta(delta);
                 }
             };
 
-            const handleTouchMove = (e) => {
-                if (e.touches.length === 2 && isPinching) {
-                    e.preventDefault(); // Prevent scroll while pinching
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-                    const newScale = Math.min(Math.max(dist / initialDist.current, 1), 4);
-                    setScale(newScale);
+            const onCarouselMouseUp = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+                    setActiveIdx(i => i + 1);
+                } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+                    setActiveIdx(i => i - 1);
                 }
+                setDragDelta(0);
+                dragStart.current = null;
             };
 
-            const handleTouchEnd = () => {
-                setIsPinching(false);
-                setScale(1);
-                initialDist.current = null;
-            };
-
+            // ── Render ──────────────────────────────────────────────────────────────
             return (
                 <div
                     ref={containerRef}
-                    className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 group cursor-pointer overflow-hidden touch-pan-y"
-                    onClick={() => !isPinching && onImageClick && onImageClick(src, type)}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
+                    className={`w-full rounded-xl mb-3 border border-white/5 relative bg-black overflow-hidden cursor-pointer select-none media-zoom-effect ${aspectClass}`}
                     style={{ zIndex: isPinching ? 50 : 1 }}
+                    onClick={handleClick}
                 >
-                    <div
-                        className={`w-full h-full transition-all duration-700 ease-out ${!isPinching ? 'group-hover:scale-110' : ''}`}
-                        style={{
-                            transform: isPinching ? `scale(${scale})` : undefined,
-                            transformOrigin: `${origin.x}% ${origin.y}%`
-                        }}
-                    >
-                        {type === 'video' ? (
+                    {isVideo ? (
+                        /* ── SINGLE VIDEO ─────────────────────────────── */
+                        <div
+                            className="absolute inset-0"
+                            onTouchStart={onSingleTouchStart}
+                            onTouchMove={onSingleTouchMove}
+                            onTouchEnd={onSingleTouchEnd}
+                            style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
+                        >
                             <video
                                 src={src}
-                                className="w-full max-h-[500px] object-contain bg-black pointer-events-none"
-                                playsInline
-                                loop
-                                muted
-                                autoPlay
+                                className="w-full h-full object-cover pointer-events-none"
+                                playsInline loop muted={isMuted || !isInView} autoPlay
+                                onLoadedMetadata={handleMediaLoad}
                             />
-                        ) : (
+                            {/* Mute/Unmute button */}
+                            <button
+                                onClick={toggleMute}
+                                className="absolute bottom-3 right-3 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full p-2 text-white transition-all z-10 pointer-events-auto">
+                                {isMuted ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                                ) : (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                )}
+                            </button>
+                        </div>
+                    ) : isMulti ? (
+                        /* ── MULTI-IMAGE CAROUSEL ──────────────────────── */
+                        <>
+                            <div
+                                className="absolute inset-0 flex"
+                                style={{
+                                    transform: `translateX(calc(${-activeIdx * (100 / imageList.length)}% + ${dragDelta}px))`,
+                                    transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    width: `${imageList.length * 100}%`
+                                }}
+                                onTouchStart={onCarouselTouchStart}
+                                onTouchMove={onCarouselTouchMove}
+                                onTouchEnd={onCarouselTouchEnd}
+                                onMouseDown={onCarouselMouseDown}
+                                onMouseMove={onCarouselMouseMove}
+                                onMouseUp={onCarouselMouseUp}
+                                onMouseLeave={onCarouselMouseUp}
+                            >
+                                {imageList.map((imgSrc, idx) => (
+                                    <div key={idx} className="h-full flex-shrink-0" style={{ width: `${100 / imageList.length}%` }}>
+                                        <img
+                                            src={imgSrc}
+                                            alt={`Image ${idx + 1}`}
+                                            loading={idx === 0 ? 'eager' : 'lazy'}
+                                            className="w-full h-full object-cover pointer-events-none"
+                                            onLoad={idx === 0 ? handleMediaLoad : undefined}
+                                            draggable="false"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 pointer-events-none z-10">
+                                {imageList.map((_, idx) => (
+                                    <div key={idx} className="transition-all duration-300" style={{
+                                        width: idx === activeIdx ? '18px' : '6px',
+                                        height: '6px',
+                                        borderRadius: '3px',
+                                        background: idx === activeIdx ? 'white' : 'rgba(255,255,255,0.4)'
+                                    }} />
+                                ))}
+                            </div>
+                            {/* Image count badge */}
+                            <div className="absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] text-white font-bold pointer-events-none z-10">
+                                {activeIdx + 1}/{imageList.length}
+                            </div>
+                        </>
+                    ) : (
+                        /* ── SINGLE IMAGE ──────────────────────────────── */
+                        <div
+                            className="absolute inset-0"
+                            onTouchStart={onSingleTouchStart}
+                            onTouchMove={onSingleTouchMove}
+                            onTouchEnd={onSingleTouchEnd}
+                            style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
+                        >
                             <img
                                 src={src}
                                 alt="Post media"
                                 loading="lazy"
-                                className="w-full h-auto max-h-[500px] object-contain bg-black pointer-events-none"
+                                className="w-full h-full object-cover pointer-events-none"
+                                onLoad={handleMediaLoad}
+                                draggable="false"
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             );
         };
 
-        const ImageViewer = ({ src, type, onClose }) => {
-            if (!src) return null;
+        // ─── FULL-SCREEN IMAGE VIEWER (multi-image swipe + pinch-zoom) ─────────────
+        const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
+            // Normalize: images[] takes priority; fall back to single src
+            const imgList = (images && images.length > 0) ? images : (src && type !== 'video' ? [src] : []);
+            const isVideo = type === 'video' && (!images || images.length === 0);
+            const isMulti = imgList.length > 1;
+
+            const [currentIdx, setCurrentIdx] = useState(initialIndex || 0);
             const [scale, setScale] = useState(1);
             const [position, setPosition] = useState({ x: 0, y: 0 });
             const [isPinching, setIsPinching] = useState(false);
-            const imageRef = useRef(null);
-            const lastTouch = useRef({ x: 0, y: 0 });
+            const [isDragging, setIsDragging] = useState(false);
+            const [dragDelta, setDragDelta] = useState(0);
             const initialDist = useRef(null);
             const lastScale = useRef(1);
+            const lastTouch = useRef({ x: 0, y: 0 });
+            const dragStart = useRef(null);
+            const SWIPE_THRESHOLD = 50;
 
+            if (!src && imgList.length === 0) return null;
+
+            const resetZoom = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+
+            // ── Touch handlers (pinch + pan + swipe) ────────────────────────────────
             const handleTouchStart = (e) => {
                 if (e.touches.length === 2) {
                     setIsPinching(true);
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    initialDist.current = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
                     lastScale.current = scale;
-                } else if (e.touches.length === 1 && scale > 1) {
-                    lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+                } else if (e.touches.length === 1) {
+                    if (scale > 1) {
+                        lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+                    } else if (isMulti) {
+                        dragStart.current = e.touches[0].clientX;
+                        setIsDragging(true);
+                    }
                 }
             };
 
             const handleTouchMove = (e) => {
-                if (e.touches.length === 2 && isPinching) {
+                if (e.touches.length === 2 && isPinching && initialDist.current) {
                     e.preventDefault();
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const dist = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
-                    const newScale = Math.min(Math.max((dist / initialDist.current) * lastScale.current, 1), 5);
-                    setScale(newScale);
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    setScale(Math.min(Math.max((d / initialDist.current) * lastScale.current, 1), 5));
                 } else if (e.touches.length === 1 && scale > 1) {
                     const newX = e.touches[0].pageX - lastTouch.current.x;
                     const newY = e.touches[0].pageY - lastTouch.current.y;
-
                     const limitX = (scale - 1) * (window.innerWidth / 2);
                     const limitY = (scale - 1) * (window.innerHeight / 2);
-
-                    setPosition({
-                        x: Math.min(Math.max(newX, -limitX), limitX),
-                        y: Math.min(Math.max(newY, -limitY), limitY)
-                    });
+                    setPosition({ x: Math.min(Math.max(newX, -limitX), limitX), y: Math.min(Math.max(newY, -limitY), limitY) });
+                } else if (e.touches.length === 1 && isDragging && isMulti && scale <= 1) {
+                    const delta = e.touches[0].clientX - dragStart.current;
+                    if ((currentIdx === 0 && delta > 0) || (currentIdx === imgList.length - 1 && delta < 0)) {
+                        setDragDelta(delta * 0.2);
+                    } else {
+                        setDragDelta(delta);
+                    }
                 }
             };
 
             const handleTouchEnd = () => {
                 setIsPinching(false);
-                if (scale <= 1) {
-                    setPosition({ x: 0, y: 0 });
+                if (scale <= 1) setPosition({ x: 0, y: 0 });
+                if (isDragging) {
+                    setIsDragging(false);
+                    if (dragDelta < -SWIPE_THRESHOLD && currentIdx < imgList.length - 1) {
+                        setCurrentIdx(i => i + 1);
+                        resetZoom();
+                    } else if (dragDelta > SWIPE_THRESHOLD && currentIdx > 0) {
+                        setCurrentIdx(i => i - 1);
+                        resetZoom();
+                    }
+                    setDragDelta(0);
+                    dragStart.current = null;
                 }
             };
 
             const handleDoubleTap = (e) => {
                 e.stopPropagation();
-                if (scale > 1) {
-                    setScale(1);
-                    setPosition({ x: 0, y: 0 });
-                } else {
-                    setScale(2.5);
-                }
+                if (scale > 1) { resetZoom(); } else { setScale(2.5); }
             };
 
             return (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in overflow-hidden touch-pan-y"
-                    onClick={onClose}
+                    className="fixed inset-0 z-[100] bg-black animate-fade-in overflow-hidden"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                 >
-                    <button className="absolute top-5 right-5 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 z-50">
-                        <Icon icon="X" size={24} />
+                    {/* Close button */}
+                    <button
+                        className="absolute top-5 right-5 p-2.5 bg-white/10 rounded-full text-white z-50 backdrop-blur-sm"
+                        onClick={onClose}
+                    >
+                        <Icon icon="X" size={22} />
                     </button>
 
-                    <div
-                        className="w-full h-full flex items-center justify-center transition-transform duration-100 ease-out"
-                        style={{
-                            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
-                        }}
-                        onDoubleClick={handleDoubleTap}
-                    >
-                        {type === 'video' ? (
+                    {/* Counter */}
+                    {isMulti && (
+                        <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-bold z-50">
+                            {currentIdx + 1} / {imgList.length}
+                        </div>
+                    )}
+
+                    {isVideo ? (
+                        /* ── Full-screen video ─────────── */
+                        <div className="w-full h-full flex items-center justify-center p-4" onClick={onClose}>
                             <video
                                 src={src}
-                                className="max-w-full max-h-full object-contain p-2"
-                                controls={scale === 1}
-                                autoPlay
-                                onClick={(e) => e.stopPropagation()}
+                                className="max-w-full max-h-full object-contain"
+                                controls autoPlay
+                                onClick={e => e.stopPropagation()}
                             />
-                        ) : (
+                        </div>
+                    ) : isMulti ? (
+                        /* ── Multi-image swipeable fullscreen ── */
+                        <>
+                            <div
+                                className="absolute inset-0 flex items-center"
+                                style={{
+                                    transform: `translateX(calc(${-currentIdx * (100 / imgList.length)}% + ${dragDelta}px))`,
+                                    transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    width: `${imgList.length * 100}%`
+                                }}
+                            >
+                                {imgList.map((imgSrc, idx) => (
+                                    <div key={idx} className="h-full flex items-center justify-center flex-shrink-0" style={{ width: `${100 / imgList.length}%` }}>
+                                        <img
+                                            src={imgSrc}
+                                            alt={`Image ${idx + 1}`}
+                                            className="max-w-full max-h-full object-contain select-none p-2"
+                                            style={idx === currentIdx ? { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s' } : {}}
+                                            onDoubleClick={idx === currentIdx ? handleDoubleTap : undefined}
+                                            draggable="false"
+                                            onClick={e => e.stopPropagation()}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 pointer-events-none z-50">
+                                {imgList.map((_, idx) => (
+                                    <div key={idx} style={{
+                                        width: idx === currentIdx ? '20px' : '6px',
+                                        height: '6px', borderRadius: '3px',
+                                        background: idx === currentIdx ? 'white' : 'rgba(255,255,255,0.4)',
+                                        transition: 'all 0.3s'
+                                    }} />
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        /* ── Single image ──────────────── */
+                        <div
+                            className="w-full h-full flex items-center justify-center"
+                            onClick={onClose}
+                        >
                             <img
-                                src={src}
+                                src={imgList[0] || src}
                                 className="max-w-full max-h-full object-contain p-2 select-none"
-                                onClick={(e) => e.stopPropagation()}
+                                style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s ease-out' }}
+                                onDoubleClick={handleDoubleTap}
+                                onClick={e => e.stopPropagation()}
                                 draggable="false"
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -975,22 +1261,9 @@
                 };
             }, []);
 
-            // Setup pull-to-refresh handler
-            useEffect(() => {
-                const setupPullToRefresh = () => {
-                    if (window.PullToRefresh) {
-                        window.PullToRefresh.onRefresh(async () => {
-                            window.location.reload();
-                        });
-                    } else {
-                        setTimeout(setupPullToRefresh, 100);
-                    }
-                };
-                setTimeout(setupPullToRefresh, 200);
-            }, []);
 
             return (
-                <div className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                <div id="bottom-nav-bar" className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
                     <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
                     <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
                     <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} />
@@ -1204,117 +1477,117 @@
             };
 
 
-        return (
-            <div className="absolute inset-0 bg-[#020205] z-50 flex flex-col animate-enter overflow-y-auto">
-                {/* Header */}
-                <div className="h-[60px] header-glass sticky top-0 flex items-center justify-between px-4 z-10 shrink-0">
-                    <button onClick={onClose} disabled={saving} className="text-white text-sm font-medium hover:text-white/80">Cancel</button>
-                    <span className="font-heading font-bold text-white">Edit Profile</span>
-                    <button onClick={handleSave} disabled={saving} className="text-neon text-sm font-bold disabled:opacity-50">
-                        {saving ? 'Saving...' : 'Done'}
-                    </button>
-                </div>
-
-                <div className="p-5 space-y-6">
-                    {/* Avatar Uploader */}
-                    <div className="flex flex-col items-center gap-4 relative">
-                        <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                            <div className="w-24 h-24 rounded-full border-4 border-white/5 overflow-hidden bg-black">
-                                {avatarPreview ? (
-                                    <img src={avatarPreview} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                                        <Icon icon="User" size={32} className="text-neon" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                                <Icon icon="Camera" size={24} className="text-white drop-shadow-lg" />
-                            </div>
-
-                            {/* Remove Avatar Button */}
-                            {avatarPreview && (
-                                <button
-                                    onClick={handleRemoveAvatar}
-                                    className="absolute -top-1 -right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
-                                    title="Remove Avatar"
-                                >
-                                    <Icon icon="Trash" size={12} />
-                                </button>
-                            )}
-                        </div>
-                        <input
-                            ref={avatarInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarChange}
-                            className="hidden"
-                        />
-                        <button onClick={() => avatarInputRef.current?.click()} className="text-neon text-xs font-bold">
-                            Change Profile Photo
+            return (
+                <div className="absolute inset-0 bg-[#020205] z-50 flex flex-col animate-enter overflow-y-auto">
+                    {/* Header */}
+                    <div className="h-[60px] header-glass sticky top-0 flex items-center justify-between px-4 z-10 shrink-0">
+                        <button onClick={onClose} disabled={saving} className="text-white text-sm font-medium hover:text-white/80">Cancel</button>
+                        <span className="font-heading font-bold text-white">Edit Profile</span>
+                        <button onClick={handleSave} disabled={saving} className="text-neon text-sm font-bold disabled:opacity-50">
+                            {saving ? 'Saving...' : 'Done'}
                         </button>
                     </div>
 
-                    {/* Banner Uploader */}
-                    <div className="relative h-32 rounded-xl overflow-hidden bg-white/5 border border-white/10 group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
-                        {bannerPreview ? (
-                            <img src={bannerPreview} className="w-full h-full object-cover" />
-                        ) : null}
-                        <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/80 flex items-center justify-center gap-2 group-hover:bg-black/60 transition-colors">
-                            <Icon icon="Camera" size={20} className="text-white" />
-                            <span className="text-xs font-bold text-white">Edit Banner</span>
-                        </div>
+                    <div className="p-5 space-y-6">
+                        {/* Avatar Uploader */}
+                        <div className="flex flex-col items-center gap-4 relative">
+                            <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                                <div className="w-24 h-24 rounded-full border-4 border-white/5 overflow-hidden bg-black">
+                                    {avatarPreview ? (
+                                        <img src={avatarPreview} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                                            <Icon icon="User" size={32} className="text-neon" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                                    <Icon icon="Camera" size={24} className="text-white drop-shadow-lg" />
+                                </div>
 
-                        {/* Remove Banner Button */}
-                        {bannerPreview && (
-                            <button
-                                onClick={handleRemoveBanner}
-                                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
-                                title="Remove Banner"
-                            >
-                                <Icon icon="Trash" size={14} />
+                                {/* Remove Avatar Button */}
+                                {avatarPreview && (
+                                    <button
+                                        onClick={handleRemoveAvatar}
+                                        className="absolute -top-1 -right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
+                                        title="Remove Avatar"
+                                    >
+                                        <Icon icon="Trash" size={12} />
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleAvatarChange}
+                                className="hidden"
+                            />
+                            <button onClick={() => avatarInputRef.current?.click()} className="text-neon text-xs font-bold">
+                                Change Profile Photo
                             </button>
-                        )}
-                    </div>
-                </div>
-                <input
-                    ref={bannerInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerChange}
-                    className="hidden"
-                />
+                        </div>
 
-                {/* Fields */}
-                <div className="space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Full Name</label>
-                        <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
-                    </div>
+                        {/* Banner Uploader */}
+                        <div className="relative h-32 rounded-xl overflow-hidden bg-white/5 border border-white/10 group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
+                            {bannerPreview ? (
+                                <img src={bannerPreview} className="w-full h-full object-cover" />
+                            ) : null}
+                            <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/80 flex items-center justify-center gap-2 group-hover:bg-black/60 transition-colors">
+                                <Icon icon="Camera" size={20} className="text-white" />
+                                <span className="text-xs font-bold text-white">Edit Banner</span>
+                            </div>
 
-                    <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Bio</label>
-                        <textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
-                    </div>
-
-                    <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Location</label>
-                        <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="MapPin" size={16} /></div>
-                            <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                            {/* Remove Banner Button */}
+                            {bannerPreview && (
+                                <button
+                                    onClick={handleRemoveBanner}
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
+                                    title="Remove Banner"
+                                >
+                                    <Icon icon="Trash" size={14} />
+                                </button>
+                            )}
                         </div>
                     </div>
+                    <input
+                        ref={bannerInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBannerChange}
+                        className="hidden"
+                    />
 
-                    <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-muted ml-1">Website</label>
-                        <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="Link" size={16} /></div>
-                            <input type="text" value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                    {/* Fields */}
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Full Name</label>
+                            <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Bio</label>
+                            <textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Location</label>
+                            <div className="relative">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="MapPin" size={16} /></div>
+                                <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Website</label>
+                            <div className="relative">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="Link" size={16} /></div>
+                                <input type="text" value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        );
+            );
         };
 
         // --- OPINION CARD (INTERACTIVE) ---
@@ -1810,10 +2083,11 @@
 
                     <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{renderTextWithMentions(post.text)}</p>
 
-                    {post.media && (
-                        <ZoomableMedia
+                    {(post.media || (post.images && post.images.length > 0)) && (
+                        <SmartMedia
                             src={post.media}
                             type={post.media_type}
+                            images={post.images}
                             onImageClick={onImageClick}
                         />
                     )}
@@ -1933,6 +2207,68 @@
 
         // --- SHARE MODAL ---
         const ShareModal = ({ isOpen, onClose, post, user }) => {
+
+            const [internalContacts, setInternalContacts] = useState([]);
+            const [internalLoadingContacts, setInternalLoadingContacts] = useState(false);
+            const [internalSelectedContacts, setInternalSelectedContacts] = useState(new Set());
+            const [internalSending, setInternalSending] = useState(false);
+
+            useEffect(() => {
+                const fetchInternalContacts = async () => {
+                    if (!isOpen || !window.getCurrentUser) return;
+                    setInternalLoadingContacts(true);
+                    try {
+                        const user = await window.getCurrentUser();
+                        if (!user) return;
+                        const { data } = await window.supabase
+                            .from('conversations')
+                            .select('id, participant_1_id, participant_2_id')
+                            .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+                            .order('last_message_at', { ascending: false })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            const otherIds = [...new Set(data.map(c => c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id))];
+                            const { data: profiles } = await window.supabase
+                                .from('profiles').select('id, full_name, avatar_url, username').in('id', otherIds);
+                            if (profiles) {
+                                const profileMap = {};
+                                profiles.forEach(p => profileMap[p.id] = p);
+                                const contacts = data.map(c => {
+                                    const otherId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id;
+                                    const profile = profileMap[otherId];
+                                    if (!profile) return null;
+                                    return { convId: c.id, ...profile };
+                                }).filter(Boolean);
+                                if (window.rewriteMediaUrl) contacts.forEach(c => { if (c.avatar_url) c.avatar_url = window.rewriteMediaUrl(c.avatar_url); });
+                                setInternalContacts(contacts);
+                            }
+                        }
+                    } catch (e) { console.error('Failed to load contacts', e); }
+                    finally { setInternalLoadingContacts(false); }
+                };
+                fetchInternalContacts();
+            }, [isOpen]);
+
+            const handleInternalSend = async () => {
+                if (internalSelectedContacts.size === 0 || internalSending) return;
+                if (!window.sendPostToUser) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing system initializing...', icon: 'Clock', isSuccess: false } }));
+                    return;
+                }
+                setInternalSending(true);
+                const contactsToSend = internalContacts.filter(c => internalSelectedContacts.has(c.id));
+                const shareTarget = post || user;
+                let successCount = 0;
+                for (const contact of contactsToSend) {
+                    try { await window.sendPostToUser(contact.convId, contact.id, contact.full_name || contact.username, contact.avatar_url, shareTarget); successCount++; }
+                    catch (e) { console.error(`Failed to send to ${contact.username}`, e); }
+                }
+                window.dispatchEvent(new CustomEvent('toast', { detail: { message: `Shared with ${successCount} profile${successCount > 1 ? 's' : ''}`, icon: 'Send', isSuccess: true } }));
+                setInternalSending(false);
+                onClose();
+            };
+
+
             if (!isOpen || (!post && !user)) return null;
 
             const isProfile = !!user;
@@ -2157,6 +2493,73 @@
                                         </div>
                                     </div>
                                 </div>
+                            )}
+                        </div>
+
+
+                        {/* Internal Share — Send in Chat */}
+                        <div className="mb-6 overflow-hidden">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Share to Profiles</span>
+                                {internalSelectedContacts.size > 0 && (
+                                    <button onClick={() => setInternalSelectedContacts(new Set())} className="text-[10px] text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase">Clear ({internalSelectedContacts.size})</button>
+                                )}
+                            </div>
+                            <div className="flex gap-4 overflow-x-auto select-none custom-scrollbar pb-2 px-1">
+                                <button
+                                    onClick={() => {
+                                        onClose();
+                                        if (window.toggleInbox) { window.toggleInbox(true); }
+                                        else if (window.openInbox) { window.openInbox(); }
+                                        setTimeout(() => {
+                                            if (window._inboxBootPhase1 && window._inboxBootPhase1.openSearchOverlay) window._inboxBootPhase1.openSearchOverlay();
+                                        }, 500);
+                                    }}
+                                    className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                >
+                                    <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-lg">
+                                        <Icon icon="Search" size={24} className="text-white/70 group-hover:text-white" />
+                                    </div>
+                                    <span className="text-[10px] text-white/70 group-hover:text-white truncate w-14 text-center">Search</span>
+                                </button>
+
+                                {internalLoadingContacts && <div className="text-white/40 text-xs py-3 px-4">Loading...</div>}
+                                {!internalLoadingContacts && internalContacts.map(c => {
+                                    const isSelected = internalSelectedContacts.has(c.id);
+                                    return (
+                                        <button key={c.id} onClick={() => {
+                                            const next = new Set(internalSelectedContacts);
+                                            if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                                            setInternalSelectedContacts(next);
+                                        }} className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0">
+                                            <div className={`w-14 h-14 rounded-full border-2 transition-all duration-300 relative ${isSelected ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/10 hover:border-white/30'}`}>
+                                                <img src={c.avatar_url || DEFAULT_AVATAR} className="w-full h-full rounded-full object-cover" onError={e => { e.target.src = DEFAULT_AVATAR; }} />
+                                                {isSelected && (
+                                                    <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-[#121212]">
+                                                        <Icon icon="Check" size={10} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] text-white/70 truncate w-14 text-center">{c.full_name || c.username}</span>
+                                        </button>
+                                    );
+                                })}
+                                {!internalLoadingContacts && internalContacts.length === 0 && (
+                                    <div className="text-white/30 text-xs py-3 px-4 flex items-center gap-2">
+                                        <Icon icon="MessageCircle" size={14} /><span>No conversations yet</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {internalSelectedContacts.size > 0 && (
+                                <button
+                                    onClick={handleInternalSend}
+                                    disabled={internalSending}
+                                    className="mt-4 w-full py-3 rounded-2xl bg-[#2f8bff] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#1a7bf0] active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    <Icon icon={internalSending ? "Clock" : "Send"} size={16} />
+                                    {internalSending ? 'Sending...' : `Send to ${internalSelectedContacts.size} Profile${internalSelectedContacts.size > 1 ? 's' : ''}`}
+                                </button>
                             )}
                         </div>
 
@@ -2455,7 +2858,7 @@
                     <div className="w-8 h-8 rounded-full bg-[#1c1e1e] animate-pulse"></div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
+                <div className="flex-1 overflow-y-auto no-scrollbar pb-24 ptr-enabled">
                     {/* Banner & Avatar */}
                     <div className="relative mb-6">
                         <div className="h-[140px] w-full bg-[#1c1e1e] animate-pulse"></div>
@@ -2538,6 +2941,8 @@
 
         // --- MAIN APP COMPONENT ---
         const App = () => {
+
+            const [sharedPostsToRender, setSharedPostsToRender] = useState({});
             const [view, setView] = useState('profile'); // profile, edit
             const [isGuest, setIsGuest] = useState(false);
             const [showAuthModal, setShowAuthModal] = useState(false);
@@ -2577,9 +2982,73 @@
             // Delete Modal State
             const [deleteModal, setDeleteModal] = useState({ isOpen: false, postId: null });
 
-            const handleImageClick = (src, type) => {
+            // Setup pull-to-refresh handler
+            useEffect(() => {
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
+
+            // Listen for internal chat post rendering
+            useEffect(() => {
+                const handleRenderSharedPost = async (e) => {
+                    const { postId, containerId } = e.detail;
+                    if (!postId || !containerId) return;
+
+                    setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: true, post: null } }));
+
+                    try {
+                        const fullPost = await window.getPost(postId);
+                        if (fullPost && fullPost.id) {
+                            const uiPost = {
+                                id: fullPost.id,
+                                user_id: fullPost.user_id,
+                                name: fullPost.profiles?.full_name || 'User',
+                                username: fullPost.profiles?.username || 'user',
+                                avatar: fullPost.profiles?.avatar_url || "",
+                                rqs: fullPost.profiles?.rqs_score || 0,
+                                verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+                                category: fullPost.category,
+                                product: fullPost.product_name,
+                                text: fullPost.text_content,
+                                media: fullPost.media_url,
+                                media_type: fullPost.media_type || 'image',
+                                images: fullPost.images || null,
+                                time: "Shared",
+                                agrees: fullPost.agrees_count || 0,
+                                comments: fullPost.comments_count || 0,
+                                seenBy: fullPost.seen_by_brand
+                            };
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, post: uiPost } }));
+                        } else {
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                        }
+                    } catch (err) {
+                        setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                    }
+                };
+                window.addEventListener('render_shared_post', handleRenderSharedPost);
+                
+                // Expose openFullPost globally
+                window.openFullPost = async (postId) => {
+                    if (window.closeInbox) window.closeInbox();
+                    window.location.href = `HOMEPAGE_FINAL.HTML?postId=${postId}`;
+                };
+                window.scrollToPost = window.openFullPost;
+
+                return () => window.removeEventListener('render_shared_post', handleRenderSharedPost);
+            }, []);
+
+            const handleImageClick = (src, type, images, idx) => {
                 vibrate();
-                setSelectedImage({ src, type });
+                setSelectedImage({ src, type, images, initialIndex: idx || 0 });
             };
 
             // DYNAMIC PROFILE DATA
@@ -2921,6 +3390,7 @@
                 text: post.text_content,
                 media: post.media_url || post.media || post.image_url || ((post.images && post.images.length > 0) ? post.images[0] : null),
                 media_type: post.media_type || 'image',
+                images: post.images || null,
                 agrees: post.agrees_count || 0,
                 comments: post.comments_count || 0,
                 shares: post.shares_count || 0,
@@ -3024,14 +3494,15 @@
                             <button className="p-2 rounded-full hover:bg-white/5 relative z-10" onClick={() => window.history.back()}><Icon icon="ArrowLeft" size={20} /></button>
                         </div>
                         <SkeletonProfile />
-                        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isVisible={true} />
+                        <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
+                    <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isVisible={true} />
                     </div>
                 );
             }
 
             return (
                 <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-                    <ImageViewer src={selectedImage?.src} type={selectedImage?.type} onClose={() => setSelectedImage(null)} />
+                    <ImageViewer src={selectedImage?.src} type={selectedImage?.type} images={selectedImage?.images} initialIndex={selectedImage?.initialIndex || 0} onClose={() => setSelectedImage(null)} />
 
                     {/* EDIT PROFILE MODAL */}
                     {view === 'edit' && <EditProfile onClose={() => setView('profile')} currentProfile={profileData} onSave={loadUserProfile} />}
@@ -3103,7 +3574,7 @@
 
                     {/* SCROLLABLE CONTENT AREA */}
                     <div
-                        className="absolute inset-0 overflow-y-auto smooth-scroll-container pb-24"
+                        className="absolute inset-0 overflow-y-auto smooth-scroll-container pb-24 ptr-enabled"
                         onScroll={handleScroll}
                         onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
@@ -3160,15 +3631,32 @@
                                     </div>
                                 </div>
 
-                                {/* Engraved User Badge */}
+                                {/* Message / EST User Badge */}
                                 {(userBadge !== null) && (
-                                    <div className="flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-xl bg-[#020205] border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),_0_1px_0_rgba(255,255,255,0.05)] group relative overflow-hidden active:scale-95 transition-transform" title={`User #${userBadge}`}>
-                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/[0.02] pointer-events-none"></div>
-                                        <span className="text-[8px] text-white/20 font-black uppercase tracking-widest leading-none mb-0.5">EST</span>
-                                        <span className="text-lg font-heading font-black text-white/30 tracking-tighter leading-none" style={{ textShadow: '0 -1px 0 rgba(0,0,0,1), 0 1px 0 rgba(255,255,255,0.05)' }}>
-                                            #{userBadge}
-                                        </span>
-                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            vibrate(5);
+                                            // Owner looking at their own profile doesn't need to message themselves, 
+                                            // but we'll open the main inbox just in case, or show a toast
+                                            if (window.openInbox) {
+                                                window.openInbox();
+                                            } else {
+                                                console.warn('Inbox chat not available');
+                                            }
+                                        }}
+                                        className="flex flex-col items-center shrink-0 w-14 h-14 rounded-xl bg-[#020205] border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),_0_1px_0_rgba(255,255,255,0.05)] group relative overflow-hidden active:scale-95 transition-transform" 
+                                        title={`Inbox (EST #${userBadge})`}
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/[0.02] pointer-events-none group-hover:bg-white/[0.05] transition-colors z-10"></div>
+                                        <div className="flex-1 w-full bg-[#2f8bff] flex items-center justify-center hover:bg-[#2f8bff]/90 transition-colors">
+                                            <Icon icon="PlusOpinionInbox" size={22} className="text-white group-hover:scale-110 transition-transform duration-300 stroke-[2.5px]" />
+                                        </div>
+                                        <div className="h-[18px] w-full bg-[#020205] flex items-center justify-center border-t border-white/5">
+                                            <span className="text-[7px] text-white/30 font-black uppercase tracking-widest leading-none pt-0.5" style={{ textShadow: '0 -1px 0 rgba(0,0,0,1)' }}>
+                                                EST <span className="text-white/40">#{userBadge}</span>
+                                            </span>
+                                        </div>
+                                    </button>
                                 )}
                             </div>
 
@@ -3450,7 +3938,7 @@
                     const msg = err.message || 'Authentication failed';
                     const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
                     const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
-                    
+
                     if (isSignupEmailErr) {
                         setInlineEmailError('This email is already registered. Please log in.');
                     } else if (isLoginEmailErr) {
@@ -3615,6 +4103,20 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
+
+    <!-- ===================================================== -->
+    <!-- INBOX PANEL — Loaded after React mounts                -->
+    <!-- inbox.js: CSS + HTML shell + gesture engine            -->
+    <!-- inbox_panel.js: data layer, rendering, realtime        -->
+    <!-- ===================================================== -->
+    
+    
+    
+
+    <!-- Crypto, Realtime, Profile Integration -->
+    <script src="inbox_crypto.js"></script>
+    <script src="inbox.js"></script>
+    <script src="inbox_panel.js"></script>
 </body>
 
 
