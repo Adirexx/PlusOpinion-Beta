@@ -879,31 +879,30 @@
             if (parsed.reply_to) {
                 let previewContent = escHtml(parsed.reply_to.text || '');
                 let extraAttrs = '';
-                if (parsed.reply_to.type === 'image') {
+                const thumbUrl = parsed.reply_to.thumbUrl || '';
+
+                if (parsed.reply_to.type === 'image' || parsed.reply_to.type === 'post') {
                     const path = parsed.reply_to.url || '';
-                    if (path.startsWith('chat_images/')) {
-                        extraAttrs = ` data-media-path="${escHtml(path)}"`;
-                        previewContent = `<div style="display:flex; align-items:center; gap: 6px;">
-                            <img src="" style="width:24px; height:24px; object-fit:cover; border-radius:4px;" alt="📷">
-                            <span style="font-size:12px; opacity:0.8; font-weight:500;">Photo</span>
-                        </div>`;
-                    } else {
-                        previewContent = `<div style="display:flex; align-items:center; gap: 6px;">
-                            <img src="${escHtml(path)}" style="width:24px; height:24px; object-fit:cover; border-radius:4px;" onerror="this.style.display='none'" alt="📷">
-                            <span style="font-size:12px; opacity:0.8; font-weight:500;">Photo</span>
-                        </div>`;
-                    }
-                }
-                else if (parsed.reply_to.type === 'post') {
-                     previewContent = `<div style="display:flex; align-items:center; gap: 6px; color:#3b82f6;">
-                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                         <span style="font-weight:600;">Shared Post</span>
-                     </div>`;
+                    const isE2EE = path.startsWith('chat_images/');
+                    extraAttrs = isE2EE ? ` data-media-path="${escHtml(path)}"` : '';
+                    
+                    const label = parsed.reply_to.type === 'image' ? 'Photo' : 'Shared Post';
+                    const icon = parsed.reply_to.type === 'post' ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>` : '';
+
+                    previewContent = `<div style="display:flex; align-items:center; gap: 8px;">
+                        <div style="width:32px; height:32px; border-radius:6px; overflow:hidden; background:rgba(255,255,255,0.1); flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                            <img src="${escHtml(thumbUrl || (isE2EE ? '' : path))}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <span style="font-size:12px; font-weight:600; color:white; display:flex; align-items:center;">${icon}${label}</span>
+                            ${parsed.reply_to.text ? `<span style="font-size:11px; opacity:0.6; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;">${escHtml(parsed.reply_to.text)}</span>` : ''}
+                        </div>
+                    </div>`;
                 }
 
                 html += `<div class="msg-reply-block" data-reply-id="${escHtml(parsed.reply_to.id || '')}" style="cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1" ${extraAttrs}>
                     <div class="reply-name" style="font-size:11px; font-weight:700; color:#4ade80; margin-bottom:4px;">${escHtml(parsed.reply_to.name || 'Reply')}</div>
-                    <div class="reply-text" style="font-size:12px; opacity:0.8; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 6px; margin-bottom: 6px; line-height: 1.2;">${previewContent}</div>
+                    <div class="reply-text" style="font-size:12px; opacity:0.8; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 8px; margin-bottom: 6px; line-height: 1.2;">${previewContent}</div>
                 </div>`;
             }
 
@@ -1280,20 +1279,19 @@
         S.replyToMsg = null;
 
         function showReplyBanner(msgJson, visualThumbUrl) {
-            S.replyToMsg = { ...msgJson };
+            S.replyToMsg = { ...msgJson, thumbUrl: visualThumbUrl };
             document.getElementById('chat-reply-name').textContent = msgJson.name || 'User';
             
             const replyTextEl = document.getElementById('chat-reply-text');
-            if (msgJson.type === 'image') {
-                const path = msgJson.url || '';
+            if (msgJson.type === 'image' || msgJson.type === 'post') {
+                const label = msgJson.type === 'image' ? 'Photo' : 'Shared Post';
+                const icon = msgJson.type === 'post' ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:2px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>` : '';
+                
                 replyTextEl.innerHTML = `<div style="display:flex; align-items:center; gap: 8px;">
-                    <img src="${escHtml(visualThumbUrl || path)}" style="height:28px; width:28px; object-fit:cover; border-radius:4px;" onerror="this.style.display='none'">
-                    <span style="font-weight: 500;">Photo</span>
-                </div>`;
-            } else if (msgJson.type === 'post') {
-                replyTextEl.innerHTML = `<div style="display:flex; align-items:center; gap: 8px; color:#3b82f6;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                    <span style="font-weight: 600;">Shared Post</span>
+                    <div style="width:28px; height:28px; border-radius:4px; overflow:hidden; background:rgba(255,255,255,0.1); flex-shrink:0;">
+                         <img src="${escHtml(visualThumbUrl || msgJson.url || '')}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+                    </div>
+                    <span style="font-weight: 600; font-size:12px; display:flex; align-items:center;">${icon}${label}</span>
                 </div>`;
             } else {
                 let preview = msgJson.text || 'Message';
@@ -1366,6 +1364,8 @@
                         previewData = { type: 'image', url: path };
                     } else if (targetMsg.classList.contains('shared-post-only')) {
                         let postContainer = targetMsg.querySelector('.shared-post-container');
+                        const postImg = postContainer?.querySelector('img');
+                        visualThumbUrl = postImg ? postImg.src : '';
                         previewData = { type: 'post', postId: postContainer?.dataset.postId || '' };
                     } else {
                         const payloadEl = targetMsg.querySelector('.chat-msg-payload');
@@ -1375,9 +1375,11 @@
                             if (replyBlock) replyBlock.remove();
                             let txt = clone.textContent.trim();
                             
-                            if (!txt && clone.querySelector('.shared-post-container')) {
-                                let postContainer = clone.querySelector('.shared-post-container');
-                                previewData = { type: 'post', postId: postContainer?.dataset.postId || '' };
+                            const postContainer = clone.querySelector('.shared-post-container');
+                            if (postContainer) {
+                                const postImg = postContainer.querySelector('img');
+                                visualThumbUrl = postImg ? postImg.src : '';
+                                previewData = { type: 'post', postId: postContainer.dataset.postId || '', text: txt };
                             } else {
                                 previewData = { type: 'text', text: txt };
                             }
@@ -1404,9 +1406,10 @@
                 viewer.id = 'chat-fullscreen-viewer';
                 viewer.style.cssText = `
                     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                    background: rgba(0,0,0,0.95); z-index: 100000;
+                    background: rgba(0,0,0,0.98); z-index: 100000;
                     display: flex; align-items: center; justify-content: center;
-                    opacity: 0; transition: opacity 0.25s ease; cursor: pointer;
+                    opacity: 0; transition: opacity 0.25s ease; overflow: hidden;
+                    touch-action: none;
                 `;
                 
                 const closeBtn = document.createElement('div');
@@ -1414,37 +1417,137 @@
                 closeBtn.style.cssText = `
                     position: absolute; top: 20px; right: 20px;
                     color: white; font-size: 24px; font-weight: bold;
-                    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-                    background: rgba(0,0,0,0.5); border-radius: 50%; padding-bottom: 2px; transition: background 0.2s;
+                    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+                    background: rgba(0,0,0,0.5); border-radius: 50%; padding-bottom: 2px; 
+                    transition: background 0.2s; z-index: 10; cursor: pointer;
                 `;
-                closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(255,255,255,0.2)';
-                closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(0,0,0,0.5)';
                 
                 const img = document.createElement('img');
                 img.id = 'chat-fullscreen-img';
                 img.style.cssText = `
                     max-width: 95vw; max-height: 90vh; object-fit: contain;
-                    border-radius: 8px; transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+                    border-radius: 8px; transform: scale(0.95); transition: transform 0.2s ease-out;
+                    cursor: grab;
                 `;
                 
-                viewer.appendChild(img);
-                viewer.appendChild(closeBtn);
-                
-                viewer.addEventListener('click', () => {
+                let scale = 1;
+                let lastScale = 1;
+                let offsetX = 0;
+                let offsetY = 0;
+                let isDragging = false;
+                let startDist = 0;
+                let startX = 0;
+                let startY = 0;
+
+                const updateTransform = () => {
+                    img.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+                };
+
+                const closeViewer = () => {
                     viewer.style.opacity = '0';
                     img.style.transform = 'scale(0.95)';
-                    setTimeout(() => viewer.style.display = 'none', 250);
+                    setTimeout(() => {
+                        viewer.style.display = 'none';
+                        scale = 1;
+                        offsetX = 0;
+                        offsetY = 0;
+                        updateTransform();
+                    }, 250);
+                };
+
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    closeViewer();
+                };
+
+                img.addEventListener('mousedown', (e) => {
+                    if (scale <= 1) return;
+                    isDragging = true;
+                    startX = e.clientX - offsetX;
+                    startY = e.clientY - offsetY;
+                    img.style.cursor = 'grabbing';
                 });
-                
-                document.body.appendChild(viewer);
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    offsetX = e.clientX - startX;
+                    offsetY = e.clientY - startY;
+                    updateTransform();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    img.style.cursor = scale > 1 ? 'grab' : 'default';
+                });
+
+                img.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        startDist = Math.hypot(
+                            e.touches[0].pageX - e.touches[1].pageX,
+                            e.touches[0].pageY - e.touches[1].pageY
+                        );
+                        lastScale = scale;
+                    } else if (e.touches.length === 1) {
+                        startX = e.touches[0].pageX - offsetX;
+                        startY = e.touches[0].pageY - offsetY;
+                        isDragging = true;
+                    }
+                }, { passive: false });
+
+                img.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (e.touches.length === 2) {
+                        const dist = Math.hypot(
+                            e.touches[0].pageX - e.touches[1].pageX,
+                            e.touches[0].pageY - e.touches[1].pageY
+                        );
+                        scale = Math.min(Math.max(1, lastScale * (dist / startDist)), 4);
+                        updateTransform();
+                    } else if (e.touches.length === 1 && isDragging) {
+                        offsetX = e.touches[0].pageX - startX;
+                        offsetY = e.touches[0].pageY - startY;
+                        updateTransform();
+                    }
+                }, { passive: false });
+
+                img.addEventListener('touchend', () => {
+                    isDragging = false;
+                    if (scale < 1.1) {
+                        scale = 1;
+                        offsetX = 0;
+                        offsetY = 0;
+                        updateTransform();
+                    }
+                });
+
+                viewer.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -0.2 : 0.2;
+                    scale = Math.min(Math.max(1, scale + delta), 4);
+                    if (scale <= 1) {
+                        scale = 1;
+                        offsetX = 0;
+                        offsetY = 0;
+                    }
+                    updateTransform();
+                }, { passive: false });
+
+                viewer.addEventListener('click', (e) => {
+                    if (e.target === viewer) closeViewer();
+                });
+
+                viewer.appendChild(img);
+                viewer.appendChild(closeBtn);
+                document.body.appendChild(viewer); 
             }
-            
+
             const img = document.getElementById('chat-fullscreen-img');
             img.src = src;
             viewer.style.display = 'flex';
-            viewer.offsetHeight; // trigger reflow
-            viewer.style.opacity = '1';
-            img.style.transform = 'scale(1)';
+            setTimeout(() => {
+                viewer.style.opacity = '1';
+                img.style.transform = 'scale(1)';
+            }, 10);
         }
 
         function initChatInteractions() {
