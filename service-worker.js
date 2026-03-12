@@ -41,7 +41,10 @@ const FILES_TO_CACHE = [
   "/global.css",
   "/icon-192.png",
   "/icon-512.png",
-  "/manifest.json"
+  "/manifest.json",
+  "/inbox.js",
+  "/inbox_panel.js",
+  "/inbox_crypto.js"
 ];
 
 self.addEventListener("install", (event) => {
