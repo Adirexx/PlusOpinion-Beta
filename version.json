@@ -1,6 +1,6 @@
 {
-    "version": "9.3.0",
-    "major": false,
-    "maintenance": true,
-    "timestamp": "2026-14-03T23:48:00Z"
+    "version": "9.4.0",
+    "major": true,
+    "maintenance": false,
+    "timestamp": "2026-16-03T13:00:00Z"
 }
