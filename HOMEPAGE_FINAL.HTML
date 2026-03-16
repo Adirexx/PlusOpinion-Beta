@@ -5548,8 +5548,8 @@
                                                         </div>
                                                     ))}
 
-                                                {/* Empty State UI for Categories */}
-                                                {!loading && !isLoadingPosts && visiblePosts.length === 0 && (
+                                                {/* Empty State UI for Categories - Only show when a category is actually selected */}
+                                                {!loading && !isLoadingPosts && visiblePosts.length === 0 && feedFilters.category && (
                                                     <div className="flex flex-col items-center justify-center py-20 px-6 animate-fade-in">
                                                         <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/5">
                                                             <Icon icon="Search" size={32} className="text-white/20" />
