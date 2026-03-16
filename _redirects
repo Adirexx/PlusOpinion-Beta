@@ -1,11 +1,5 @@
 /global.css /global.css 200
 /updater.js /updater.js 200
-# --- STATIC / LEGAL PAGES ---
-/about /ABOUT.HTML 200
-/support /SUPPORT.HTML 200
-/privacy-policy /PRIVACY_POLICY.HTML 200
-/t&c /TERMS_AND_CONDITIONS.HTML 200
-/cookies-policy /COOKIES.HTML 200
 
 # ============================
 # PlusOpinion - Cloudflare Pages Redirects
@@ -37,6 +31,14 @@
 
 # --- AUTH PAGES ---
 
+# --- STATIC / LEGAL PAGES ---
+/about /ABOUT.HTML 200
+/support /SUPPORT.HTML 200
+/privacy-policy /PRIVACY_POLICY.HTML 200
+/t&c /TERMS_AND_CONDITIONS.HTML 200
+/cookies-policy /COOKIES.HTML 200
+
+
 
 /maintenance /MAINTENANCE.HTML 200
 
@@ -44,5 +46,3 @@
 # --- ROOT ---
 / /index.html 200
 
-# Maintenance Mode
-/* /MAINTENANCE.HTML 200
