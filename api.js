@@ -306,6 +306,430 @@ window.getFeed = async function (options = {}) {
 };
 
 // ============================================
+// ALGORITHM BRAIN — POST SCORING ENGINE (PSE)
+// ============================================
+// Calculates a composite score for each post.
+// FinalScore = E_score(40%) + A_score(25%) + R_score(25%) + Q_score(10%)
+
+window._calcPostScore = function (post, fingerprint = null) {
+    // E_score: Engagement (agrees + comments*2 + shares*3)
+    const agrees = post.agrees_count || 0;
+    const comments = post.comments_count || 0;
+    const shares = post.shares_count || 0;
+    const rawEngagement = agrees + (comments * 2) + (shares * 3);
+    // Normalize to 0-100 using soft log scale (handles both tiny + viral posts gracefully)
+    const E_score = Math.min(100, Math.log1p(rawEngagement) * 15);
+
+    // A_score: Author Credibility
+    const rqs = post.profiles?.rqs_score || 0;
+    const isVerifiedAuthor = post.profiles?.is_verified ? 1 : 0;
+    const A_score = Math.min(100, (rqs / 100) * 80 + isVerifiedAuthor * 20);
+
+    // R_score: Recency Decay (exponential, half-life ~20 hours)
+    const hoursOld = Math.max(0, (Date.now() - new Date(post.created_at).getTime()) / 3600000);
+    const R_score = 100 * Math.exp(-0.035 * hoursOld);
+
+    // Q_score: Content Quality Bonus
+    const textLen = (post.text_content || '').length;
+    const Q_score = (post.is_verified_purchase ? 30 : 0)
+        + (post.media_url ? 15 : 0)
+        + (textLen > 100 ? 10 : 0)
+        + (textLen > 250 ? 10 : 0);
+
+    // Weighted composite
+    let baseScore = (E_score * 0.40) + (A_score * 0.25) + (R_score * 0.25) + (Q_score * 0.10);
+
+    // Affinity Boost from User Fingerprint (personalization layer)
+    if (fingerprint) {
+        const catFreq = fingerprint.categories[post.category_id] || fingerprint.categories[post.category] || 0;
+        const brandFreq = fingerprint.brands[post.brand_name] || 0;
+        baseScore += (catFreq * 5) + (brandFreq * 3);
+    }
+
+    return baseScore;
+};
+
+// ============================================
+// ALGORITHM BRAIN — USER SIGNAL FINGERPRINT (USF)
+// ============================================
+// Builds a lightweight interest map from user's last 30 interactions.
+// Cached per session to avoid repeated DB calls.
+
+window._fingerprintCache = null;
+window._fingerprintCacheTime = 0;
+const _FINGERPRINT_TTL = 10 * 60 * 1000; // 10 minutes
+
+window.getUserFingerprint = async function () {
+    const now = Date.now();
+    if (window._fingerprintCache && (now - window._fingerprintCacheTime) < _FINGERPRINT_TTL) {
+        return window._fingerprintCache;
+    }
+
+    const user = await window.getCurrentUser();
+    if (!user) return null;
+
+    try {
+        // Fetch last 30 likes with post data (categories + brands)
+        const { data: likes } = await window.supabase
+            .from('post_likes')
+            .select('posts(category_id, category, brand_name)')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(30);
+
+        const categories = {};
+        const brands = {};
+
+        (likes || []).forEach(like => {
+            const p = like.posts;
+            if (!p) return;
+            const catKey = p.category_id || p.category;
+            if (catKey) categories[catKey] = (categories[catKey] || 0) + 1;
+            if (p.brand_name) brands[p.brand_name] = (brands[p.brand_name] || 0) + 1;
+        });
+
+        const sortedCats = Object.entries(categories).sort(([, a], [, b]) => b - a);
+        const fingerprint = {
+            categories,
+            brands,
+            topCategory: sortedCats[0]?.[0] || null,
+            secondCategory: sortedCats[1]?.[0] || null,
+            totalInteractions: likes?.length || 0
+        };
+
+        window._fingerprintCache = fingerprint;
+        window._fingerprintCacheTime = now;
+        return fingerprint;
+    } catch (e) {
+        console.warn('[Algorithm] Failed to build fingerprint:', e);
+        return null;
+    }
+};
+
+// ============================================
+// ALGORITHM BRAIN — SMART FEED (FOR YOU TAB)
+// ============================================
+// Blends 4 buckets: Interest-Matched (35%) + High-Score Discovery (35%)
+// + Serendipity (15%) + Recency Bonus (15%)
+// All posts sorted by composite PSE score.
+
+window.getSmartFeed = async function (limit = 20, excludeIds = []) {
+    if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
+
+    // Get user fingerprint + hidden items in parallel
+    const [fingerprint, hiddenData, user] = await Promise.all([
+        window.getUserFingerprint().catch(() => null),
+        window.getHiddenItems().catch(() => ({ posts: [], brands: [], categories: [] })),
+        window.getCurrentUser().catch(() => null)
+    ]);
+
+    // Build exclusion set
+    const excludeSet = new Set([
+        ...excludeIds.map(String),
+        ...(hiddenData?.posts || []).map(String)
+    ]);
+
+    // Get blocked user IDs
+    let blockedUserIds = [];
+    if (user) {
+        try {
+            const { data: blocks } = await window.supabase
+                .from('profile_blocks')
+                .select('blocked_id')
+                .eq('blocker_id', user.id);
+            blockedUserIds = (blocks || []).map(b => b.blocked_id);
+        } catch (e) { /* ignore */ }
+    }
+
+    const mutedBrands = new Set(hiddenData?.brands || []);
+    const mutedCategories = new Set(hiddenData?.categories || []);
+
+    // Fetch a generous pool of recent posts for scoring
+    let query = window.supabase
+        .from('posts')
+        .select(`*, profiles:user_id (id, full_name, username, avatar_url, rqs_score, is_verified)`)
+        .eq('is_deleted', false)
+        .eq('is_draft', false)
+        .order('created_at', { ascending: false })
+        .range(0, 79); // Pool of 80 posts for the algorithm to work with
+
+    if (blockedUserIds.length > 0) {
+        query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
+    }
+
+    const { data: pool, error } = await query;
+    if (error) throw error;
+    if (!pool || pool.length === 0) return [];
+
+    // Filter out excluded/muted/hidden
+    const eligible = pool.filter(p =>
+        !excludeSet.has(String(p.id)) &&
+        !mutedBrands.has(p.brand_name) &&
+        !mutedCategories.has(p.category)
+    );
+
+    // Score every post
+    const scored = eligible.map(p => ({
+        ...p,
+        _score: window._calcPostScore(p, fingerprint)
+    }));
+
+    // Sort by score descending
+    scored.sort((a, b) => b._score - a._score);
+
+    // Bucket A: Interest-matched (top category posts, 35%)
+    const bucketA_size = Math.ceil(limit * 0.35);
+    // Bucket B: High discovery (top scored from any category, 35%)
+    const bucketB_size = Math.ceil(limit * 0.35);
+    // Bucket C: Serendipity (random from lower-scored pool, 15%)
+    const bucketC_size = Math.ceil(limit * 0.15);
+    // Bucket D: Recency (newest posts not yet in A/B/C, 15%)
+    const bucketD_size = limit - bucketA_size - bucketB_size - bucketC_size;
+
+    let bucketA = [], bucketB = [], bucketC = [], bucketD = [];
+    const usedIds = new Set();
+
+    // Bucket A: posts from top-interest categories
+    if (fingerprint?.topCategory) {
+        const interestPosts = scored.filter(p =>
+            (p.category_id === fingerprint.topCategory || p.category === fingerprint.topCategory ||
+             p.category_id === fingerprint.secondCategory || p.category === fingerprint.secondCategory) &&
+            !usedIds.has(p.id)
+        );
+        bucketA = interestPosts.slice(0, bucketA_size);
+        bucketA.forEach(p => usedIds.add(p.id));
+    }
+
+    // Bucket B: top scored globally (discovery)
+    const topScored = scored.filter(p => !usedIds.has(p.id));
+    bucketB = topScored.slice(0, bucketB_size);
+    bucketB.forEach(p => usedIds.add(p.id));
+
+    // Bucket C: serendipity (random from remaining)
+    const remaining = scored.filter(p => !usedIds.has(p.id));
+    const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
+    bucketC = shuffledRemaining.slice(0, bucketC_size);
+    bucketC.forEach(p => usedIds.add(p.id));
+
+    // Bucket D: newest (recency bonus)
+    const byRecency = eligible.filter(p => !usedIds.has(p.id))
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    bucketD = byRecency.slice(0, Math.max(0, bucketD_size));
+
+    // Interleave buckets for a varied feed feel (not grouped)
+    const allBuckets = [bucketA, bucketB, bucketC, bucketD];
+    const interleaved = [];
+    const maxLen = Math.max(...allBuckets.map(b => b.length));
+    for (let i = 0; i < maxLen; i++) {
+        for (const bucket of allBuckets) {
+            if (i < bucket.length) interleaved.push(bucket[i]);
+        }
+    }
+
+    // Deduplicate and trim to limit
+    const finalIds = new Set();
+    const final = interleaved.filter(p => {
+        if (finalIds.has(p.id)) return false;
+        finalIds.add(p.id);
+        return true;
+    }).slice(0, limit);
+
+    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+};
+
+// ============================================
+// ALGORITHM BRAIN — TRENDING FEED
+// ============================================
+// Posts gaining the most momentum RIGHT NOW.
+// TrendScore = total_engagement / hours_old^0.8
+// Higher decay exponent = faster drop-off = truly captures "right now"
+
+window.getTrendingFeed = async function (limit = 20, excludeIds = []) {
+    if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
+
+    const [hiddenData, user] = await Promise.all([
+        window.getHiddenItems().catch(() => ({ posts: [], brands: [], categories: [] })),
+        window.getCurrentUser().catch(() => null)
+    ]);
+
+    const excludeSet = new Set([...excludeIds.map(String), ...(hiddenData?.posts || []).map(String)]);
+    const mutedBrands = new Set(hiddenData?.brands || []);
+    const mutedCategories = new Set(hiddenData?.categories || []);
+
+    let blockedUserIds = [];
+    if (user) {
+        try {
+            const { data: blocks } = await window.supabase
+                .from('profile_blocks').select('blocked_id').eq('blocker_id', user.id);
+            blockedUserIds = (blocks || []).map(b => b.blocked_id);
+        } catch (e) { /* ignore */ }
+    }
+
+    // Fetch more recent posts for trending (last ~72 hours matters most)
+    let query = window.supabase
+        .from('posts')
+        .select(`*, profiles:user_id (id, full_name, username, avatar_url, rqs_score, is_verified)`)
+        .eq('is_deleted', false)
+        .eq('is_draft', false)
+        .order('created_at', { ascending: false })
+        .range(0, 99); // Bigger pool for trending
+
+    if (blockedUserIds.length > 0) {
+        query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
+    }
+
+    const { data: pool, error } = await query;
+    if (error) throw error;
+    if (!pool || pool.length === 0) return [];
+
+    const eligible = pool.filter(p =>
+        !excludeSet.has(String(p.id)) &&
+        !mutedBrands.has(p.brand_name) &&
+        !mutedCategories.has(p.category)
+    );
+
+    // Apply TrendScore formula
+    const now = Date.now();
+    const scored = eligible.map(p => {
+        const hoursOld = Math.max(0.1, (now - new Date(p.created_at).getTime()) / 3600000);
+        const totalEngagement = (p.agrees_count || 0) + (p.comments_count || 0) * 2 + (p.shares_count || 0) * 3;
+        // Power decay — velocity-based, not just popularity
+        const trendScore = totalEngagement / Math.pow(hoursOld, 0.8);
+        return { ...p, _trendScore: trendScore };
+    });
+
+    // Sort by trend score — highest velocity wins
+    scored.sort((a, b) => b._trendScore - a._trendScore);
+
+    const final = scored.slice(0, limit);
+    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+};
+
+// ============================================
+// ALGORITHM BRAIN — VERIFIED PURCHASE FEED
+// ============================================
+// Only posts where is_verified_purchase = true, ranked by PSE score.
+
+window.getVerifiedFeed = async function (limit = 20, excludeIds = []) {
+    if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
+
+    const [hiddenData, user] = await Promise.all([
+        window.getHiddenItems().catch(() => ({ posts: [], brands: [], categories: [] })),
+        window.getCurrentUser().catch(() => null)
+    ]);
+
+    const excludeSet = new Set([...excludeIds.map(String), ...(hiddenData?.posts || []).map(String)]);
+    const mutedBrands = new Set(hiddenData?.brands || []);
+    const mutedCategories = new Set(hiddenData?.categories || []);
+
+    let blockedUserIds = [];
+    if (user) {
+        try {
+            const { data: blocks } = await window.supabase
+                .from('profile_blocks').select('blocked_id').eq('blocker_id', user.id);
+            blockedUserIds = (blocks || []).map(b => b.blocked_id);
+        } catch (e) { /* ignore */ }
+    }
+
+    let query = window.supabase
+        .from('posts')
+        .select(`*, profiles:user_id (id, full_name, username, avatar_url, rqs_score, is_verified)`)
+        .eq('is_deleted', false)
+        .eq('is_draft', false)
+        .eq('is_verified_purchase', true) // CRITICAL: Only verified purchases
+        .order('created_at', { ascending: false })
+        .range(0, 59);
+
+    if (blockedUserIds.length > 0) {
+        query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
+    }
+
+    const { data: pool, error } = await query;
+    if (error) throw error;
+    if (!pool || pool.length === 0) return [];
+
+    const eligible = pool.filter(p =>
+        !excludeSet.has(String(p.id)) &&
+        !mutedBrands.has(p.brand_name) &&
+        !mutedCategories.has(p.category)
+    );
+
+    // Score + sort by PSE (with Q_score bonus already baked in for verified purchases)
+    const scored = eligible.map(p => ({ ...p, _score: window._calcPostScore(p) }));
+    scored.sort((a, b) => b._score - a._score);
+
+    const final = scored.slice(0, limit);
+    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+};
+
+// ============================================
+// ALGORITHM BRAIN — HIGH RQS FEED
+// ============================================
+// Posts from authors with the highest RQS scores.
+// Sorted by a combination of author credibility + recency.
+
+window.getHighRQSFeed = async function (limit = 20, excludeIds = []) {
+    if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
+
+    const [hiddenData, user] = await Promise.all([
+        window.getHiddenItems().catch(() => ({ posts: [], brands: [], categories: [] })),
+        window.getCurrentUser().catch(() => null)
+    ]);
+
+    const excludeSet = new Set([...excludeIds.map(String), ...(hiddenData?.posts || []).map(String)]);
+    const mutedBrands = new Set(hiddenData?.brands || []);
+    const mutedCategories = new Set(hiddenData?.categories || []);
+
+    let blockedUserIds = [];
+    if (user) {
+        try {
+            const { data: blocks } = await window.supabase
+                .from('profile_blocks').select('blocked_id').eq('blocker_id', user.id);
+            blockedUserIds = (blocks || []).map(b => b.blocked_id);
+        } catch (e) { /* ignore */ }
+    }
+
+    let query = window.supabase
+        .from('posts')
+        .select(`*, profiles:user_id (id, full_name, username, avatar_url, rqs_score, is_verified)`)
+        .eq('is_deleted', false)
+        .eq('is_draft', false)
+        .not('profiles.rqs_score', 'is', null) // Only posts from users with an RQS score
+        .order('created_at', { ascending: false })
+        .range(0, 79);
+
+    if (blockedUserIds.length > 0) {
+        query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
+    }
+
+    const { data: pool, error } = await query;
+    if (error) throw error;
+    if (!pool || pool.length === 0) return [];
+
+    const eligible = pool.filter(p =>
+        !excludeSet.has(String(p.id)) &&
+        !mutedBrands.has(p.brand_name) &&
+        !mutedCategories.has(p.category) &&
+        (p.profiles?.rqs_score || 0) > 0 // Extra guard
+    );
+
+    // RQS-weighted score: 70% author credibility, 30% recency
+    const now = Date.now();
+    const scored = eligible.map(p => {
+        const rqs = p.profiles?.rqs_score || 0;
+        const hoursOld = Math.max(0.1, (now - new Date(p.created_at).getTime()) / 3600000);
+        const recencyScore = 100 * Math.exp(-0.035 * hoursOld);
+        const rqsScore = (rqs / 100) * 100; // Already 0-100 scale assumed
+        return { ...p, _rqsWeightedScore: (rqsScore * 0.70) + (recencyScore * 0.30) };
+    });
+
+    scored.sort((a, b) => b._rqsWeightedScore - a._rqsWeightedScore);
+
+    const final = scored.slice(0, limit);
+    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+};
+
+// ============================================
 // CATEGORIES API
 // ============================================
 
@@ -334,7 +758,8 @@ window.getCategories = async function () {
             { id: 'food', name: 'Food & Bev', title: 'Food & Bev', icon: 'Coffee', color: '#F0A500' },
             { id: 'health', name: 'Health', title: 'Health', icon: 'Activity', color: '#10B981' },
             { id: 'gaming', name: 'Gaming', title: 'Gaming', icon: 'Gamepad', color: '#8b5cf6' },
-            { id: 'fitness', name: 'Sports', title: 'Sports', icon: 'Dumbbell', color: '#F97316' },
+            { id: 'fitness', name: 'Fitness', title: 'Fitness', icon: 'Dumbbell', color: '#F97316' },
+            { id: 'beauty-skincare', name: 'Beauty & Skin Care', title: 'Beauty & Skin Care', icon: 'Smile', color: '#EC4899' },
             { id: 'tech', name: 'Technology', title: 'Technology', icon: 'Cpu', color: '#2f8bff' },
             { id: 'others', name: 'Others', title: 'Others', icon: 'MoreHorizontal', color: '#6B7280' }
         ].sort((a, b) => (a.title || a.name).localeCompare(b.title || b.name));
@@ -2438,6 +2863,7 @@ window.getCategories = async function () {
         { id: 'sports', name: 'Sports', icon: 'Activity', section: 'growing', color: 'from-emerald-500 to-green-500' },
         { id: 'health', name: 'Health', icon: 'Heart', section: 'all', color: 'from-rose-500 to-red-500' },
         { id: 'fitness', name: 'Fitness', icon: 'Zap', section: 'all', color: 'from-cyan-500 to-blue-500' },
+        { id: 'beauty-skincare', name: 'Beauty & Skin Care', icon: 'Smile', section: 'all', color: 'from-pink-400 to-rose-400' },
         { id: 'cars', name: 'Automotive', icon: 'Truck', section: 'all', color: 'from-slate-500 to-gray-500' },
         { id: 'finance', name: 'Finance', icon: 'DollarSign', section: 'all', color: 'from-green-600 to-emerald-600' },
         { id: 'education', name: 'Education', icon: 'BookOpen', section: 'all', color: 'from-blue-600 to-indigo-600' },
