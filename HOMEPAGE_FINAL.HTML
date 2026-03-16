@@ -95,7 +95,7 @@
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script type="module" src="/supabase.js"></script>
-    <script type="module" src="/api.js"></script>
+    <script type="module" src="/api.js?v=4.0"></script>
     <script type="module" src="/auth.js"></script>
     <script src="/rqs_calculator.js"></script>
     <script src="/auth_guard.js"></script>
@@ -703,6 +703,9 @@
 
         // --- ICONS (Merged) ---
         const Icons = {
+            Smile: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
+            Running: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 4a2 2 0 10-4 0 2 2 0 004 0z"/><path d="M10 7l-2 4 4 2-1 6"/><path d="M12 13l4-1 2-4"/><path d="M8 7l-2 0 2 3"/></svg>, 
+
             Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1 -2 2H5a2 2 0 0 1 -2 -2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
             Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
             User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
@@ -951,15 +954,15 @@
         // --- Clickable @mention and URL renderer ---
         const renderTextWithMentions = (text) => {
             if (!text) return text;
-            
+
             // First split by URL to identify links
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             const mentionRegex = /(@[\w.]+)/g;
-            
+
             // Split by both URLs and mentions
             // We'll use a single pass approach by splitting on spaces and checking each token
             const tokens = text.split(/(\s+)/);
-            
+
             return tokens.map((token, i) => {
                 // Check for URL
                 if (urlRegex.test(token)) {
@@ -976,7 +979,7 @@
                         </a>
                     );
                 }
-                
+
                 // Check for Mention
                 if (mentionRegex.test(token)) {
                     const username = token.match(/@([\w.]+)/)[1];
@@ -994,7 +997,7 @@
                         </span>
                     );
                 }
-                
+
                 return token;
             });
         };
@@ -2457,7 +2460,7 @@
                 <div className="fixed inset-0 z-[110] bg-[#070A12] animate-fade-in flex flex-col overflow-hidden">
                     {/* Header */}
                     <div className="flex items-center justify-between px-5 h-[60px] border-b border-white/5 bg-[#070A12]/80 backdrop-blur-xl shrink-0">
-                        <button 
+                        <button
                             onClick={() => { vibrate(5); onClose(); }}
                             className="text-white/60 hover:text-white transition-colors p-2 -ml-2 active:scale-90"
                         >
@@ -3425,7 +3428,7 @@
             const [draftId, setDraftId] = useState(null); // ID if editing existing draft
             const [mentionQuery, setMentionQuery] = useState(null);
 
-            const PREDEFINED_CATEGORIES = ['Electronics', 'Automotive', 'Software', 'Fashion', 'Tech', 'Food', 'Gaming', 'Lifestyle', 'Other'];
+            const PREDEFINED_CATEGORIES = ['Electronics', 'Automotive', 'Software', 'Fashion', 'Tech', 'Food', 'Gaming', 'Lifestyle', 'Fitness', 'Beauty & Skin Care', 'Other'];
 
             const [mentionCoords, setMentionCoords] = useState({ top: 0, left: 0 });
 
@@ -3838,8 +3841,8 @@
                                                 <div className="mb-4">
                                                     <div className="flex flex-wrap gap-2 max-h-[100px] overflow-y-auto no-scrollbar">
                                                         {[
-                                                            'Automotive', 'Education', 'Electronics', 'Fashion',
-                                                            'Finance', 'Food & Bev', 'Gaming', 'Health',
+                                                            'Automotive', 'Beauty & Skin Care', 'Education', 'Electronics', 'Fashion',
+                                                            'Finance', 'Fitness', 'Food & Bev', 'Gaming', 'Health',
                                                             'Home', 'Office', 'Personal Care', 'Pets',
                                                             'Science', 'Sports', 'Technology', 'Travel', 'Others'
                                                         ].sort().map(cat => (
@@ -4433,7 +4436,7 @@
             const [isGuest, setIsGuest] = useState(false);
             const [deepLinkedPost, setDeepLinkedPost] = useState(null);
             const [feedFilters, setFeedFilters] = useState({ source: 'All', type: 'All', category: null });
-            
+
             // Inbox count state for the top header badge
             const [unreadInboxCount, setUnreadInboxCount] = useState(0);
 
@@ -4470,9 +4473,15 @@
             const [hasMore, setHasMore] = useState(true);
             const [isLoadingMore, setIsLoadingMore] = useState(false);
             const [seenIds, setSeenIds] = useState(new Set()); // CRITICAL: For deduplication in random shuffle
+            // ALGORITHM BRAIN: Feed mode controls which algorithm powers the feed
+            const [feedMode, setFeedMode] = useState('for-you'); // 'for-you' | 'trending' | 'verified' | 'high-rqs'
+            const seenIdsByMode = useRef({ 'for-you': new Set(), 'trending': new Set(), 'verified': new Set(), 'high-rqs': new Set() });
             const [savedPosts, setSavedPosts] = useState(new Set());
             const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
             const [hiddenItems, setHiddenItems] = useState({ posts: [], brands: [], categories: [] });
+            
+            // Ref to track the latest fetch to prevent race conditions when multiple overlapping fetches are triggered on mount
+            const activeFetchIdRef = useRef(0);
 
             // Portals for internal messaging payloads
             const [sharedPostsToRender, setSharedPostsToRender] = useState({});
@@ -4558,7 +4567,7 @@
                 // Expose openFullPost globally (formerly scrollToPost)
                 window.openFullPost = async (postId) => {
                     if (window.closeInbox) window.closeInbox();
-                    
+
                     try {
                         // Check if we already have it in local posts or sharedPostsToRender
                         let post = posts.find(p => p.id === postId);
@@ -4643,6 +4652,8 @@
             const loadPosts = async (currentOffset = 0, reset = false) => {
                 if (isLoadingMore) return; // Guard against rapid fire
 
+                const currentFetchId = ++activeFetchIdRef.current;
+
                 try {
                     if (reset) {
                         setIsLoadingPosts(true);
@@ -4650,18 +4661,6 @@
                         setSeenIds(new Set()); // Reset seen IDs on refresh for a fresh shuffle
                     } else {
                         setIsLoadingMore(true);
-                    }
-
-                    // CACHE-FIRST (Only for initial load, bypass for shuffle to keep it fresh)
-                    if (window.StateManager && !reset && currentOffset === 0 && !feedFilters.category) {
-                        const cachedData = await window.StateManager.get('home_feed_initial');
-                        if (cachedData && posts.length === 0) {
-                            setPosts(cachedData.posts);
-                            setSeenIds(new Set(cachedData.seenIds));
-                            setOffset(cachedData.nextOffset);
-                            setIsLoadingPosts(false);
-                            return;
-                        }
                     }
 
                     // FETCH HIDDEN ITEMS (Strict Filtering)
@@ -4678,14 +4677,38 @@
                         }
                     } catch (e) { console.warn("Failed to fetch hidden items", e); }
 
-                    // FETCH FROM API (Passing seenIds for deduplication + Weighted Shuffle)
-                    const finalBatch = await window.getFeed({
-                        limit: 10,
-                        offset: reset ? 0 : currentOffset,
-                        category_id: feedFilters.category,
-                        excludeIds: Array.from(reset ? new Set() : seenIds), // Exclude what we already have
-                        shuffle: true // ENABLE THE 7:3 RECENCY BIAS ALGORITHM
-                    });
+                    // ALGORITHM BRAIN: Route to correct feed function based on feedMode
+                    const currentSeenIds = seenIdsByMode.current[feedMode] || new Set();
+                    const excludeIdsList = Array.from(reset ? new Set() : currentSeenIds);
+                    let finalBatch = [];
+
+                    // If category filter is active, we always use the legacy getFeed with category filter
+                    if (feedFilters.category) {
+                        finalBatch = await window.getFeed({
+                            limit: 10,
+                            offset: reset ? 0 : currentOffset,
+                            category_id: feedFilters.category,
+                            excludeIds: excludeIdsList,
+                            shuffle: true
+                        });
+                    } else {
+                        // Route to algorithm brain based on active tab
+                        switch (feedMode) {
+                            case 'trending':
+                                finalBatch = window.getTrendingFeed ? await window.getTrendingFeed(15, excludeIdsList) : await window.getFeed({ limit: 15, excludeIds: excludeIdsList, shuffle: true });
+                                break;
+                            case 'verified':
+                                finalBatch = window.getVerifiedFeed ? await window.getVerifiedFeed(15, excludeIdsList) : await window.getFeed({ limit: 15, verifiedOnly: true, excludeIds: excludeIdsList, shuffle: true });
+                                break;
+                            case 'high-rqs':
+                                finalBatch = window.getHighRQSFeed ? await window.getHighRQSFeed(15, excludeIdsList) : await window.getFeed({ limit: 15, excludeIds: excludeIdsList, shuffle: true });
+                                break;
+                            case 'for-you':
+                            default:
+                                finalBatch = window.getSmartFeed ? await window.getSmartFeed(15, excludeIdsList) : await window.getFeed({ limit: 15, excludeIds: excludeIdsList, shuffle: true });
+                                break;
+                        }
+                    }
 
                     if (finalBatch.length === 0) {
                         setHasMore(false);
@@ -4723,26 +4746,25 @@
                         seenBy: post.seen_by_brand
                     }));
 
-                    // SHUFFLE the transformed posts for the "Smart" feel (only in batches)
-                    const shuffledBatch = [...transformedPosts].sort(() => Math.random() - 0.5);
+                    // Only shuffle for 'for-you' — other tabs are pre-ordered by the algorithm
+                    const finalBatchOrdered = feedMode === 'for-you'
+                        ? [...transformedPosts].sort(() => Math.random() - 0.5)
+                        : transformedPosts;
 
-                    // SAVE TO STATE
+                    // SAVE TO STATE + update per-mode seen IDs
+                    if (currentFetchId !== activeFetchIdRef.current) {
+                        console.log("Stale fetch prevented from overwriting active state.");
+                        return; // Prevent race conditions
+                    }
+
                     setPosts(prev => {
-                        const newPosts = reset ? shuffledBatch : [...prev, ...shuffledBatch];
-                        // Update seen IDs
-                        const nextSeen = new Set(reset ? [] : seenIds);
-                        shuffledBatch.forEach(p => nextSeen.add(p.id));
+                        const newPosts = reset ? finalBatchOrdered : [...prev, ...finalBatchOrdered];
+                        // Track seen IDs per feed mode for proper deduplication
+                        const modeSeenSet = seenIdsByMode.current[feedMode] || new Set();
+                        const nextSeen = new Set(reset ? [] : modeSeenSet);
+                        finalBatchOrdered.forEach(p => nextSeen.add(p.id));
+                        seenIdsByMode.current[feedMode] = nextSeen;
                         setSeenIds(nextSeen);
-
-                        // Cache initial set for performance
-                        if (reset && window.StateManager) {
-                            window.StateManager.set('home_feed_initial', {
-                                posts: shuffledBatch,
-                                seenIds: Array.from(nextSeen),
-                                nextOffset: 10
-                            }, { ttl: 5 * 60 * 1000 });
-                        }
-
                         return newPosts;
                     });
 
@@ -4751,8 +4773,10 @@
                 } catch (error) {
                     console.error('Failed to load posts:', error);
                 } finally {
-                    setIsLoadingPosts(false);
-                    setIsLoadingMore(false);
+                    if (currentFetchId === activeFetchIdRef.current) {
+                        setIsLoadingPosts(false);
+                        setIsLoadingMore(false);
+                    }
                 }
             };
 
@@ -4936,10 +4960,17 @@
 
             // Reload posts when category filter changes (from category page navigation)
             useEffect(() => {
-                if (feedFilters.category !== null) {
-                    loadPosts(0, true);
-                }
+                // Trigger reload whenever category filter changes (even if set to null)
+                loadPosts(0, true);
             }, [feedFilters.category]);
+
+            // ALGORITHM BRAIN: Reload posts whenever feed mode changes
+            useEffect(() => {
+                // Reset seen IDs for this mode when switching tabs
+                seenIdsByMode.current[feedMode] = new Set();
+                setSeenIds(new Set());
+                loadPosts(0, true);
+            }, [feedMode]);
 
             // --- EFFECTS ---
             // 1. Initial Load & Hash Listener (Restoring cross-page signal logic)
@@ -5363,11 +5394,33 @@
                         </div>
                     </div>
 
+
+                    {/* CATEGORY FILTER ACTIVE INDICATOR */}
+                    {feedFilters.category && activeTab === 'home' && (
+                        <div className={`fixed top-[60px] left-0 w-full z-39 transition-transform duration-500 ${navVisible ? 'translate-y-0' : '-translate-y-[120px]'}`}
+                            style={{ zIndex: 39 }}>
+                            <div className="top-nav-glass border-b border-white/5 px-4 py-2 flex items-center justify-between gap-3">
+                                <span className="text-xs text-white/60 truncate">
+                                    Showing: <span className="text-neon font-bold capitalize">{feedFilters.category}</span>
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        setFeedFilters(prev => ({ ...prev, category: null }));
+                                        window.history.replaceState(null, '', window.location.pathname);
+                                    }}
+                                    className="shrink-0 text-[10px] text-white/40 hover:text-white border border-white/10 px-2 py-1 rounded-full transition-colors"
+                                >
+                                    Clear ×
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* MAIN FEED CONTENT - FULL SCREEN */}
                     <div
                         ref={scrollRef}
                         className={`
-                            absolute inset-0 overflow-y-auto px-4 pt-[70px] pb-28 no-scrollbar smooth-scroll-container 
+                            absolute inset-0 overflow-y-auto px-4 pt-[75px] pb-28 no-scrollbar smooth-scroll-container 
                             transition-all duration-500 ease-out origin-center
                             ${getMainContentTransform()}
                         `}
@@ -5494,6 +5547,27 @@
                                                             />
                                                         </div>
                                                     ))}
+
+                                                {/* Empty State UI for Categories */}
+                                                {!loading && !isLoadingPosts && visiblePosts.length === 0 && (
+                                                    <div className="flex flex-col items-center justify-center py-20 px-6 animate-fade-in">
+                                                        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/5">
+                                                            <Icon icon="Search" size={32} className="text-white/20" />
+                                                        </div>
+                                                        <h3 className="text-white font-bold text-lg mb-2">No opinions found</h3>
+                                                        <p className="text-muted text-sm text-center max-w-[240px] leading-relaxed">
+                                                            There are no opinions in the <span className="text-neon capitalize">{feedFilters.category || "selected"}</span> category yet.
+                                                        </p>
+                                                        {feedFilters.category && (
+                                                            <button 
+                                                                onClick={() => setFeedFilters(prev => ({ ...prev, category: null }))}
+                                                                className="mt-8 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm font-bold transition-all"
+                                                            >
+                                                                Back to Feed
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </>
                                         )}
 
@@ -5630,11 +5704,11 @@
 
                     {/* FULLSCREEN IMAGE VIEWER */}
                     <ImageViewer src={viewingImage?.src} type={viewingImage?.type} images={viewingImage?.images} initialIndex={viewingImage?.initialIndex || 0} onClose={() => setViewingImage(null)} />
-                    
+
                     {/* FULLSCREEN POST VIEWER */}
                     {viewingFullPost && (
-                        <FullPostViewer 
-                            post={viewingFullPost} 
+                        <FullPostViewer
+                            post={viewingFullPost}
                             onClose={() => setViewingFullPost(null)}
                             userProfile={userProfile}
                             savedPosts={savedPosts}
