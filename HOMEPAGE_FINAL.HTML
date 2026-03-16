@@ -95,16 +95,16 @@
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script type="module" src="/supabase.js"></script>
-    <script type="module" src="/api.js?v=4.0"></script>
-    <script type="module" src="/auth.js"></script>
-    <script src="/rqs_calculator.js"></script>
-    <script src="/auth_guard.js"></script>
+    <script type="module" src="/api.js?v=4.5"></script>
+    <script type="module" src="/auth.js?v=4.5"></script>
+    <script src="/rqs_calculator.js?v=4.5"></script>
+    <script src="/auth_guard.js?v=4.5"></script>
 
     <!-- SPA Core Infrastructure -->
     <script src="/state_manager.js"></script>
     <script src="/router.js"></script>
     <script src="/spa_router.js"></script>
-    <script src="/pull_to_refresh.js?v=2.0"></script>
+    <script src="/pull_to_refresh.js?v=2.5"></script>
     <script src="/navigation_preloader.js"></script>
 
 
@@ -4706,6 +4706,10 @@
                             case 'for-you':
                             default:
                                 finalBatch = window.getSmartFeed ? await window.getSmartFeed(15, excludeIdsList) : await window.getFeed({ limit: 15, excludeIds: excludeIdsList, shuffle: true });
+                                // Fallback: If smart feed returned nothing but we aren't at the end of the global feed
+                                if (finalBatch.length === 0 && window.getSmartFeed) {
+                                    finalBatch = await window.getFeed({ limit: 15, excludeIds: excludeIdsList, shuffle: true });
+                                }
                                 break;
                         }
                     }
