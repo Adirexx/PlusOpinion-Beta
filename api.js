@@ -461,11 +461,11 @@ window.getSmartFeed = async function (limit = 20, excludeIds = []) {
     if (error) throw error;
     if (!pool || pool.length === 0) return [];
 
-    // Filter out excluded/muted/hidden
+    // Filter out excluded/muted/hidden (Safety check: only filter if values are truthy to prevent total feed death)
     const eligible = pool.filter(p =>
         !excludeSet.has(String(p.id)) &&
-        !mutedBrands.has(p.brand_name) &&
-        !mutedCategories.has(p.category)
+        !(p.brand_name && mutedBrands.has(p.brand_name)) &&
+        !(p.category && mutedCategories.has(p.category))
     );
 
     // Score every post
