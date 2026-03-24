@@ -531,6 +531,7 @@ window.signUpUser = signUpUser;
 window.signInUser = signInUser;
 window.signInWithProvider = signInWithProvider;
 window.signOutUser = signOutUser;
+window._authGetCurrentUser = getCurrentUser; // used by auth bridge proxy in page templates
 window.getCurrentUser = getCurrentUser;
 window.resetPassword = resetPassword;
 window.getUserProfile = getUserProfile;
