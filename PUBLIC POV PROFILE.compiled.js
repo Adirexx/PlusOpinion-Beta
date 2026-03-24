@@ -1,0 +1,3202 @@
+function _extends() {return _extends = Object.assign ? Object.assign.bind() : function (n) {for (var e = 1; e < arguments.length; e++) {var t = arguments[e];for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);}return n;}, _extends.apply(null, arguments);}
+const { useState, useEffect, useRef } = React;
+
+// 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
+const goTo = (page) => {
+  window.scrollTo(0, 0);
+  window.location.href = page;
+};
+
+function dispatchAction(action) {
+  if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+    // Already on homepage
+    window.PlusOpinionActions[action]();
+  } else {
+    // On another page → redirect with hash
+    window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+  }
+}
+
+const triggerAction = (action) => {
+  if (window.PlusOpinionActions?.[action]) {
+    window.PlusOpinionActions[action]();
+  } else {
+    window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+  }
+};
+
+// 🔁 PAGE → TAB MAP (GLOBAL)
+const PAGE_TAB_MAP = {
+  'HOMEPAGE_FINAL.HTML': 'home',
+  'CATAGORYPAGE.HTML': 'categories',
+  'MY SPACE FINAL (USER).HTML': 'myspace',
+  'NOTIFICATION PANEL.HTML': 'notifs',
+  'PRIVATE OWNER PROFILE.HTML': 'profile'
+};
+
+// --- ICONS ---
+const Icons = {
+  Smile: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "12", r: "10" }), /*#__PURE__*/React.createElement("path", { d: "M8 14s1.5 2 4 2 4-2 4-2" }), /*#__PURE__*/React.createElement("line", { x1: "9", y1: "9", x2: "9.01", y2: "9" }), /*#__PURE__*/React.createElement("line", { x1: "15", y1: "9", x2: "15.01", y2: "9" })),
+  Running: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M13 4a2 2 0 10-4 0 2 2 0 004 0z" }), /*#__PURE__*/React.createElement("path", { d: "M10 7l-2 4 4 2-1 6" }), /*#__PURE__*/React.createElement("path", { d: "M12 13l4-1 2-4" }), /*#__PURE__*/React.createElement("path", { d: "M8 7l-2 0 2 3" })),
+
+  ArrowLeft: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "m12 19-7-7 7-7" }), /*#__PURE__*/React.createElement("path", { d: "M19 12H5" })),
+  Search: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("circle", { cx: "11", cy: "11", r: "8" }), /*#__PURE__*/React.createElement("path", { d: "m21 21-4.3-4.3" })),
+  MoreVertical: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "12", r: "1" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "5", r: "1" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "19", r: "1" })),
+  MoreHorizontal: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "12", r: "1" }), /*#__PURE__*/React.createElement("circle", { cx: "19", cy: "12", r: "1" }), /*#__PURE__*/React.createElement("circle", { cx: "5", cy: "12", r: "1" })),
+  MapPin: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "10", r: "3" })),
+  Link: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" }), /*#__PURE__*/React.createElement("path", { d: "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" })),
+  Edit: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" }), /*#__PURE__*/React.createElement("path", { d: "m15 5 4 4" })),
+  BarChart2: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("line", { x1: "18", x2: "18", y1: "20", y2: "10" }), /*#__PURE__*/React.createElement("line", { x1: "12", x2: "12", y1: "20", y2: "4" }), /*#__PURE__*/React.createElement("line", { x1: "6", x2: "6", y1: "20", y2: "14" })),
+  ShieldCheck: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" }), /*#__PURE__*/React.createElement("path", { d: "m9 12 2 2 4-4" })),
+  Plus: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M12 5v14M5 12h14" })),
+  Zap: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("polygon", { points: "13 2 3 14 12 14 11 22 21 10 12 10 13 2" })),
+  Lock: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2" }), /*#__PURE__*/React.createElement("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })),
+  ThumbsUp: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M7 10v12" }), /*#__PURE__*/React.createElement("path", { d: "M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" })),
+  Share: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" }), /*#__PURE__*/React.createElement("polyline", { points: "16 6 12 2 8 6" }), /*#__PURE__*/React.createElement("line", { x1: "12", x2: "12", y1: "2", y2: "15" })),
+  WhatsApp: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" }), /*#__PURE__*/React.createElement("path", { d: "M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" })),
+  Instagram: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("rect", { width: "20", height: "20", x: "2", y: "2", rx: "5", ry: "5" }), /*#__PURE__*/React.createElement("path", { d: "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" }), /*#__PURE__*/React.createElement("line", { x1: "17.5", x2: "17.51", y1: "6.5", y2: "6.5" })),
+  MessageCircle: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M7.9 20A9 9 0 1 0 4 16.1L2 22Z" })),
+  MessagesDuo: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z" }), /*#__PURE__*/React.createElement("path", { d: "M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1" })),
+  InboxArchive: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2" }), /*#__PURE__*/React.createElement("path", { d: "M3 10v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9" }), /*#__PURE__*/React.createElement("path", { d: "M10 12h4" })),
+  MailOpen: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M21.2 8.4c.5.3.8.8.8 1.4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.8c0-.6.3-1.1.8-1.4l7.5-4.5a2 2 0 0 1 2.4 0l7.5 4.5Z" }), /*#__PURE__*/React.createElement("path", { d: "m22 9-10 7L2 9" }), /*#__PURE__*/React.createElement("path", { d: "M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4" })),
+  Mail: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("rect", { width: "20", height: "16", x: "2", y: "4", rx: "2" }), /*#__PURE__*/React.createElement("path", { d: "m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" })),
+  PaperPlane: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M22 2 15 22l-4-9L2 9z" }), /*#__PURE__*/React.createElement("path", { d: "M22 2 11 13v6l4-3" })),
+  PlusOpinionInbox: (p) => /*#__PURE__*/
+  React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/
+  React.createElement("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }), /*#__PURE__*/
+  React.createElement("polyline", { points: "3 5 12 11 21 5" })
+  ),
+
+  ActiveChat: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }), /*#__PURE__*/React.createElement("circle", { cx: "8", cy: "10", r: "1.5", fill: "currentColor", stroke: "none" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "10", r: "1.5", fill: "currentColor", stroke: "none" }), /*#__PURE__*/React.createElement("circle", { cx: "16", cy: "10", r: "1.5", fill: "currentColor", stroke: "none" })),
+  AlertTriangle: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" }), /*#__PURE__*/React.createElement("line", { x1: "12", x2: "12", y1: "9", y2: "13" }), /*#__PURE__*/React.createElement("line", { x1: "12", x2: "12.01", y1: "17", y2: "17" })),
+  Clock: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "12", r: "10" }), /*#__PURE__*/React.createElement("polyline", { points: "12 6 12 12 16 14" })),
+  Flag: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" }), /*#__PURE__*/React.createElement("line", { x1: "4", x2: "4", y1: "22", y2: "15" })),
+  Slash: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "12", r: "10" }), /*#__PURE__*/React.createElement("line", { x1: "4.93", x2: "19.07", y1: "4.93", y2: "19.07" })),
+  Repeat: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "m17 2 4 4-4 4" }), /*#__PURE__*/React.createElement("path", { d: "M3 11v-1a4 4 0 0 1 4-4h14" }), /*#__PURE__*/React.createElement("path", { d: "m7 22-4-4 4-4" }), /*#__PURE__*/React.createElement("path", { d: "M21 13v1a4 4 0 0 1-4 4H3" })),
+  BookMark: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" })),
+  BarChart: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("line", { x1: "12", x2: "12", y1: "20", y2: "10" }), /*#__PURE__*/React.createElement("line", { x1: "18", x2: "18", y1: "20", y2: "4" }), /*#__PURE__*/React.createElement("line", { x1: "6", x2: "6", y1: "20", y2: "16" })),
+
+  // Edit Icons
+  Camera: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "13", r: "3" })),
+  X: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }), /*#__PURE__*/React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })),
+  Settings: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "12", r: "3" })),
+
+  // Nav Icons
+  Home: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" }), /*#__PURE__*/React.createElement("polyline", { points: "9 22 9 12 15 12 15 22" })),
+  Grid: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("rect", { width: "7", height: "7", x: "3", y: "3", rx: "1" }), /*#__PURE__*/React.createElement("rect", { width: "7", height: "7", x: "14", y: "3", rx: "1" }), /*#__PURE__*/React.createElement("rect", { width: "7", height: "7", x: "14", y: "14", rx: "1" }), /*#__PURE__*/React.createElement("rect", { width: "7", height: "7", x: "3", y: "14", rx: "1" })),
+  Bell: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" }), /*#__PURE__*/React.createElement("path", { d: "M10.3 21a1.94 1.94 0 0 0 3.4 0" })),
+  User: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }), /*#__PURE__*/React.createElement("circle", { cx: "12", cy: "7", r: "4" })),
+  Check: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("polyline", { points: "20 6 9 17 4 12" })),
+  ArrowRight: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M5 12h14" }), /*#__PURE__*/React.createElement("path", { d: "m12 5 7 7-7 7" })),
+  EyeOff: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M9.88 9.88a3 3 0 1 0 4.24 4.24" }), /*#__PURE__*/React.createElement("path", { d: "M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" }), /*#__PURE__*/React.createElement("path", { d: "M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" }), /*#__PURE__*/React.createElement("line", { x1: "2", x2: "22", y1: "2", y2: "22" })),
+  Trash: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M3 6h18" }), /*#__PURE__*/React.createElement("path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" }), /*#__PURE__*/React.createElement("path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }), /*#__PURE__*/React.createElement("line", { x1: "10", x2: "10", y1: "11", y2: "17" }), /*#__PURE__*/React.createElement("line", { x1: "14", x2: "14", y1: "11", y2: "17" })),
+  Send: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "m22 2-7 20-4-9-9-4Z" }), /*#__PURE__*/React.createElement("path", { d: "M22 2 11 13" })),
+  FileText: (p) => /*#__PURE__*/React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/React.createElement("path", { d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" }), /*#__PURE__*/React.createElement("polyline", { points: "14 2 14 8 20 8" }), /*#__PURE__*/React.createElement("line", { x1: "16", x2: "8", y1: "13", y2: "13" }), /*#__PURE__*/React.createElement("line", { x1: "16", x2: "8", y1: "17", y2: "17" }), /*#__PURE__*/React.createElement("line", { x1: "10", x2: "8", y1: "9", y2: "9" })),
+  MySpaceLogo: (p) => /*#__PURE__*/
+  React.createElement("svg", _extends({}, p, { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }), /*#__PURE__*/
+  React.createElement("path", { d: "M11 3L3 22", strokeLinejoin: "bevel" }), /*#__PURE__*/
+  React.createElement("path", { d: "M21 22L11 3", strokeLinejoin: "bevel" }), /*#__PURE__*/
+  React.createElement("path", { d: "M22 8L4 18", className: "myspace-swoosh", strokeWidth: "2.5" })
+  )
+
+};
+
+const Icon = ({ icon, size = 20, className = "" }) => {
+  const Component = Icons[icon];
+  if (!Component) return null;
+  return /*#__PURE__*/React.createElement(Component, { width: size, height: size, className: className });
+};
+
+const NavItem = ({ icon, label, isActive, onClick, isMySpace }) => {
+  const handleClick = () => {
+    vibrate();
+    if (isMySpace) {
+      checkMySpaceRedirect();
+    } else if (onClick) {
+      onClick();
+    }
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("button", {
+      onClick: handleClick,
+      className: `flex flex-col items-center justify-center gap-1 w-full transition-all duration-300 ${isActive ? 'text-neon scale-110' : 'text-muted/60 hover:text-white/80'}` }, /*#__PURE__*/
+
+    React.createElement("div", { className: "relative" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: icon, size: 22, className: `${isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}` }),
+    isActive && /*#__PURE__*/
+    React.createElement("div", { className: "absolute -inset-2 bg-neon/10 blur-xl rounded-full -z-10" })
+
+    ), /*#__PURE__*/
+    React.createElement("span", { className: `text-[10px] font-medium tracking-wide ${isActive ? 'opacity-100' : 'opacity-0'}` },
+    label
+    )
+    ));
+
+};
+
+const vibrate = () => {
+  if (navigator.vibrate) navigator.vibrate(5);
+};
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+
+// --- HELPERS ---
+const formatTime = (dateString) => {
+  if (!dateString) return 'recently';
+  const now = new Date();
+  const past = new Date(dateString);
+  const diffMs = now - past;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return 'just now';
+  if (diffMin < 60) return `${diffMin}m`;
+  if (diffHour < 24) return `${diffHour}h`;
+  if (diffDay < 7) return `${diffDay}d`;
+  return past.toLocaleDateString();
+};
+
+const checkMySpaceRedirect = async () => {
+  try {
+    const user = await window.getCurrentUser();
+    if (!user) {
+      window.location.href = 'MY SPACE FINAL (USER).HTML';
+      return;
+    }
+    const { data: profile } = await window.supabase.
+    from('profiles').
+    select('is_business_account, company_name').
+    eq('id', user.id).
+    single();
+
+    if (profile && profile.is_business_account) {
+      window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+    } else {
+      window.location.href = 'MY SPACE FINAL (USER).HTML';
+    }
+  } catch (e) {
+    window.location.href = 'MY SPACE FINAL (USER).HTML';
+  }
+};
+
+// --- COMPONENTS ---
+// Mock data removed - now using dynamic state from Supabase
+
+// --- COMPONENTS ---
+
+// NavItem and BottomNav moved to global helpers and App component respectively
+
+// --- SHARE MODAL ---
+const ShareModal = ({ isOpen, onClose, post, user }) => {
+
+  const [internalContacts, setInternalContacts] = useState([]);
+  const [internalLoadingContacts, setInternalLoadingContacts] = useState(false);
+  const [internalSelectedContacts, setInternalSelectedContacts] = useState(new Set());
+  const [internalSending, setInternalSending] = useState(false);
+
+  useEffect(() => {
+    const fetchInternalContacts = async () => {
+      if (!isOpen || !window.getCurrentUser) return;
+      setInternalLoadingContacts(true);
+      try {
+        const user = await window.getCurrentUser();
+        if (!user) return;
+        const { data } = await window.supabase.
+        from('conversations').
+        select('id, participant_1_id, participant_2_id').
+        or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`).
+        order('last_message_at', { ascending: false }).
+        limit(10);
+        if (data && data.length > 0) {
+          const otherIds = [...new Set(data.map((c) => c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id))];
+          const { data: profiles } = await window.supabase.
+          from('profiles').select('id, full_name, avatar_url, username').in('id', otherIds);
+          if (profiles) {
+            const profileMap = {};
+            profiles.forEach((p) => profileMap[p.id] = p);
+            const contacts = data.map((c) => {
+              const otherId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id;
+              const profile = profileMap[otherId];
+              if (!profile) return null;
+              return { convId: c.id, ...profile };
+            }).filter(Boolean);
+            if (window.rewriteMediaUrl) contacts.forEach((c) => {if (c.avatar_url) c.avatar_url = window.rewriteMediaUrl(c.avatar_url);});
+            setInternalContacts(contacts);
+          }
+        }
+      } catch (e) {console.error('Failed to load contacts', e);} finally
+      {setInternalLoadingContacts(false);}
+    };
+    fetchInternalContacts();
+  }, [isOpen]);
+
+  const handleInternalSend = async () => {
+    if (internalSelectedContacts.size === 0 || internalSending) return;
+    if (!window.sendPostToUser) {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing system initializing...', icon: 'Clock', isSuccess: false } }));
+      return;
+    }
+    setInternalSending(true);
+    const contactsToSend = internalContacts.filter((c) => internalSelectedContacts.has(c.id));
+    const shareTarget = post || user;
+    let successCount = 0;
+    for (const contact of contactsToSend) {
+      try {await window.sendPostToUser(contact.convId, contact.id, contact.full_name || contact.username, contact.avatar_url, shareTarget);successCount++;}
+      catch (e) {console.error(`Failed to send to ${contact.username}`, e);}
+    }
+    window.dispatchEvent(new CustomEvent('toast', { detail: { message: `Shared with ${successCount} profile${successCount > 1 ? 's' : ''}`, icon: 'Send', isSuccess: true } }));
+    setInternalSending(false);
+    onClose();
+  };
+
+
+  if (!isOpen || !post && !user) return null;
+
+  const isProfileShare = !!user && !post;
+  const target = isProfileShare ? user : post;
+
+  const PROD_URL = 'https://plusopinion.com';
+  const shareUrl = isProfileShare ?
+  `${PROD_URL}/profile/${user.username}` :
+  `${PROD_URL}/post/${post.id || ''}`;
+
+  const shareText = isProfileShare ?
+  `Check out @${user.username}'s profile on PlusOpinion` :
+  `Check out this interaction by @${post.username}`;
+
+  const handleCopy = async () => {
+    try {
+      const cleanText = isProfileShare ?
+      `Check out @${user.username}'s profile on PlusOpinion:\n\n${user.bio || 'Check out my opinions and reviews!'}\n\nLink: ${shareUrl}` :
+      `Check out this interaction on PlusOpinion:\n\n"${post.text ? post.text.substring(0, 100) + '...' : ''}"\n\nRead more at: ${shareUrl}`;
+      await navigator.clipboard.writeText(cleanText);
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link & Preview copied', icon: 'Link', isSuccess: true } }));
+      onClose();
+    } catch (err) {console.error(err);}
+  };
+
+  const handleWhatsApp = () => {
+    const waText = isProfileShare ?
+    `🔥 *Check out @${user.username} on PlusOpinion*\n\nRead their opinions and reviews here: ${shareUrl}` :
+    `🔥 *New Interaction on PlusOpinion!*\n\n"@${post.username}: ${post.text ? post.text.substring(0, 80) : ''}..."\n\nRead full POV here:\n${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
+    onClose();
+  };
+
+  const handleInstagram = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Top Interaction', text: shareText, url: shareUrl });
+        onClose();
+      } catch (e) {}
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied! Open Instagram to share.', icon: 'Instagram', isSuccess: true } }));
+      setTimeout(() => {window.open('https://instagram.com', '_blank');}, 1000);
+      onClose();
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+        onClose();
+      } catch (err) {}
+    } else {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing not supported', icon: 'AlertTriangle' } }));
+    }
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: "fixed inset-0 z-[60] flex items-end justify-center sm:px-4" }, /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in", onClick: onClose }), /*#__PURE__*/
+    React.createElement("div", { className: "relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0" }), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex justify-between items-center mb-6 shrink-0" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-white font-heading font-bold text-lg" }, isProfileShare ? 'Share Profile' : 'Share Interaction'), /*#__PURE__*/
+    React.createElement("button", { onClick: onClose, className: "p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "X", size: 20 })
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "glass-panel rounded-2xl p-5 mb-6 border border-white/5 relative overflow-hidden group flex flex-col animate-fade-in shadow-2xl" },
+    !isProfileShare ? /*#__PURE__*/
+    React.createElement(React.Fragment, null, /*#__PURE__*/
+
+    React.createElement("div", { className: "absolute top-6 right-6 z-20 group/logo" }, /*#__PURE__*/
+    React.createElement("img", {
+      src: "/icon-192.png",
+      className: "w-10 h-10 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40",
+      style: {
+        filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
+        mixBlendMode: 'luminosity'
+      },
+      alt: "PlusOpinion Logo" }
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex justify-between items-start mb-2" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex gap-3 w-full" }, /*#__PURE__*/
+    React.createElement("div", { className: "relative" }, /*#__PURE__*/
+    React.createElement("img", { src: post.avatar || DEFAULT_AVATAR, className: "w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" }),
+    post.verified && /*#__PURE__*/
+    React.createElement("div", { className: "absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-[#121212]" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Check", size: 8, className: "text-white" })
+    )
+
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex-1 min-w-0 pr-2" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-bold text-white text-sm truncate" }, post.name), /*#__PURE__*/
+    React.createElement("div", { className: "rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-bold text-[9px] text-white tracking-wide" }, "RQS ", target.rqs || 0)
+    )
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "text-xs text-muted truncate" }, "@", target.username)
+    )
+    )
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center flex-wrap gap-2 mb-3 mt-1" }, /*#__PURE__*/
+    React.createElement("div", { className: "border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium whitespace-nowrap overflow-hidden max-w-full" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-neon truncate" }, post.category || 'Others'), /*#__PURE__*/
+    React.createElement("span", { className: "mx-1.5 opacity-30" }, "|"), /*#__PURE__*/
+    React.createElement("span", { className: "truncate" }, "plus opinion")
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("p", { className: "text-sm text-gray-200 leading-relaxed mb-3 font-light line-clamp-3" }, post.text),
+
+    post.media && /*#__PURE__*/
+    React.createElement("div", { className: "w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 overflow-hidden" },
+    post.media_type === 'video' ? /*#__PURE__*/
+    React.createElement("div", { className: "w-full h-32 flex items-center justify-center" }, /*#__PURE__*/
+    React.createElement("video", { src: post.media, className: "w-full h-full object-cover opacity-60" }), /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 flex items-center justify-center" }, /*#__PURE__*/
+    React.createElement("div", { className: "p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Video", size: 20, className: "text-white" })
+    )
+    )
+    ) : /*#__PURE__*/
+
+    React.createElement("img", { src: post.media, className: "w-full h-auto max-h-32 object-cover opacity-90" })
+
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "flex items-center justify-between pt-3 mt-1 border-t border-white/5" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-5" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-1.5 text-muted" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ThumbsUp", size: 18 }), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs font-medium" }, post.agrees || 0)
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-1.5 text-muted" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "MessageCircle", size: 18 }), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs font-medium" }, post.comments || 0)
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("span", { className: "text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 flex items-center gap-1.5" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-1 h-1 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]" }), "Verified Interaction"
+
+    )
+    )
+    ) : /*#__PURE__*/
+
+    React.createElement("div", { className: "mt-1 flex flex-col gap-6 relative overflow-hidden" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "flex items-center gap-6 relative min-h-[110px]" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "absolute -left-10 -top-10 w-48 h-48 rounded-full opacity-[0.07] blur-[40px] pointer-events-none" }, /*#__PURE__*/
+    React.createElement("img", { src: user.avatar_url || DEFAULT_AVATAR, className: "w-full h-full object-cover" })
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "relative group shrink-0" }, /*#__PURE__*/
+    React.createElement("div", { className: "absolute -inset-1.5 bg-white/5 rounded-2xl blur-sm opacity-50" }), /*#__PURE__*/
+    React.createElement("div", { className: "w-24 h-24 rounded-2xl border border-white/10 shadow-2xl overflow-hidden relative z-10 transition-transform duration-500 group-hover:scale-105" }, /*#__PURE__*/
+    React.createElement("img", { src: user.avatar_url || DEFAULT_AVATAR, className: "w-full h-full object-cover", alt: "Profile" })
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "flex-1 min-w-0 flex flex-col justify-center relative z-10" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-3 mb-1.5 flex-wrap" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-extrabold text-white text-2xl tracking-tight truncate" }, user.full_name), /*#__PURE__*/
+    React.createElement("div", { className: "rqs-pill px-2.5 py-1 rounded-full flex items-center shadow-lg border border-white/5" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-black text-[9px] text-white tracking-[0.2em] uppercase" }, "RQS ", user.rqs || 0)
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex flex-col gap-1.5" }, /*#__PURE__*/
+    React.createElement("div", { className: "text-sm font-medium text-white/50 tracking-wide flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement("span", null, "@", user.username)
+    ),
+    user.location && /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-1.5 text-white/30 text-[11px] font-medium italic" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "MapPin", size: 12, className: "opacity-50" }), /*#__PURE__*/
+    React.createElement("span", null, user.location)
+    )
+
+    )
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "relative group z-10" }, /*#__PURE__*/
+    React.createElement("div", { className: "text-gray-300 text-sm leading-relaxed font-light italic bg-white/[0.04] backdrop-blur-xl p-5 rounded-2xl border border-white/[0.08] shadow-inner line-clamp-3" },
+    user.bio || 'Sharing opinions and reviews on PlusOpinion!'
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "flex items-center justify-between pt-6 mt-1 border-t border-white/5 relative z-10" }, /*#__PURE__*/
+    React.createElement("button", {
+      className: "px-8 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-[10px] font-black tracking-[0.25em] uppercase transition-all active:scale-95 shadow-xl flex items-center gap-2",
+      onClick: () => window.location.href = shareUrl },
+    "Visit Profile"
+
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex flex-col items-center gap-1.5 shrink-0" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-10 h-10 z-20 group/logo flex items-center justify-center" }, /*#__PURE__*/
+    React.createElement("img", {
+      src: "/icon-192.png",
+      className: "w-8 h-8 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40",
+      style: {
+        filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
+        mixBlendMode: 'luminosity'
+      },
+      alt: "PlusOpinion Logo" }
+    )
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "text-[7px] text-white/20 font-black uppercase tracking-[0.25em] italic leading-tight" }, "PLUSOPINION.COM")
+    )
+    )
+    )
+
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "mb-6 overflow-hidden" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center justify-between mb-4" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-[10px] font-bold text-white/40 uppercase tracking-widest" }, "Share to Profiles"),
+    internalSelectedContacts.size > 0 && /*#__PURE__*/
+    React.createElement("button", { onClick: () => setInternalSelectedContacts(new Set()), className: "text-[10px] text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase" }, "Clear (", internalSelectedContacts.size, ")")
+
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex gap-4 overflow-x-auto select-none custom-scrollbar pb-2 px-1" }, /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        onClose();
+        if (window.toggleInbox) {window.toggleInbox(true);} else
+        if (window.openInbox) {window.openInbox();}
+        setTimeout(() => {
+          if (window._inboxBootPhase1 && window._inboxBootPhase1.openSearchOverlay) window._inboxBootPhase1.openSearchOverlay();
+        }, 500);
+      },
+      className: "flex flex-col items-center gap-2 group min-w-[64px] shrink-0" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-lg" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Search", size: 24, className: "text-white/70 group-hover:text-white" })
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-[10px] text-white/70 group-hover:text-white truncate w-14 text-center" }, "Search")
+    ),
+
+    internalLoadingContacts && /*#__PURE__*/React.createElement("div", { className: "text-white/40 text-xs py-3 px-4" }, "Loading..."),
+    !internalLoadingContacts && internalContacts.map((c) => {
+      const isSelected = internalSelectedContacts.has(c.id);
+      return (/*#__PURE__*/
+        React.createElement("button", { key: c.id, onClick: () => {
+            const next = new Set(internalSelectedContacts);
+            if (next.has(c.id)) next.delete(c.id);else next.add(c.id);
+            setInternalSelectedContacts(next);
+          }, className: "flex flex-col items-center gap-2 group min-w-[64px] shrink-0" }, /*#__PURE__*/
+        React.createElement("div", { className: `w-14 h-14 rounded-full border-2 transition-all duration-300 relative ${isSelected ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/10 hover:border-white/30'}` }, /*#__PURE__*/
+        React.createElement("img", { src: c.avatar_url || DEFAULT_AVATAR, className: "w-full h-full rounded-full object-cover", onError: (e) => {e.target.src = DEFAULT_AVATAR;} }),
+        isSelected && /*#__PURE__*/
+        React.createElement("div", { className: "absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-[#121212]" }, /*#__PURE__*/
+        React.createElement(Icon, { icon: "Check", size: 10, className: "text-white" })
+        )
+
+        ), /*#__PURE__*/
+        React.createElement("span", { className: "text-[10px] text-white/70 truncate w-14 text-center" }, c.full_name || c.username)
+        ));
+
+    }),
+    !internalLoadingContacts && internalContacts.length === 0 && /*#__PURE__*/
+    React.createElement("div", { className: "text-white/30 text-xs py-3 px-4 flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "MessageCircle", size: 14 }), /*#__PURE__*/React.createElement("span", null, "No conversations yet")
+    )
+
+    ),
+
+    internalSelectedContacts.size > 0 && /*#__PURE__*/
+    React.createElement("button", {
+      onClick: handleInternalSend,
+      disabled: internalSending,
+      className: "mt-4 w-full py-3 rounded-2xl bg-[#2f8bff] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#1a7bf0] active:scale-95 transition-all disabled:opacity-50" }, /*#__PURE__*/
+
+    React.createElement(Icon, { icon: internalSending ? "Clock" : "Send", size: 16 }),
+    internalSending ? 'Sending...' : `Send to ${internalSelectedContacts.size} Profile${internalSelectedContacts.size > 1 ? 's' : ''}`
+    )
+
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "grid grid-cols-4 gap-4 mb-4" }, /*#__PURE__*/
+    React.createElement("button", { onClick: handleCopy, className: "flex flex-col items-center gap-2 group" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Link", size: 24, className: "text-white" })
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs text-muted" }, "Copy Link")
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: handleWhatsApp, className: "flex flex-col items-center gap-2 group" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "WhatsApp", size: 24, className: "text-white" })
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs text-muted" }, "WhatsApp")
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: handleInstagram, className: "flex flex-col items-center gap-2 group" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Instagram", size: 24, className: "text-white" })
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs text-muted" }, "Instagram")
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: handleNativeShare, className: "flex flex-col items-center gap-2 group" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Share", size: 24, className: "text-white" })
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs text-muted" }, "More")
+    )
+    )
+    )
+    ));
+
+};
+
+
+
+const Avatar = ({ src, className, fallbackSize = 24, onClick }) => {
+  const [error, setError] = useState(false);
+
+  useEffect(() => {setError(false);}, [src]);
+
+  if (!src || error) {
+    return (/*#__PURE__*/
+      React.createElement("img", {
+        src: DEFAULT_AVATAR,
+        className: `${className} object-cover`,
+        onClick: onClick,
+        alt: "Avatar" }
+      ));
+
+  }
+
+  return (/*#__PURE__*/
+    React.createElement("img", {
+      src: src,
+      className: className,
+      onError: () => setError(true),
+      onClick: onClick,
+      alt: "Avatar" }
+    ));
+
+};
+
+// --- Clickable @mention renderer ---
+const renderTextWithMentions = (text) => {
+  if (!text) return text;
+  const parts = text.split(/(@[\w.]+)/g);
+  return parts.map((part, i) => {
+    if (/@[\w.]+/.test(part)) {
+      const username = part.slice(1);
+      return (/*#__PURE__*/
+        React.createElement("span", {
+          key: i,
+          className: "text-neon font-semibold cursor-pointer hover:underline",
+          onClick: (e) => {
+            e.stopPropagation();
+            vibrate(5);
+            window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+          } },
+
+        part
+        ));
+
+    }
+    return part;
+  });
+};
+
+// =============================================
+// COMMENT REPLY ITEM (indented)
+// =============================================
+const ReplyItem = ({ reply, onReply }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(reply.likes?.[0]?.count || 0);
+
+  useEffect(() => {
+    const checkLike = async () => {
+      if (window.hasLikedComment && typeof reply.id === 'string') {
+        try {setIsLiked(await window.hasLikedComment(reply.id));} catch (e) {}
+      }
+    };
+    checkLike();
+  }, [reply.id]);
+
+  useEffect(() => {
+    const ch = window.supabase.channel(`comment-likes-rt:${reply.id}`).
+    on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${reply.id}` },
+    () => setLikesCount((p) => p + 1)).
+    on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${reply.id}` },
+    () => setLikesCount((p) => Math.max(0, p - 1))).
+    subscribe();
+    return () => window.supabase.removeChannel(ch);
+  }, [reply.id]);
+
+  const handleLike = async () => {
+    vibrate(5);
+    const newStatus = !isLiked;
+    setIsLiked(newStatus);
+    setLikesCount((p) => newStatus ? p + 1 : Math.max(0, p - 1));
+    try {
+      if (newStatus) await window.likeComment(reply.id);else
+      await window.unlikeComment(reply.id);
+    } catch (e) {
+      setIsLiked(!newStatus);
+      setLikesCount((p) => !newStatus ? p + 1 : Math.max(0, p - 1));
+    }
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: `flex gap-2 text-sm animate-fade-in ml-7 pl-3 border-l border-white/10 mt-2 ${reply.isPending ? 'opacity-50' : ''}` }, /*#__PURE__*/
+    React.createElement("div", { className: "flex-shrink-0" }, /*#__PURE__*/
+    React.createElement(Avatar, { src: reply.avatar, className: "w-5 h-5 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer", fallbackSize: 10,
+      onClick: () => {vibrate();if (reply.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`;} })
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex-1" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-baseline justify-between" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-baseline gap-1.5" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-bold text-white text-[11px] cursor-pointer hover:text-neon transition-colors",
+      onClick: () => {vibrate();if (reply.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`;} },
+    reply.user), /*#__PURE__*/
+    React.createElement("span", { className: "text-[9px] text-muted" }, reply.time)
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: handleLike, className: `flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}` }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ThumbsUp", size: 10, className: `stroke-[1.5px] ${isLiked ? 'fill-white' : ''}`, style: { fill: isLiked ? 'white' : 'none' } }),
+    likesCount > 0 && /*#__PURE__*/React.createElement("span", { className: "text-[9px]" }, likesCount)
+    )
+    ), /*#__PURE__*/
+    React.createElement("p", { className: "text-gray-300 text-[11px] leading-relaxed mt-0.5" }, renderTextWithMentions(reply.text)), /*#__PURE__*/
+    React.createElement("button", { onClick: () => onReply && onReply(reply), className: "text-[9px] text-muted hover:text-white transition-colors mt-0.5" }, "Reply")
+    )
+    ));
+
+};
+
+// =============================================
+// COMMENT ITEM (top-level, with replies)
+// =============================================
+const CommentItem = ({ comment, onReply }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+  const [showReplies, setShowReplies] = useState(true);
+
+  useEffect(() => {
+    const checkLike = async () => {
+      if (window.hasLikedComment && typeof comment.id === 'string') {
+        try {setIsLiked(await window.hasLikedComment(comment.id));} catch (e) {}
+      }
+    };
+    checkLike();
+  }, [comment.id]);
+
+  useEffect(() => {
+    if (!comment.id || comment.isPending) return;
+    const ch = window.supabase.channel(`comment-likes-rt:${comment.id}`).
+    on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${comment.id}` },
+    () => setLikesCount((p) => p + 1)).
+    on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${comment.id}` },
+    () => setLikesCount((p) => Math.max(0, p - 1))).
+    subscribe();
+    return () => window.supabase.removeChannel(ch);
+  }, [comment.id]);
+
+  const handleLike = async () => {
+    vibrate(5);
+    const newStatus = !isLiked;
+    setIsLiked(newStatus);
+    setLikesCount((p) => newStatus ? p + 1 : Math.max(0, p - 1));
+    try {
+      if (newStatus) await window.likeComment(comment.id);else
+      await window.unlikeComment(comment.id);
+    } catch (e) {
+      setIsLiked(!newStatus);
+      setLikesCount((p) => !newStatus ? p + 1 : Math.max(0, p - 1));
+    }
+  };
+
+  const replies = comment.replies || [];
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: `animate-fade-in ${comment.isPending ? 'opacity-50' : ''}` }, /*#__PURE__*/
+    React.createElement("div", { className: "flex gap-3 text-sm group" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex-shrink-0" }, /*#__PURE__*/
+    React.createElement(Avatar, { src: comment.avatar, className: "w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer", fallbackSize: 12,
+      onClick: () => {vibrate(5);if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`;} })
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex-1" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-baseline justify-between focus-within:ring-0" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-baseline gap-2 cursor-pointer group/name",
+      onClick: () => {vibrate(5);if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`;} }, /*#__PURE__*/
+    React.createElement("span", { className: "font-bold text-white text-xs group-hover/name:text-neon transition-colors" }, comment.user), /*#__PURE__*/
+    React.createElement("span", { className: "text-[10px] text-muted" }, comment.time)
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: handleLike, className: `flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}` }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ThumbsUp", size: 12, className: `stroke-[1.5px] ${isLiked ? 'fill-white' : ''}`, style: { fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' } }),
+    likesCount > 0 && /*#__PURE__*/React.createElement("span", { className: "text-[10px]" }, likesCount)
+    )
+    ), /*#__PURE__*/
+    React.createElement("p", { className: "text-gray-300 text-xs leading-relaxed mt-0.5" }, renderTextWithMentions(comment.text)), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-3 mt-1" }, /*#__PURE__*/
+    React.createElement("button", { onClick: () => onReply && onReply(comment), className: "text-[10px] text-muted hover:text-white transition-colors font-medium" }, "Reply",
+    replies.length > 0 ? ` · ${replies.length}` : ''
+    ),
+    replies.length > 0 && /*#__PURE__*/
+    React.createElement("button", { onClick: () => setShowReplies((p) => !p), className: "text-[10px] text-neon/70 hover:text-neon transition-colors font-medium" },
+    showReplies ? 'Hide replies' : `View ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`
+    )
+
+    )
+    )
+    ),
+    showReplies && replies.map((r) => /*#__PURE__*/
+    React.createElement(ReplyItem, { key: r.id, reply: r, onReply: onReply })
+    )
+    ));
+
+};
+
+// =============================================
+// @MENTION AUTOCOMPLETE COMPONENT
+// =============================================
+const MentionAutocomplete = ({ query, onSelect, direction = 'up', coords }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!query || query.length < 1) {setUsers([]);return;}
+    setLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const results = await window.searchUsersForMention(query);
+        setUsers(results);
+      } catch (e) {
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  if (!query || users.length === 0 && !loading) return null;
+
+  const positionClass = direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2';
+  const style = coords ? {
+    position: 'absolute',
+    top: `${coords.top + 25}px`,
+    left: `${coords.left}px`,
+    width: '220px',
+    zIndex: 100
+  } : {};
+
+  return (/*#__PURE__*/
+    React.createElement("div", {
+      style: style,
+      className: `${coords ? '' : 'absolute ' + positionClass + ' left-0 right-0'} bg-[#1A1C2E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in` },
+
+    loading && /*#__PURE__*/React.createElement("div", { className: "px-3 py-2 text-xs text-muted" }, "Searching..."),
+    users.map((u) => /*#__PURE__*/
+    React.createElement("button", {
+      key: u.id,
+      onMouseDown: (e) => {e.preventDefault();onSelect(u);},
+      className: "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left" }, /*#__PURE__*/
+
+    React.createElement(Avatar, { src: u.avatar_url, className: "w-7 h-7 rounded-full border border-white/10 object-cover flex-shrink-0", fallbackSize: 13 }), /*#__PURE__*/
+    React.createElement("div", { className: "flex-1 min-w-0" }, /*#__PURE__*/
+    React.createElement("div", { className: "text-white text-xs font-semibold truncate" }, u.full_name), /*#__PURE__*/
+    React.createElement("div", { className: "text-muted text-[10px] truncate" }, "@", u.username)
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-[9px] text-neon/60 font-bold shrink-0" }, "RQS ", u.rqs_score)
+    )
+    )
+    ));
+
+};
+
+
+// --- OPINION CARD (PUBLIC VIEW) ---
+const Post = ({ post, index, onShare, onReport, userProfile, onBookmark, savedPosts, onRemove, targetUserId, onImageClick }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [localLikes, setLocalLikes] = useState(post.agrees || 0);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isHidden, setIsHidden] = useState(post.isHidden || false);
+  const isSaved = savedPosts?.has(String(post.id));
+  const [localCommentCount, setLocalCommentCount] = useState(post.comments || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [localComments, setLocalComments] = useState([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [mentionQuery, setMentionQuery] = useState(null);
+  const commentInputRef = useRef(null);
+
+  const handleLike = async () => {
+    vibrate(10);
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    setLocalLikes((prev) => newLiked ? prev + 1 : prev - 1);
+
+    try {
+      if (newLiked) await window.likePost(post.id);else
+      await window.unlikePost(post.id);
+    } catch (err) {
+      console.error('Like action failed', err);
+      setIsLiked(!newLiked);
+      setLocalLikes((prev) => !newLiked ? prev + 1 : prev - 1);
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: err.message || 'Action failed', icon: 'AlertTriangle', isSuccess: false } }));
+    }
+  };
+
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (window.hasLikedPost) {
+        try {
+          const hasLiked = await window.hasLikedPost(post.id);
+          setIsLiked(hasLiked);
+        } catch (e) {
+          console.error('Like check failed', e);
+        }
+      }
+    };
+    checkLikeStatus();
+  }, [post.id]);
+
+  useEffect(() => {
+    const channel = window.supabase.channel(`post-likes:${post.id}`).
+    on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'posts',
+      filter: `id=eq.${post.id}`
+    }, (payload) => {
+      if (payload.new) {
+        if (payload.new.agrees_count !== undefined) {
+          setLocalLikes(payload.new.agrees_count);
+        }
+        if (payload.new.comments_count !== undefined) {
+          setLocalCommentCount(payload.new.comments_count);
+        }
+      }
+    }).
+    subscribe();
+
+    return () => {
+      window.supabase.removeChannel(channel);
+    };
+  }, [post.id]);
+
+  const commentsFetchedRef = useRef(false);
+
+  const transformComment = (c) => ({
+    id: c.id,
+    user: c.profiles?.full_name || 'User',
+    username: c.profiles?.username || '',
+    avatar: c.profiles?.avatar_url || '',
+    text: c.text_content,
+    time: formatTime(c.created_at),
+    user_id: c.user_id,
+    likes: c.likes,
+    parent_comment_id: c.parent_comment_id || null,
+    replies: (c.replies || []).map((r) => transformComment(r))
+  });
+
+  // Fetch threaded comments once on first open
+  useEffect(() => {
+    if (!showComments || commentsFetchedRef.current) return;
+
+    const fetchComments = async () => {
+      setIsLoadingComments(true);
+      try {
+        const comments = await window.getComments(post.id);
+        setLocalComments(comments.map(transformComment));
+        commentsFetchedRef.current = true;
+      } catch (e) {
+        console.error('Failed to load comments', e);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+
+    fetchComments();
+  }, [showComments, post.id]);
+
+  // Realtime subscription — stays alive on mount, independent of toggle
+  useEffect(() => {
+    const channel = window.supabase.channel(`post-comments:${post.id}`).
+    on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'comments',
+      filter: `post_id=eq.${post.id}`
+    }, async (payload) => {
+      const currentUser = await window.getCurrentUser();
+      if (payload.new.user_id === currentUser?.id) return; // handled optimistically
+
+      const { data: profile } = await window.supabase.
+      from('profiles').
+      select('full_name, username, avatar_url').
+      eq('id', payload.new.user_id).
+      maybeSingle();
+
+      const newEntry = {
+        id: payload.new.id,
+        user_id: payload.new.user_id,
+        user: profile?.full_name || 'User',
+        username: profile?.username || '',
+        avatar: profile?.avatar_url || '',
+        text: payload.new.text_content,
+        time: 'Just now',
+        parent_comment_id: payload.new.parent_comment_id || null,
+        likes: [],
+        replies: []
+      };
+
+      const parentId = payload.new.parent_comment_id;
+      if (!parentId) {
+        setLocalComments((prev) => {
+          if (prev.some((c) => c.id === newEntry.id)) return prev;
+          return [...prev, newEntry];
+        });
+      } else {
+        setLocalComments((prev) => {
+          const parentExists = prev.some((c) => c.id === parentId);
+          if (!parentExists) return prev;
+          return prev.map((c) =>
+          c.id === parentId ?
+          {
+            ...c, replies: [
+            ...(c.replies || []).filter((r) => r.id !== newEntry.id),
+            newEntry]
+
+          } :
+          c
+          );
+        });
+      }
+      vibrate(5);
+    }).
+    subscribe();
+
+    return () => {
+      window.supabase.removeChannel(channel);
+    };
+  }, [post.id]); // only post.id
+
+  const toggleComments = () => {
+    vibrate(5);
+    setShowComments(!showComments);
+  };
+
+  const handleSendComment = async () => {
+    if (!commentText.trim()) return;
+
+    const isReply = !!replyingTo;
+    const tempId = Date.now();
+    const tempEntry = {
+      id: tempId,
+      user: userProfile?.full_name || 'You',
+      username: userProfile?.username || '',
+      user_id: userProfile?.id,
+      avatar: userProfile?.avatar_url || '',
+      text: commentText,
+      time: 'Just now',
+      isPending: true,
+      likes: [],
+      replies: []
+    };
+
+    if (isReply) {
+      setLocalComments((prev) => prev.map((c) =>
+      c.id === replyingTo.id ? { ...c, replies: [...(c.replies || []), tempEntry] } : c
+      ));
+    } else {
+      setLocalComments((prev) => [...prev, tempEntry]);
+    }
+
+    const textToSend = commentText;
+    setCommentText('');
+    setReplyingTo(null);
+    setMentionQuery(null);
+    vibrate(10);
+
+    try {
+      let newData;
+      if (isReply) {
+        newData = await window.createReply(post.id, replyingTo.id, textToSend);
+        setLocalComments((prev) => prev.map((c) =>
+        c.id === replyingTo.id ?
+        {
+          ...c, replies: (c.replies || []).map((r) => r.id === tempId ? {
+            id: newData.id, user: userProfile?.full_name || 'You',
+            username: userProfile?.username || '', user_id: userProfile?.id,
+            avatar: userProfile?.avatar_url || '', text: newData.text_content,
+            time: 'Just now', likes: [], replies: []
+          } : r)
+        } :
+        c
+        ));
+      } else {
+        newData = await window.createComment(post.id, textToSend);
+        setLocalComments((prev) => prev.map((c) => c.id === tempId ? {
+          id: newData.id, user: userProfile?.full_name || 'You',
+          username: userProfile?.username || '', avatar: userProfile?.avatar_url || '',
+          text: newData.text_content, time: 'Just now', likes: newData.likes || [], replies: []
+        } : c));
+      }
+    } catch (e) {
+      console.error('Failed to add comment', e);
+      if (isReply) {
+        setLocalComments((prev) => prev.map((c) =>
+        c.id === replyingTo?.id ? { ...c, replies: (c.replies || []).filter((r) => r.id !== tempId) } : c
+        ));
+      } else {
+        setLocalComments((prev) => prev.filter((c) => c.id !== tempId));
+      }
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to post comment', icon: 'AlertTriangle', isSuccess: false } }));
+    }
+  };
+
+  const handleReply = (commentOrReply, topLevelId = null) => {
+    const parentId = topLevelId || commentOrReply.parent_comment_id || commentOrReply.id;
+    setReplyingTo({ id: parentId, user: commentOrReply.user, username: commentOrReply.username || '' });
+    setCommentText(`@${commentOrReply.username || commentOrReply.user} `);
+    setShowComments(true);
+    setTimeout(() => commentInputRef.current?.focus(), 50);
+  };
+
+  const handleCommentChange = (e) => {
+    const val = e.target.value;
+    setCommentText(val);
+    const cursor = e.target.selectionStart;
+    const atMatch = val.substring(0, cursor).match(/@([\w.]*)$/);
+    setMentionQuery(atMatch ? atMatch[1] : null);
+  };
+
+  const handleMentionSelect = (user) => {
+    const cursor = commentInputRef.current?.selectionStart || commentText.length;
+    const textBeforeCursor = commentText.substring(0, cursor);
+    const textAfterCursor = commentText.substring(cursor);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+
+    if (atIndex !== -1) {
+      const newTextBefore = textBeforeCursor.substring(0, atIndex) + '@' + user.username + ' ';
+      setCommentText(newTextBefore + textAfterCursor);
+      setMentionQuery(null);
+      // Reset cursor position after React update
+      setTimeout(() => {
+        if (commentInputRef.current) {
+          const newPos = newTextBefore.length;
+          commentInputRef.current.focus();
+          commentInputRef.current.setSelectionRange(newPos, newPos);
+        }
+      }, 0);
+    }
+  };
+
+  const handleMoreAction = (action) => {
+    vibrate(10);
+    setShowMoreMenu(false);
+
+    if (action === 'edit') {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Edit feature coming soon!', icon: 'FileText' } }));
+    } else if (action === 'delete') {
+      if (confirm('Are you sure you want to delete this opinion?')) {
+        if (onRemove) onRemove(post.id, 'Deleted', 'delete');
+      }
+    } else if (action === 'not_interested') {
+      if (onRemove) onRemove(post.id, 'Marked as not interested', 'not_interested', post.category);
+    } else if (action === 'hide') {
+      setIsHidden(true);
+      if (onRemove) onRemove(post.id, 'Opinion hidden', 'hide_post');
+    } else if (action === 'block_brand') {
+      if (onRemove) onRemove(post.id, `Posts from ${post.seenBy || 'Brand'} hidden`, 'mute_brand', post.seenBy);
+    } else if (action === 'bookmark') {
+      const nextState = !isSaved;
+      if (onBookmark) onBookmark(post.id, nextState);
+    } else if (action === 'insight') {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Insight feature coming soon!', icon: 'BarChart' } }));
+    }
+  };
+
+  const toggleMoreMenu = (e) => {
+    e.stopPropagation();
+    vibrate(5);
+    setShowMoreMenu(!showMoreMenu);
+  };
+
+  // Calculate position for the portal menu
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const moreButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (showMoreMenu && moreButtonRef.current) {
+      const rect = moreButtonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY + 10,
+        right: window.innerWidth - rect.right
+      });
+    }
+  }, [showMoreMenu]);
+
+  if (isHidden) {
+    return (/*#__PURE__*/
+      React.createElement("div", { className: "glass-panel rounded-2xl p-4 mb-4 flex items-center justify-between animate-fade-in" }, /*#__PURE__*/
+      React.createElement("div", { className: "flex items-center gap-3" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "EyeOff", size: 20, className: "text-muted" }), /*#__PURE__*/
+      React.createElement("span", { className: "text-sm text-gray-400" }, "Opinion hidden")
+      ), /*#__PURE__*/
+      React.createElement("button", { onClick: () => setIsHidden(false), className: "underline text-neon text-xs" }, "Undo")
+      ));
+
+  }
+
+  return (/*#__PURE__*/
+    React.createElement("div", {
+      className: "glass-panel rounded-2xl p-4 mb-4 relative transition-all duration-300 animate-enter" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "flex justify-between items-start mb-2" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex gap-3 w-full" }, /*#__PURE__*/
+    React.createElement("div", {
+      className: "group relative cursor-pointer active:scale-95 transition-transform",
+      onClick: () => {vibrate(5);window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`;} }, /*#__PURE__*/
+
+    React.createElement("img", { src: post.avatar || DEFAULT_AVATAR, alt: "Profile", loading: "lazy", className: "w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" }), /*#__PURE__*/
+    React.createElement("span", { className: "delayed-label absolute top-12 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg" }, "View Profile")
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex-1 min-w-0 pr-8" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement("div", {
+      className: "group relative cursor-pointer hover:text-neon transition-colors",
+      onClick: () => {vibrate(5);window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`;} }, /*#__PURE__*/
+
+    React.createElement("span", { className: "font-heading font-bold text-white text-sm truncate" }, post.name), /*#__PURE__*/
+    React.createElement("span", { className: "delayed-label absolute bottom-6 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg" }, "View Profile")
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "group relative rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-bold text-[9px] text-white tracking-wide cursor-default" }, "RQS ", post.rqs), /*#__PURE__*/
+    React.createElement("span", { className: "delayed-label absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg" }, "Review Quality Score")
+    )
+    ), /*#__PURE__*/
+    React.createElement("div", {
+      className: "group relative inline-block cursor-pointer",
+      onClick: () => {vibrate(5);window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`;} }, /*#__PURE__*/
+
+    React.createElement("div", { className: "text-xs text-muted truncate hover:text-white transition-colors" }, "@", post.username), /*#__PURE__*/
+    React.createElement("span", { className: "delayed-label absolute top-5 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg" }, "View Profile")
+    )
+    )
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "absolute top-4 right-4 touch-scale text-muted/60 hover:text-white group z-10", onClick: toggleMoreMenu, ref: moreButtonRef }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "MoreVertical", size: 18 })
+    )
+    ),
+
+    showMoreMenu && ReactDOM.createPortal(/*#__PURE__*/
+      React.createElement(React.Fragment, null, /*#__PURE__*/
+      React.createElement("div", { className: "fixed inset-0 z-[9998]", onClick: (e) => {e.stopPropagation();setShowMoreMenu(false);} }), /*#__PURE__*/
+      React.createElement("div", {
+        className: "absolute z-[9999] bg-[#1A1C2E] border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1 w-56 animate-fade-in origin-top-right backdrop-blur-xl",
+        style: { top: `${menuPosition.top}px`, right: `${menuPosition.right}px` },
+        onClick: (e) => e.stopPropagation() },
+
+      userProfile && String(userProfile.id) === String(post.user_id || post.profiles?.id) ? /*#__PURE__*/
+      /* Owner Options */
+      React.createElement(React.Fragment, null, /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('edit'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "FileText", size: 16, className: "text-muted" }), /*#__PURE__*/
+      React.createElement("span", null, "Edit Opinion")
+      ), /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('delete'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-red-400 group" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "Trash", size: 16, className: "text-red-400" }), /*#__PURE__*/
+      React.createElement("span", null, "Delete Opinion")
+      ), /*#__PURE__*/
+      React.createElement("div", { className: "h-px bg-white/10 my-1" }), /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('bookmark'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "BookMark", size: 16, className: isSaved ? "text-neon" : "text-muted" }), /*#__PURE__*/
+      React.createElement("span", null, isSaved ? 'Bookmarked' : 'Bookmark')
+      )
+      ) : /*#__PURE__*/
+
+      /* Non-Owner Options */
+      React.createElement(React.Fragment, null, /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('not_interested'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "EyeOff", size: 16, className: "text-muted" }), /*#__PURE__*/
+      React.createElement("span", null, "Not interested in this post")
+      ), /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('hide'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "X", size: 16, className: "text-muted" }), /*#__PURE__*/
+      React.createElement("span", null, "Hide this opinion")
+      ), /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('block_brand'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "Flag", size: 16, className: "text-muted" }), /*#__PURE__*/
+      React.createElement("span", null, "Don't show posts from ", post.seenBy || 'Brand')
+      ), /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('bookmark'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "BookMark", size: 16, className: isSaved ? "text-neon" : "text-muted" }), /*#__PURE__*/
+      React.createElement("span", null, isSaved ? 'Bookmarked' : 'Bookmark')
+      )
+      ), /*#__PURE__*/
+
+
+      React.createElement("div", { className: "h-px bg-white/10 my-1" }), /*#__PURE__*/
+      React.createElement("button", { onClick: () => handleMoreAction('insight'), className: "flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "BarChart", size: 16, className: "text-muted" }), /*#__PURE__*/
+      React.createElement("div", { className: "flex flex-col items-start" }, /*#__PURE__*/
+      React.createElement("span", null, "View Insights"), /*#__PURE__*/
+      React.createElement("span", { className: "text-[8px] text-neon font-bold tracking-wider" }, "COMING SOON")
+      )
+      )
+      )
+      ),
+      document.body
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex items-center flex-wrap gap-2 mb-3 mt-1" }, /*#__PURE__*/
+    React.createElement("div", { className: "group relative border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-neon" }, post.category), /*#__PURE__*/
+    React.createElement("span", { className: "mx-1.5 opacity-30" }, "|"), /*#__PURE__*/
+    React.createElement("span", null, post.product)
+    ),
+    post.verified && /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-1 text-accent-green touch-scale group relative" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ShieldCheck", size: 16 }), /*#__PURE__*/
+    React.createElement("span", { className: "delayed-label absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg" }, "Verified Purchase")
+    )
+
+    ), /*#__PURE__*/
+
+    React.createElement("p", { className: "text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2" }, renderTextWithMentions(post.text)),
+
+    (post.media || post.images && post.images.length > 0) && /*#__PURE__*/
+    React.createElement(SmartMedia, {
+      src: post.media,
+      type: post.media_type,
+      images: post.images,
+      onImageClick: onImageClick }
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "flex items-end justify-between pt-3 mt-1 relative" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-6" }, /*#__PURE__*/
+    React.createElement("button", {
+      onClick: handleLike,
+      className: "flex items-center gap-1.5 touch-scale group relative" }, /*#__PURE__*/
+
+    React.createElement("div", { className: isLiked ? "animate-pop" : "" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ThumbsUp", size: 20,
+      className: `transition-all duration-300 stroke-[1.5px] ${isLiked ? 'fill-white stroke-black/80 filter drop-shadow-[0_2px_0_rgba(255,255,255,0.4)]' : ''}`,
+      style: isLiked ? {
+        fill: 'white',
+        stroke: '#000',
+        strokeWidth: '1.5px',
+        filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
+      } : {} }
+    )
+    ), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs font-medium" }, localLikes)
+    ), /*#__PURE__*/
+    React.createElement("button", { className: `flex items-center gap-1.5 touch-scale transition-transform group relative ${showComments ? 'text-white' : 'text-muted hover:text-white'}`, onClick: toggleComments }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "MessageCircle", size: 20, className: "stroke-[1.5]" }), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs font-medium" }, showComments ? localComments.length : Math.max(localCommentCount, localComments.length))
+    ), /*#__PURE__*/
+    React.createElement("button", { className: "text-muted hover:text-white transition-colors touch-scale group relative", onClick: () => {vibrate();if (onShare) onShare(post);} }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Share", size: 20 })
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex items-center gap-3" },
+    post.seenBy && /*#__PURE__*/
+    React.createElement("span", { className: "group relative text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 cursor-default flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]" }), "Seen by ",
+    post.seenBy
+    ), /*#__PURE__*/
+
+    React.createElement("button", { className: "text-muted/40 hover:text-danger transition-colors touch-scale group relative", onClick: () => {vibrate();if (onReport) onReport(post.id);} }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "AlertTriangle", size: 18, className: "stroke-[1.5]" })
+    )
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "mt-3 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[10px] text-muted/40 font-medium" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Clock", size: 12 }), /*#__PURE__*/
+    React.createElement("span", null, "Posted ", post.time, " ago")
+    ),
+
+
+    showComments && /*#__PURE__*/
+    React.createElement("div", { className: "mt-4 pt-0 border-t border-white/5 animate-fade-in origin-top" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex justify-between items-center mb-3 pt-2" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-xs font-bold text-white" }, "Comments (",
+    localComments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0), ")"
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: () => {setShowComments(false);setReplyingTo(null);setMentionQuery(null);}, className: "text-muted hover:text-white text-xs" }, "Close")
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "space-y-4 mb-4 max-h-72 overflow-y-auto no-scrollbar" },
+    isLoadingComments && /*#__PURE__*/React.createElement("div", { className: "text-center text-muted text-xs py-2" }, "Loading comments..."),
+
+    localComments.map((c) => /*#__PURE__*/
+    React.createElement(CommentItem, { key: c.id, comment: c, onReply: (target, topLevelId = null) => handleReply(target, topLevelId || c.id) })
+    ),
+
+    !isLoadingComments && localComments.length === 0 && /*#__PURE__*/
+    React.createElement("div", { className: "text-center text-muted text-xs py-2" }, "No comments yet. Be the first!")
+
+    ),
+
+
+    replyingTo && /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center justify-between px-3 py-1.5 mb-1.5 bg-neon/5 border border-neon/20 rounded-lg" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-[10px] text-neon/80" }, "Replying to ", /*#__PURE__*/React.createElement("span", { className: "font-bold" }, "@", replyingTo.username || replyingTo.user)), /*#__PURE__*/
+    React.createElement("button", { onClick: () => {setReplyingTo(null);setCommentText('');setMentionQuery(null);}, className: "text-muted hover:text-white" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "X", size: 12 })
+    )
+    ), /*#__PURE__*/
+
+
+
+    React.createElement("div", { className: "relative" }, /*#__PURE__*/
+    React.createElement(MentionAutocomplete, { query: mentionQuery, onSelect: handleMentionSelect }), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors" }, /*#__PURE__*/
+    React.createElement("input", {
+      ref: commentInputRef,
+      value: commentText,
+      onChange: handleCommentChange,
+      placeholder: replyingTo ? `Reply to @${replyingTo.username || replyingTo.user}...` : "Add a comment or type @ to mention...",
+      className: "bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30",
+      onKeyDown: (e) => e.key === 'Enter' && handleSendComment() }
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: handleSendComment, className: `${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors` }, /*#__PURE__*/React.createElement(Icon, { icon: "Send", size: 14 }))
+    )
+    )
+    )
+
+    ));
+
+};
+
+// --- IMAGE VIEWER COMPONENT ---
+// PREMIUM ZOOMABLE MEDIA COMPONENT (Instagram Style)
+// ─── SMART MEDIA RATIO DETECTION HELPER ────────────────────────────────────
+// Decodes the image/video ratio and returns CSS aspect-ratio class
+const getAspectClass = (ratio) => {
+  if (ratio >= 1.55) return 'aspect-[16/9]'; // Landscape → 16:9
+  if (ratio >= 0.89) return 'aspect-square'; // Square / near-square → 1:1
+  return 'aspect-[4/5]'; // Portrait → 4:5 (covers tall too)
+};
+
+// ─── SMART MEDIA COMPONENT ─────────────────────────────────────────────────
+// Replaces ZoomableMedia. Handles: single image, single video, multi-image carousel
+// Props: src (string), type ('image'|'video'), images (string[]), onImageClick
+const SmartMedia = ({ src, type, images, onImageClick }) => {
+  const isVideo = type === 'video' || type?.startsWith('video/') || src?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
+  const isMulti = images && images.length > 1;
+  const imageList = isMulti ? images : [src].filter(Boolean);
+
+  // Global mute state
+  const [isMuted, setIsMuted] = useState(() => {
+    const stored = localStorage.getItem('globalVideoMuted');
+    return stored ? stored === 'true' : false; // default unmuted
+  });
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const handleMuteChange = (e) => setIsMuted(e.detail.isMuted);
+    window.addEventListener('globalMuteToggle', handleMuteChange);
+    return () => window.removeEventListener('globalMuteToggle', handleMuteChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isVideo || !containerRef.current) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsInView(entry.isIntersecting);
+    }, { threshold: 0.6 });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [isVideo]);
+
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    localStorage.setItem('globalVideoMuted', newMuted);
+    window.dispatchEvent(new CustomEvent('globalMuteToggle', { detail: { isMuted: newMuted } }));
+  };
+
+  // Aspect ratio state (determined after first media loads)
+  const [aspectClass, setAspectClass] = useState('aspect-[4/5]');
+  const [ratioDetected, setRatioDetected] = useState(false);
+
+  // Carousel state
+  const [activeIdx, useState__activeIdx] = useState(0);
+  const setActiveIdx = useState__activeIdx; // Keep variable accessible
+  const [dragDelta, setDragDelta] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef(null);
+  const containerRef = useRef(null);
+
+  // Pinch-zoom state (single media only)
+  const [scale, setScale] = useState(1);
+  const [pinchOrigin, setPinchOrigin] = useState({ x: 50, y: 50 });
+  const [isPinching, setIsPinching] = useState(false);
+  const initialDist = useRef(null);
+
+  // Detect ratio from the first image/video
+  const handleMediaLoad = (e) => {
+    if (ratioDetected) return;
+    const el = e.target;
+    const w = el.naturalWidth || el.videoWidth || el.clientWidth;
+    const h = el.naturalHeight || el.videoHeight || el.clientHeight;
+    if (w && h) {
+      setAspectClass(getAspectClass(w / h));
+      setRatioDetected(true);
+    }
+  };
+
+  // ── Carousel touch/drag handlers ──────────────────────────────────────
+  const SWIPE_THRESHOLD = 40;
+
+  const onCarouselTouchStart = (e) => {
+    e.stopPropagation();
+    if (e.touches.length !== 1) return;
+    dragStart.current = e.touches[0].clientX;
+    setIsDragging(true);
+  };
+
+  const onCarouselTouchMove = (e) => {
+    e.stopPropagation();
+    if (!isDragging || dragStart.current === null) return;
+    const delta = e.touches[0].clientX - dragStart.current;
+    // Clamp: don't allow dragging past edges
+    if (activeIdx === 0 && delta > 0 || activeIdx === imageList.length - 1 && delta < 0) {
+      setDragDelta(delta * 0.2); // Rubber-band
+    } else {
+      setDragDelta(delta);
+    }
+  };
+
+  const onCarouselTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+      setActiveIdx((i) => i + 1);
+    } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+      setActiveIdx((i) => i - 1);
+    }
+    setDragDelta(0);
+    dragStart.current = null;
+  };
+
+  // ── Pinch-zoom handlers (single media) ──────────────────────────────────
+  const onSingleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      setIsPinching(true);
+      const t1 = e.touches[0],t2 = e.touches[1];
+      initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const mx = (t1.pageX + t2.pageX) / 2;
+        const my = (t1.pageY + t2.pageY) / 2;
+        setPinchOrigin({ x: (mx - rect.left) / rect.width * 100, y: (my - rect.top) / rect.height * 100 });
+      }
+    }
+  };
+  const onSingleTouchMove = (e) => {
+    if (e.touches.length === 2 && isPinching && initialDist.current) {
+      e.preventDefault();
+      const t1 = e.touches[0],t2 = e.touches[1];
+      const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+      setScale(Math.min(Math.max(d / initialDist.current, 1), 4));
+    }
+  };
+  const onSingleTouchEnd = () => {setIsPinching(false);setScale(1);initialDist.current = null;};
+
+  const handleClick = () => {
+    if (isPinching || isMulti && Math.abs(dragDelta) > 5) return;
+    if (isMulti) onImageClick(null, 'images', imageList, activeIdx);else
+    onImageClick(src, type);
+  };
+
+  // ── Desktop Mouse Drag handlers ───────────────────────────────────────
+  const onCarouselMouseDown = (e) => {
+    if (e.button !== 0) return; // Only left click
+    dragStart.current = e.clientX;
+    setIsDragging(true);
+  };
+
+  const onCarouselMouseMove = (e) => {
+    if (!isDragging || dragStart.current === null) return;
+    const delta = e.clientX - dragStart.current;
+    if (activeIdx === 0 && delta > 0 || activeIdx === imageList.length - 1 && delta < 0) {
+      setDragDelta(delta * 0.2);
+    } else {
+      setDragDelta(delta);
+    }
+  };
+
+  const onCarouselMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+      setActiveIdx((i) => i + 1);
+    } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+      setActiveIdx((i) => i - 1);
+    }
+    setDragDelta(0);
+    dragStart.current = null;
+  };
+
+  // ── Render ──────────────────────────────────────────────────────────────
+  return (/*#__PURE__*/
+    React.createElement("div", {
+      ref: containerRef,
+      className: `w-full rounded-xl mb-3 border border-white/5 relative bg-black overflow-hidden cursor-pointer select-none media-zoom-effect ${aspectClass}`,
+      style: { zIndex: isPinching ? 50 : 1 },
+      onClick: handleClick },
+
+    isVideo ? /*#__PURE__*/
+    /* ── SINGLE VIDEO ─────────────────────────────── */
+    React.createElement("div", {
+      className: "absolute inset-0",
+      onTouchStart: onSingleTouchStart,
+      onTouchMove: onSingleTouchMove,
+      onTouchEnd: onSingleTouchEnd,
+      style: { transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' } }, /*#__PURE__*/
+
+    React.createElement("video", {
+      src: src,
+      className: "w-full h-full object-cover pointer-events-none",
+      playsInline: true, loop: true, muted: isMuted || !isInView, autoPlay: true,
+      onLoadedMetadata: handleMediaLoad }
+    ), /*#__PURE__*/
+
+    React.createElement("button", {
+      onClick: toggleMute,
+      className: "absolute bottom-3 right-3 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full p-2 text-white transition-all z-10 pointer-events-auto" },
+    isMuted ? /*#__PURE__*/
+    React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), /*#__PURE__*/React.createElement("line", { x1: "23", y1: "9", x2: "17", y2: "15" }), /*#__PURE__*/React.createElement("line", { x1: "17", y1: "9", x2: "23", y2: "15" })) : /*#__PURE__*/
+
+    React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), /*#__PURE__*/React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" }))
+
+    )
+    ) :
+    isMulti ? /*#__PURE__*/
+    /* ── MULTI-IMAGE CAROUSEL ──────────────────────── */
+    React.createElement(React.Fragment, null, /*#__PURE__*/
+    React.createElement("div", {
+      className: "absolute inset-0 flex",
+      style: {
+        transform: `translateX(calc(${-activeIdx * (100 / imageList.length)}% + ${dragDelta}px))`,
+        transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+        width: `${imageList.length * 100}%`
+      },
+      onTouchStart: onCarouselTouchStart,
+      onTouchMove: onCarouselTouchMove,
+      onTouchEnd: onCarouselTouchEnd,
+      onMouseDown: onCarouselMouseDown,
+      onMouseMove: onCarouselMouseMove,
+      onMouseUp: onCarouselMouseUp,
+      onMouseLeave: onCarouselMouseUp },
+
+    imageList.map((imgSrc, idx) => /*#__PURE__*/
+    React.createElement("div", { key: idx, className: "h-full flex-shrink-0", style: { width: `${100 / imageList.length}%` } }, /*#__PURE__*/
+    React.createElement("img", {
+      src: imgSrc,
+      alt: `Image ${idx + 1}`,
+      loading: idx === 0 ? 'eager' : 'lazy',
+      className: "w-full h-full object-cover pointer-events-none",
+      onLoad: idx === 0 ? handleMediaLoad : undefined,
+      draggable: "false" }
+    )
+    )
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 pointer-events-none z-10" },
+    imageList.map((_, idx) => /*#__PURE__*/
+    React.createElement("div", { key: idx, className: "transition-all duration-300", style: {
+        width: idx === activeIdx ? '18px' : '6px',
+        height: '6px',
+        borderRadius: '3px',
+        background: idx === activeIdx ? 'white' : 'rgba(255,255,255,0.4)'
+      } })
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] text-white font-bold pointer-events-none z-10" },
+    activeIdx + 1, "/", imageList.length
+    )
+    ) : /*#__PURE__*/
+
+    /* ── SINGLE IMAGE ──────────────────────────────── */
+    React.createElement("div", {
+      className: "absolute inset-0",
+      onTouchStart: onSingleTouchStart,
+      onTouchMove: onSingleTouchMove,
+      onTouchEnd: onSingleTouchEnd,
+      style: { transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' } }, /*#__PURE__*/
+
+    React.createElement("img", {
+      src: src,
+      alt: "Post media",
+      loading: "lazy",
+      className: "w-full h-full object-cover pointer-events-none",
+      onLoad: handleMediaLoad,
+      draggable: "false" }
+    )
+    )
+
+    ));
+
+};
+
+// ─── FULL-SCREEN IMAGE VIEWER (multi-image swipe + pinch-zoom) ─────────────
+const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
+  // Normalize: images[] takes priority; fall back to single src
+  const imgList = images && images.length > 0 ? images : src && type !== 'video' ? [src] : [];
+  const isVideo = type === 'video' && (!images || images.length === 0);
+  const isMulti = imgList.length > 1;
+
+  const [currentIdx, setCurrentIdx] = useState(initialIndex || 0);
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isPinching, setIsPinching] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragDelta, setDragDelta] = useState(0);
+  const initialDist = useRef(null);
+  const lastScale = useRef(1);
+  const lastTouch = useRef({ x: 0, y: 0 });
+  const dragStart = useRef(null);
+  const SWIPE_THRESHOLD = 50;
+
+  if (!src && imgList.length === 0) return null;
+
+  const resetZoom = () => {setScale(1);setPosition({ x: 0, y: 0 });};
+
+  // ── Touch handlers (pinch + pan + swipe) ────────────────────────────────
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      setIsPinching(true);
+      const t1 = e.touches[0],t2 = e.touches[1];
+      initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+      lastScale.current = scale;
+    } else if (e.touches.length === 1) {
+      if (scale > 1) {
+        lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+      } else if (isMulti) {
+        dragStart.current = e.touches[0].clientX;
+        setIsDragging(true);
+      }
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && isPinching && initialDist.current) {
+      e.preventDefault();
+      const t1 = e.touches[0],t2 = e.touches[1];
+      const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+      setScale(Math.min(Math.max(d / initialDist.current * lastScale.current, 1), 5));
+    } else if (e.touches.length === 1 && scale > 1) {
+      const newX = e.touches[0].pageX - lastTouch.current.x;
+      const newY = e.touches[0].pageY - lastTouch.current.y;
+      const limitX = (scale - 1) * (window.innerWidth / 2);
+      const limitY = (scale - 1) * (window.innerHeight / 2);
+      setPosition({ x: Math.min(Math.max(newX, -limitX), limitX), y: Math.min(Math.max(newY, -limitY), limitY) });
+    } else if (e.touches.length === 1 && isDragging && isMulti && scale <= 1) {
+      const delta = e.touches[0].clientX - dragStart.current;
+      if (currentIdx === 0 && delta > 0 || currentIdx === imgList.length - 1 && delta < 0) {
+        setDragDelta(delta * 0.2);
+      } else {
+        setDragDelta(delta);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPinching(false);
+    if (scale <= 1) setPosition({ x: 0, y: 0 });
+    if (isDragging) {
+      setIsDragging(false);
+      if (dragDelta < -SWIPE_THRESHOLD && currentIdx < imgList.length - 1) {
+        setCurrentIdx((i) => i + 1);
+        resetZoom();
+      } else if (dragDelta > SWIPE_THRESHOLD && currentIdx > 0) {
+        setCurrentIdx((i) => i - 1);
+        resetZoom();
+      }
+      setDragDelta(0);
+      dragStart.current = null;
+    }
+  };
+
+  const handleDoubleTap = (e) => {
+    e.stopPropagation();
+    if (scale > 1) {resetZoom();} else {setScale(2.5);}
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("div", {
+      className: "fixed inset-0 z-[100] bg-black animate-fade-in overflow-hidden",
+      onTouchStart: handleTouchStart,
+      onTouchMove: handleTouchMove,
+      onTouchEnd: handleTouchEnd }, /*#__PURE__*/
+
+
+    React.createElement("button", {
+      className: "absolute top-5 right-5 p-2.5 bg-white/10 rounded-full text-white z-50 backdrop-blur-sm",
+      onClick: onClose }, /*#__PURE__*/
+
+    React.createElement(Icon, { icon: "X", size: 22 })
+    ),
+
+
+    isMulti && /*#__PURE__*/
+    React.createElement("div", { className: "absolute top-5 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-bold z-50" },
+    currentIdx + 1, " / ", imgList.length
+    ),
+
+
+    isVideo ? /*#__PURE__*/
+    /* ── Full-screen video ─────────── */
+    React.createElement("div", { className: "w-full h-full flex items-center justify-center p-4", onClick: onClose }, /*#__PURE__*/
+    React.createElement("video", {
+      src: src,
+      className: "max-w-full max-h-full object-contain",
+      controls: true, autoPlay: true,
+      onClick: (e) => e.stopPropagation() }
+    )
+    ) :
+    isMulti ? /*#__PURE__*/
+    /* ── Multi-image swipeable fullscreen ── */
+    React.createElement(React.Fragment, null, /*#__PURE__*/
+    React.createElement("div", {
+      className: "absolute inset-0 flex items-center",
+      style: {
+        transform: `translateX(calc(${-currentIdx * (100 / imgList.length)}% + ${dragDelta}px))`,
+        transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+        width: `${imgList.length * 100}%`
+      } },
+
+    imgList.map((imgSrc, idx) => /*#__PURE__*/
+    React.createElement("div", { key: idx, className: "h-full flex items-center justify-center flex-shrink-0", style: { width: `${100 / imgList.length}%` } }, /*#__PURE__*/
+    React.createElement("img", {
+      src: imgSrc,
+      alt: `Image ${idx + 1}`,
+      className: "max-w-full max-h-full object-contain select-none p-2",
+      style: idx === currentIdx ? { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s' } : {},
+      onDoubleClick: idx === currentIdx ? handleDoubleTap : undefined,
+      draggable: "false",
+      onClick: (e) => e.stopPropagation() }
+    )
+    )
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "absolute bottom-8 left-0 right-0 flex justify-center gap-2 pointer-events-none z-50" },
+    imgList.map((_, idx) => /*#__PURE__*/
+    React.createElement("div", { key: idx, style: {
+        width: idx === currentIdx ? '20px' : '6px',
+        height: '6px', borderRadius: '3px',
+        background: idx === currentIdx ? 'white' : 'rgba(255,255,255,0.4)',
+        transition: 'all 0.3s'
+      } })
+    )
+    )
+    ) : /*#__PURE__*/
+
+    /* ── Single image ──────────────── */
+    React.createElement("div", {
+      className: "w-full h-full flex items-center justify-center",
+      onClick: onClose }, /*#__PURE__*/
+
+    React.createElement("img", {
+      src: imgList[0] || src,
+      className: "max-w-full max-h-full object-contain p-2 select-none",
+      style: { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s ease-out' },
+      onDoubleClick: handleDoubleTap,
+      onClick: (e) => e.stopPropagation(),
+      draggable: "false" }
+    )
+    )
+
+    ));
+
+};
+
+// --- REPORT USER MODAL ---
+const ReportUserModal = ({ isOpen, onClose, onSubmit }) => {
+  if (!isOpen) return null;
+
+  const reasons = [
+  "Suspicious activity detected",
+  "Something else"];
+
+
+  const handleSelected = (reason) => {
+    onSubmit(reason);
+    onClose();
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: "fixed inset-0 z-[70] flex items-end justify-center sm:px-4" }, /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in", onClick: onClose }), /*#__PURE__*/
+    React.createElement("div", { className: "relative w-full sm:max-w-md bg-[#18181b] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden flex flex-col" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0" }), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex justify-between items-center mb-6 shrink-0" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-white font-heading font-bold text-lg flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "AlertTriangle", size: 20, className: "text-red-500" }), "Report Account"
+
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: onClose, className: "p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors" }, /*#__PURE__*/React.createElement(Icon, { icon: "X", size: 20 }))
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex-1 overflow-y-auto no-scrollbar pb-4" }, /*#__PURE__*/
+    React.createElement("p", { className: "text-sm text-gray-400 mb-4" }, "Why are you reporting this user's account?"), /*#__PURE__*/
+    React.createElement("div", { className: "space-y-2" },
+    reasons.map((reason) => /*#__PURE__*/
+    React.createElement("button", {
+      key: reason,
+      onClick: () => handleSelected(reason),
+      className: "w-full text-left p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex justify-between items-center group" }, /*#__PURE__*/
+
+    React.createElement("span", { className: "text-sm text-white" }, reason), /*#__PURE__*/
+    React.createElement(Icon, { icon: "ArrowRight", size: 16, className: "text-white/20 group-hover:text-white transition-colors" })
+    )
+    )
+    )
+    )
+    )
+    ));
+
+};
+
+// --- REPORT MODAL ---
+const ReportModal = ({ isOpen, onClose, onSubmit }) => {
+  const [step, setStep] = useState(1);
+  const [selectedReason, setSelectedReason] = useState(null);
+
+  if (!isOpen) return null;
+
+  const reasons = [
+  "It's spam",
+  "Nudity or sexual activity",
+  "Hate speech or symbols",
+  "Violence or dangerous organizations",
+  "Bullying or harassment",
+  "Selling illegal or regulated goods",
+  "Intellectual property violations",
+  "Suicide or self-injury",
+  "False information"];
+
+
+  const handleSubmit = (action) => {
+    if (onSubmit) onSubmit(selectedReason, action);
+    onClose();
+    setStep(1);
+    setSelectedReason(null);
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: "fixed inset-0 z-[70] flex items-end justify-center sm:px-4" }, /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in", onClick: onClose }), /*#__PURE__*/
+    React.createElement("div", { className: "relative w-full sm:max-w-md bg-[#18181b] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0" }), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex justify-between items-center mb-6 shrink-0" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-white font-heading font-bold text-lg flex items-center gap-2" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "AlertTriangle", size: 20, className: "text-red-500" }),
+    step === 1 ? 'Report Opinion' : 'What would you like to do?'
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: onClose, className: "p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors" }, /*#__PURE__*/React.createElement(Icon, { icon: "X", size: 20 }))
+    ),
+
+    step === 1 && /*#__PURE__*/
+    React.createElement("div", { className: "flex-1 overflow-y-auto no-scrollbar" }, /*#__PURE__*/
+    React.createElement("p", { className: "text-sm text-gray-400 mb-4" }, "Why are you reporting this post?"), /*#__PURE__*/
+    React.createElement("div", { className: "space-y-2" },
+    reasons.map((reason) => /*#__PURE__*/
+    React.createElement("button", {
+      key: reason,
+      onClick: () => {setSelectedReason(reason);setStep(2);},
+      className: "w-full text-left p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex justify-between items-center group" }, /*#__PURE__*/
+
+    React.createElement("span", { className: "text-sm text-white" }, reason), /*#__PURE__*/
+    React.createElement(Icon, { icon: "ArrowRight", size: 16, className: "text-white/20 group-hover:text-white transition-colors" })
+    )
+    )
+    )
+    ),
+
+
+    step === 2 && /*#__PURE__*/
+    React.createElement("div", { className: "flex-1 flex flex-col justify-between" }, /*#__PURE__*/
+    React.createElement("div", null, /*#__PURE__*/
+    React.createElement("p", { className: "text-sm text-gray-400 mb-6" }, "You've selected: ", /*#__PURE__*/React.createElement("span", { className: "text-white font-medium" }, selectedReason)), /*#__PURE__*/
+
+    React.createElement("div", { className: "space-y-3" }, /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => handleSubmit('remove'),
+      className: "w-full p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-3 group" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "p-2 rounded-full bg-red-500/20 text-red-500" }, /*#__PURE__*/React.createElement(Icon, { icon: "EyeOff", size: 20 })), /*#__PURE__*/
+    React.createElement("div", { className: "text-left" }, /*#__PURE__*/
+    React.createElement("div", { className: "text-white font-bold text-sm" }, "Remove from my feed"), /*#__PURE__*/
+    React.createElement("div", { className: "text-xs text-gray-400" }, "I don't want to see this anymore")
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("button", {
+      onClick: () => handleSubmit('keep'),
+      className: "w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-3" }, /*#__PURE__*/
+
+    React.createElement("div", { className: "p-2 rounded-full bg-white/10 text-white" }, /*#__PURE__*/React.createElement(Icon, { icon: "ShieldCheck", size: 20 })), /*#__PURE__*/
+    React.createElement("div", { className: "text-left" }, /*#__PURE__*/
+    React.createElement("div", { className: "text-white font-bold text-sm" }, "Just report it"), /*#__PURE__*/
+    React.createElement("div", { className: "text-xs text-gray-400" }, "Let support review it, but keep seeing it")
+    )
+    )
+    )
+    ), /*#__PURE__*/
+    React.createElement("button", { onClick: () => setStep(1), className: "mt-6 text-xs text-muted hover:text-white text-center w-full" }, "Back")
+    )
+
+    )
+    ));
+
+};
+
+// --- MAIN APP COMPONENT ---
+const App = () => {
+
+  const [sharedPostsToRender, setSharedPostsToRender] = useState({});
+
+  const [isGuest, setIsGuest] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null); // Toast State
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [contentTab, setContentTab] = useState('opinions');
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const scrollContainerRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('home'); // Assume viewer is on home tab
+  const [navVisible, setNavVisible] = useState(true);
+  const [fabVisible, setFabVisible] = useState(true);
+  const lastY = useRef(0);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  // Share/Report State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharePostData, setSharePostData] = useState(null);
+  const [shareUserData, setShareUserData] = useState(null);
+
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false); // For Posts
+  const [isReportUserModalOpen, setIsReportUserModalOpen] = useState(false); // For Profile
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+
+  const [userProfile, setUserProfile] = useState(null);
+  const [savedPosts, setSavedPosts] = useState(new Set());
+  const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
+  const [mutedBrands, setMutedBrands] = useState(new Set());
+  const [mutedCategories, setMutedCategories] = useState(new Set());
+  const [reportPostId, setReportPostId] = useState(null);
+
+  // Image Viewer State
+  const [viewingImage, setViewingImage] = useState(null);
+
+  // Target Profile State
+  const [targetUser, setTargetUser] = useState(null);
+  const [targetPosts, setTargetPosts] = useState([]);
+  const [commentedPosts, setCommentedPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userBadge, setUserBadge] = useState(null); // User Count Badge
+  const hasInitialized = useRef(false);
+
+  // Removed local formatTime helper (now global)
+
+  // Toast Handler
+  useEffect(() => {
+    const handler = (e) => showToast(e.detail.message, e.detail.icon, e.detail.isSuccess);
+    window.addEventListener('toast', handler);
+    return () => window.removeEventListener('toast', handler);
+  }, []);
+
+  const showToast = (msg, icon = null, isSuccess = false, action = null) => {
+    setToastMessage({ msg, icon, isSuccess, action });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Listen for internal chat post rendering
+  useEffect(() => {
+    const handleRenderSharedPost = async (e) => {
+      const { postId, containerId } = e.detail;
+      if (!postId || !containerId) return;
+
+      setSharedPostsToRender((prev) => ({ ...prev, [containerId]: { isLoading: true, post: null } }));
+
+      try {
+        const fullPost = await window.getPost(postId);
+        if (fullPost && fullPost.id) {
+          const uiPost = {
+            id: fullPost.id,
+            user_id: fullPost.user_id,
+            name: fullPost.profiles?.full_name || 'User',
+            username: fullPost.profiles?.username || 'user',
+            avatar: fullPost.profiles?.avatar_url || "",
+            rqs: fullPost.profiles?.rqs_score || 0,
+            verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+            category: fullPost.category,
+            product: fullPost.product_name,
+            text: fullPost.text_content,
+            media: fullPost.media_url,
+            media_type: fullPost.media_type || 'image',
+            images: fullPost.images || null,
+            time: "Shared",
+            agrees: fullPost.agrees_count || 0,
+            comments: fullPost.comments_count || 0,
+            seenBy: fullPost.seen_by_brand
+          };
+          setSharedPostsToRender((prev) => ({ ...prev, [containerId]: { isLoading: false, post: uiPost } }));
+        } else {
+          setSharedPostsToRender((prev) => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+        }
+      } catch (err) {
+        setSharedPostsToRender((prev) => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+      }
+    };
+    window.addEventListener('render_shared_post', handleRenderSharedPost);
+
+    // Expose openFullPost globally
+    window.openFullPost = async (postId) => {
+      if (window.closeInbox) window.closeInbox();
+      // Assuming profile pages should go to POST_VIEW_STORY or similar
+      window.location.href = `HOMEPAGE_FINAL.HTML?postId=${postId}`;
+    };
+    window.scrollToPost = window.openFullPost;
+
+    return () => window.removeEventListener('render_shared_post', handleRenderSharedPost);
+  }, []);
+
+  useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    const initData = async () => {
+      try {
+        // Wait for auth module to fully initialize
+        if (window.authReadyPromise) await window.authReadyPromise;
+
+        // 1. Get current logged in user (viewer)
+        const user = await window.getCurrentUser();
+        if (!user) {
+          setIsGuest(true);
+          // Do NOT show Auth Modal immediately for Guest mode profile viewing
+        } else {
+          setIsGuest(false);
+          const { data: profile } = await window.supabase.
+          from('profiles').
+          select('*').
+          eq('id', user.id).
+          single();
+          setUserProfile(profile);
+
+          // Load bookmarks
+          const { data: bookmarks } = await window.supabase.
+          from('bookmarks').
+          select('post_id').
+          eq('user_id', user.id);
+          if (bookmarks) {
+            setSavedPosts(new Set(bookmarks.map((b) => String(b.post_id))));
+          }
+
+          // Load hidden items
+          try {
+            const hidden = await window.getHiddenItems();
+            if (hidden && hidden.posts) {
+              setHiddenPostIds(new Set(hidden.posts.map((id) => String(id))));
+            }
+          } catch (e) {}
+        }
+
+        // 2. Get target user profile from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetId = urlParams.get('id');
+        let targetUsername = urlParams.get('username');
+
+        // If not in query params, check URL path for clean URLs (e.g. /profile/username)
+        if (!targetUsername && !targetId && window.location.pathname.includes('/profile/')) {
+          const pathSegments = window.location.pathname.split('/profile/');
+          if (pathSegments.length > 1 && pathSegments[1]) {
+            // Extract username and decode to handle spaces/special characters safely
+            targetUsername = decodeURIComponent(pathSegments[1].split('/')[0].split('?')[0]);
+          }
+        }
+
+        // Resolve targetId from username if id is missing
+        if (!targetId && targetUsername) {
+          try {
+            const resolvedProfile = await window.getUserProfileByUsername(targetUsername);
+            if (resolvedProfile) {
+              targetId = resolvedProfile.id;
+            }
+          } catch (err) {
+            console.error('Error resolving username:', err);
+          }
+        }
+
+        if (targetId) {
+          const cacheKey = `profile_${targetId}`;
+
+          // CACHE-FIRST: Try to load from cache first
+          if (window.StateManager) {
+            const cachedData = await window.StateManager.get(cacheKey);
+            if (cachedData) {
+              console.log('📦 Loading profile from cache');
+              setTargetUser(cachedData.profile);
+              setTargetPosts(cachedData.posts || []);
+              setCommentedPosts(cachedData.commentedPosts || []);
+              setIsLoading(false);
+              // Continue to fetch fresh data in background
+            }
+          }
+
+          const profile = await window.getUserProfile(targetId);
+          setTargetUser(profile);
+
+          // Fetch Badge Number
+          if (typeof window.getUserBadgeNumber === 'function') {
+            window.getUserBadgeNumber(targetId).then((num) => setUserBadge(num));
+          } else {
+            console.warn('getUserBadgeNumber not available locally');
+          }
+
+          const posts = await window.getUserPosts(targetId);
+          setTargetPosts(posts || []);
+
+          // Fetch commented posts for Comments tab
+          const commented = await window.getUserCommentedPosts(targetId);
+          const commentedByUser = commented || [];
+
+          // Also include target user's posts that have received comments
+          const postsWithComments = posts ? posts.filter((p) => (p.comments_count || 0) > 0) : [];
+
+          // Merge and unique by ID
+          const allCommentedMap = new Map();
+          commentedByUser.forEach((p) => allCommentedMap.set(p.id, p));
+          postsWithComments.forEach((p) => allCommentedMap.set(p.id, p));
+
+          const commentedPostsArray = Array.from(allCommentedMap.values());
+          setCommentedPosts(commentedPostsArray);
+
+          // SAVE TO CACHE (10 minute TTL for profile, indefinite for posts)
+          if (window.StateManager) {
+            await window.StateManager.set(cacheKey, {
+              profile,
+              posts,
+              commentedPosts: commentedPostsArray
+            }, { ttl: 10 * 60 * 1000 });
+            console.log('💾 Saved profile to cache');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching profile data:', err);
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Profile not found', icon: 'AlertTriangle' } }));
+      } finally {
+        // Only set loading to false once, after everything is done
+        setIsLoading(false);
+      }
+    };
+    initData();
+  }, []);
+
+  // Setup pull-to-refresh handler
+  useEffect(() => {
+    const setupPullToRefresh = () => {
+      if (window.PullToRefresh) {
+        window.PullToRefresh.onRefresh(async () => {
+          window.location.reload();
+        });
+      } else {
+        setTimeout(setupPullToRefresh, 100);
+      }
+    };
+    setTimeout(setupPullToRefresh, 200);
+  }, []);
+
+  const handleBlockUser = async (targetId) => {
+    vibrate();
+    try {
+      await window.blockUser(targetId);
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'User blocked', icon: 'Slash', isSuccess: true } }));
+      // Navigate away or refresh
+      setTimeout(() => window.history.back(), 1500);
+    } catch (err) {
+      console.error('Block failed', err);
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to block user', icon: 'AlertTriangle' } }));
+    }
+  };
+
+  const handleReportUser = async (reason) => {
+    vibrate();
+    try {
+      const reportedId = targetUser.id;
+      const reporter = await window.getCurrentUser();
+
+      await window.reportUser(reportedId, reason, {
+        reported_username: targetUser.username,
+        reporter_username: reporter?.username || 'anonymous',
+        profile_url: window.location.href
+      });
+
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'User Reported', icon: 'Flag', isSuccess: true } }));
+      setIsReportUserModalOpen(false);
+    } catch (err) {
+      console.error('Report failed', err);
+    }
+  };
+
+  const toggleBookmark = async (postId, shouldSave) => {
+    try {
+      if (shouldSave) {
+        await window.bookmarkPost(postId);
+        setSavedPosts((prev) => new Set(prev).add(postId));
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Added to Bookmarks', icon: 'BookMark', isSuccess: true } }));
+      } else {
+        await window.removeBookmark(postId);
+        setSavedPosts((prev) => {
+          const next = new Set(prev);
+          next.delete(postId);
+          return next;
+        });
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Removed from Bookmarks', icon: 'BookMark', isSuccess: true } }));
+      }
+    } catch (err) {
+      console.error('Bookmark toggle failed', err);
+    }
+  };
+
+  const handleRemove = async (postId, message, type, value) => {
+    // Shared removal logic (Hide, Not interested, block brand, delete)
+    if (type === 'delete') {
+      try {
+        await window.deletePost(postId);
+        setTargetPosts((prev) => prev.filter((p) => p.id !== postId));
+        setCommentedPosts((prev) => prev.filter((p) => p.id !== postId));
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Opinion deleted', icon: 'Trash', isSuccess: true } }));
+      } catch (err) {
+        console.error('Delete failed', err);
+      }
+      return;
+    }
+
+    // Others use window.hideItem
+    try {
+      await window.hideItem(type, value, postId);
+      setHiddenPostIds((prev) => new Set(prev).add(postId));
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: message, icon: 'EyeOff', isSuccess: true } }));
+    } catch (err) {
+      console.error('Action failed', err);
+    }
+  };
+
+  const handleShare = (post) => {
+    setSharePostData(post);
+    setIsShareModalOpen(true);
+  };
+
+  const handleReport = (postId) => {
+    setReportPostId(postId);
+    setIsReportModalOpen(true);
+  };
+
+  const submitReport = async (reason, action) => {
+    const post = targetPosts.find((p) => String(p.id) === String(reportPostId));
+    if (post) {
+      try {
+        const currentUser = await window.getCurrentUser();
+        let reporterUsername = 'Anonymous';
+        if (currentUser) {
+          const { data: profile } = await window.supabase.
+          from('profiles').
+          select('username').
+          eq('id', currentUser.id).
+          single();
+          if (profile) reporterUsername = profile.username;
+        }
+
+        const additionalData = {
+          reporter_username: reporterUsername,
+          reported_username: post.username,
+          post_url: `https://plusopinion.com/post/${post.id}`
+        };
+
+        // Use default action 'pending' if not 'remove'
+        const actionTaken = action === 'remove' ? 'remove' : 'pending';
+
+        // Call the API
+        await window.reportPost(post.id, reason, actionTaken, additionalData);
+
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Report submitted', icon: 'Check', isSuccess: true } }));
+      } catch (err) {
+        console.error('Report submission failed', err);
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Report failed', icon: 'AlertTriangle', isSuccess: false } }));
+      }
+    }
+
+    if (action === 'remove' && reportPostId) {
+      setHiddenPostIds((prev) => new Set(prev).add(reportPostId));
+    }
+
+    setIsReportModalOpen(false);
+    setReportPostId(null);
+  };
+
+  // PUBLIC TABS CONFIG
+  const TABS = ['opinions', 'comments', 'brands'];
+
+  const handleScroll = (e) => {
+    const currentY = e.target.scrollTop;
+    const isScrollingDown = currentY > lastY.current;
+
+    if (isScrollingDown && currentY > 50) {
+      setNavVisible(false);
+      setFabVisible(false);
+    } else {
+      setNavVisible(true);
+      setFabVisible(true);
+    }
+    lastY.current = currentY;
+  };
+
+  const triggerMySpace = (section) => {
+    if (isGuest) {
+      setShowAuthModal(true);
+      return;
+    }
+    vibrate();
+    // In public view, this might show a tooltip about what RQS/Verified means, not navigate
+    console.log(`Show tooltip for: ${section}`);
+  };
+
+  // SWIPE LOGIC
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e) => {
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const diffX = touchX - touchStartX.current;
+    const diffY = touchY - touchStartY.current;
+
+    // Only apply stretch if horizontal swipe dominant AND significant magnitude
+    // And verify we aren't just scrolling casually
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+      // Add resistance (sqrt or dimishing return)
+      const resistance = 0.4;
+      let offset = diffX * resistance;
+
+      // Limit max stretch
+      if (offset > 100) offset = 100 + (offset - 100) * 0.2;
+      if (offset < -100) offset = -100 + (offset + 100) * 0.2;
+
+      setSwipeOffset(offset);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+
+    const diffX = touchStartX.current - touchEndX;
+    const diffY = touchStartY.current - touchEndY;
+
+    if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+      const currentIndex = TABS.indexOf(contentTab);
+      if (diffX > 0) {
+        if (currentIndex < TABS.length - 1) {
+          setContentTab(TABS[currentIndex + 1]);
+          vibrate();
+        }
+      } else {
+        if (currentIndex > 0) {
+          setContentTab(TABS[currentIndex - 1]);
+          vibrate();
+        }
+      }
+    }
+    // Reset stretch
+    setSwipeOffset(0);
+  };
+
+  // SKELETON COMPONENTS
+  const SkeletonProfile = () => /*#__PURE__*/
+  React.createElement("div", { className: "flex-1 flex flex-col relative h-full" }, /*#__PURE__*/
+
+  React.createElement("div", { className: "h-[60px] header-glass flex items-center px-4 sticky top-0 z-30 shrink-0 border-b border-white/5" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-8 h-8 rounded-full bg-[#1c1e1e] animate-pulse" })
+  ), /*#__PURE__*/
+
+  React.createElement("div", { className: "flex-1 overflow-y-auto no-scrollbar pb-24 ptr-enabled" }, /*#__PURE__*/
+
+  React.createElement("div", { className: "relative mb-6" }, /*#__PURE__*/
+  React.createElement("div", { className: "h-[140px] w-full bg-[#1c1e1e] animate-pulse" }), /*#__PURE__*/
+  React.createElement("div", { className: "absolute bottom-1.5 left-4" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-[84px] h-[84px] rounded-full bg-[#020205] p-1" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-full h-full rounded-full bg-[#1c1e1e] animate-pulse" })
+  )
+  )
+  ), /*#__PURE__*/
+
+
+  React.createElement("div", { className: "px-5 mt-2 mb-8" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-48 h-8 rounded bg-[#1c1e1e] animate-pulse mb-3" }), /*#__PURE__*/
+  React.createElement("div", { className: "flex gap-2 mb-4" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-20 h-4 rounded bg-[#1c1e1e] animate-pulse" }), /*#__PURE__*/
+  React.createElement("div", { className: "w-24 h-4 rounded bg-[#1c1e1e] animate-pulse" })
+  ), /*#__PURE__*/
+  React.createElement("div", { className: "w-full h-4 rounded bg-[#1c1e1e] animate-pulse mb-2" }), /*#__PURE__*/
+  React.createElement("div", { className: "w-3/4 h-4 rounded bg-[#1c1e1e] animate-pulse mb-6" }), /*#__PURE__*/
+
+
+  React.createElement("div", { className: "flex gap-3 h-[72px]" }, /*#__PURE__*/
+  React.createElement("div", { className: "flex-1 rounded-xl bg-[#1c1e1e] animate-pulse" }), /*#__PURE__*/
+  React.createElement("div", { className: "flex-1 rounded-xl bg-[#1c1e1e] animate-pulse" })
+  )
+  ), /*#__PURE__*/
+
+
+  React.createElement("div", { className: "flex w-full px-4 border-b border-white/5 mb-6" }, /*#__PURE__*/
+  React.createElement("div", { className: "flex-1 py-3 flex justify-center" }, /*#__PURE__*/React.createElement("div", { className: "w-16 h-4 rounded bg-[#1c1e1e] animate-pulse" })), /*#__PURE__*/
+  React.createElement("div", { className: "flex-1 py-3 flex justify-center" }, /*#__PURE__*/React.createElement("div", { className: "w-16 h-4 rounded bg-[#1c1e1e] animate-pulse" })), /*#__PURE__*/
+  React.createElement("div", { className: "flex-1 py-3 flex justify-center" }, /*#__PURE__*/React.createElement("div", { className: "w-16 h-4 rounded bg-[#1c1e1e] animate-pulse" }))
+  ), /*#__PURE__*/
+
+
+  React.createElement("div", { className: "px-4" }, /*#__PURE__*/
+  React.createElement(SkeletonPost, { delay: "0ms" }), /*#__PURE__*/
+  React.createElement(SkeletonPost, { delay: "100ms" }), /*#__PURE__*/
+  React.createElement(SkeletonPost, { delay: "200ms" })
+  )
+  )
+  );
+
+
+  const SkeletonPost = ({ delay }) => /*#__PURE__*/
+  React.createElement("div", { className: "glass-panel rounded-2xl p-4 mb-4 animate-fade-in", style: { animationDelay: delay } }, /*#__PURE__*/
+  React.createElement("div", { className: "flex items-center gap-3 mb-4" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-10 h-10 rounded-full bg-[#1c1e1e] animate-pulse" }), /*#__PURE__*/
+  React.createElement("div", { className: "flex-1" }, /*#__PURE__*/
+  React.createElement("div", { className: "w-24 h-3 rounded bg-[#1c1e1e] animate-pulse mb-2" }), /*#__PURE__*/
+  React.createElement("div", { className: "w-16 h-2 rounded bg-[#1c1e1e] animate-pulse" })
+  )
+  ), /*#__PURE__*/
+  React.createElement("div", { className: "w-full h-3 rounded bg-[#1c1e1e] animate-pulse mb-2" }), /*#__PURE__*/
+  React.createElement("div", { className: "w-3/4 h-3 rounded bg-[#1c1e1e] animate-pulse mb-4" }), /*#__PURE__*/
+  React.createElement("div", { className: "w-full h-48 rounded-xl bg-[#1c1e1e] animate-pulse" })
+  );
+
+
+  if (isLoading) {
+    return /*#__PURE__*/React.createElement(SkeletonProfile, null);
+  }
+
+  if (!targetUser) {
+    return (/*#__PURE__*/
+      React.createElement("div", { className: "flex-1 flex flex-col items-center justify-center px-6 text-center py-20" }, /*#__PURE__*/
+      React.createElement("div", { className: "w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6" }, /*#__PURE__*/
+      React.createElement(Icon, { icon: "User", size: 40, className: "text-white/10" })
+      ), /*#__PURE__*/
+      React.createElement("h2", { className: "text-xl font-heading font-bold text-white mb-2" }, "Private or Non-Existent"), /*#__PURE__*/
+      React.createElement("p", { className: "text-muted text-sm mb-8 max-w-[280px]" }, "This profile is either private or doesn't exist on PlusOpinion."), /*#__PURE__*/
+      React.createElement("button", {
+        onClick: () => window.location.href = 'HOMEPAGE_FINAL.HTML',
+        className: "bg-neon text-white px-8 py-3 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(47,139,255,0.2)] active:scale-95 transition-transform" },
+      "Back to Opinions"
+
+      )
+      ));
+
+  }
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: "flex-1 flex flex-col relative h-full overflow-hidden" }, /*#__PURE__*/
+
+    React.createElement("div", { className: `header-glass fixed top-0 left-0 w-full h-[60px] flex items-center justify-between px-4 z-30 transition-transform duration-500 ease-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}` }, /*#__PURE__*/
+    React.createElement("button", { className: "p-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors relative z-10", onClick: () => {vibrate();window.history.back();} }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ArrowLeft", size: 20 })
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 flex items-center justify-center pointer-events-none" }, /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-bold text-sm tracking-widest uppercase text-white/90" }, "Profile")
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-2 relative z-50" }, /*#__PURE__*/
+    React.createElement("button", { className: "p-2 text-white/80 hover:text-white", onClick: () => {vibrate();triggerAction('openLens');} }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Search", size: 20 })
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "relative" }, /*#__PURE__*/
+    React.createElement("button", {
+      className: "p-2 text-white/80 hover:text-white relative",
+      onClick: () => {vibrate();setMenuOpen(!menuOpen);} }, /*#__PURE__*/
+
+    React.createElement(Icon, { icon: "MoreVertical", size: 20 })
+    ),
+
+
+    menuOpen && /*#__PURE__*/
+    React.createElement(React.Fragment, null, /*#__PURE__*/
+    React.createElement("div", { className: "fixed inset-0 z-[90]", onClick: () => setMenuOpen(false) }), /*#__PURE__*/
+    React.createElement("div", { className: "absolute top-10 right-0 w-48 bg-[#1A1C2E] border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-[100] overflow-hidden animate-enter backdrop-blur-xl" }, /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        setMenuOpen(false);
+        vibrate();
+        setShareUserData(targetUser);
+        setIsShareModalOpen(true);
+      },
+      className: "w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 flex items-center gap-2" }, /*#__PURE__*/
+
+    React.createElement(Icon, { icon: "Share", size: 16 }), " Share Profile"
+    ), /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        setMenuOpen(false);
+        vibrate();
+        if (isGuest) {
+          setShowAuthModal(true);
+          return;
+        }
+        setIsReportUserModalOpen(true);
+      },
+      className: "w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 flex items-center gap-2 border-t border-white/5" }, /*#__PURE__*/
+
+    React.createElement(Icon, { icon: "Flag", size: 16 }), " Report Profile"
+    ), /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        setMenuOpen(false);
+        vibrate();
+        if (isGuest) {
+          setShowAuthModal(true);
+          return;
+        }
+        setIsBlockConfirmOpen(true);
+      },
+      className: "w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-400/10 flex items-center gap-2 border-t border-white/5" }, /*#__PURE__*/
+
+    React.createElement(Icon, { icon: "Slash", size: 16 }), " Block User"
+    )
+    )
+    )
+
+    )
+    )
+    ), /*#__PURE__*/
+
+    React.createElement(ShareModal, {
+      isOpen: isShareModalOpen,
+      onClose: () => {setIsShareModalOpen(false);setShareUserData(null);setSharePostData(null);},
+      post: sharePostData,
+      user: shareUserData }
+    ), /*#__PURE__*/
+
+
+    React.createElement(ImageViewer, { src: viewingImage?.src, type: viewingImage?.type, images: viewingImage?.images, initialIndex: viewingImage?.initialIndex || 0, onClose: () => setViewingImage(null) }), /*#__PURE__*/
+
+    React.createElement(ReportModal, {
+      isOpen: isReportModalOpen,
+      onClose: () => {setIsReportModalOpen(false);setReportPostId(null);},
+      onSubmit: submitReport }
+    ), /*#__PURE__*/
+
+    React.createElement(ReportUserModal, {
+      isOpen: isReportUserModalOpen,
+      onClose: () => setIsReportUserModalOpen(false),
+      onSubmit: handleReportUser }
+    ),
+
+
+    isBlockConfirmOpen && /*#__PURE__*/
+    React.createElement("div", { className: "fixed inset-0 z-[70] flex items-center justify-center px-4" }, /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 bg-black/60 backdrop-blur-sm", onClick: () => setIsBlockConfirmOpen(false) }), /*#__PURE__*/
+    React.createElement("div", { className: "relative w-full max-w-sm bg-[#121212] border border-white/10 rounded-2xl p-6 shadow-2xl animate-enter" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-4" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Slash", size: 24 })
+    ), /*#__PURE__*/
+    React.createElement("h3", { className: "text-white font-bold text-lg text-center mb-2" }, "Block @", targetUser?.username, "?"), /*#__PURE__*/
+    React.createElement("p", { className: "text-white/60 text-sm text-center mb-8" }, "They won't be able to see your profile or posts, and you won't see theirs. This can be undone in Settings."
+
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "flex gap-3" }, /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => setIsBlockConfirmOpen(false),
+      className: "flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold transition-colors" },
+    "Cancel"
+
+    ), /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        setIsBlockConfirmOpen(false);
+        handleBlockUser(targetUser.id);
+      },
+      className: "flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-colors shadow-lg shadow-red-500/20" },
+    "Block"
+
+    )
+    )
+    )
+    ), /*#__PURE__*/
+
+
+
+    React.createElement("div", {
+      className: "absolute inset-0 overflow-y-auto smooth-scroll-container pb-6 ptr-enabled",
+      onScroll: handleScroll,
+      onTouchStart: handleTouchStart,
+      onTouchMove: handleTouchMove,
+      onTouchEnd: handleTouchEnd,
+      ref: scrollContainerRef }, /*#__PURE__*/
+
+
+    React.createElement("div", { className: "h-[60px] shrink-0" }), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "relative mb-6" },
+    targetUser.banner_url ? /*#__PURE__*/
+    React.createElement("div", { className: "relative h-[140px] w-full" }, /*#__PURE__*/
+    React.createElement("img", { src: targetUser.banner_url, alt: "Banner", className: "h-[140px] w-full object-cover" }), /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#020205] to-transparent" })
+    ) : /*#__PURE__*/
+
+    React.createElement("div", { className: "h-[140px] w-full banner-gradient" }), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "absolute bottom-1.5 left-4 flex items-end" }, /*#__PURE__*/
+    React.createElement("div", { className: "profile-avatar-container bg-[#020205] shadow-[0_0_20px_rgba(47,139,255,0.3)] border-2 border-[#020205]" }, /*#__PURE__*/
+    React.createElement("img", { src: targetUser.avatar_url || DEFAULT_AVATAR, alt: "Profile", className: "w-full h-full object-cover" })
+    )
+    )
+
+
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "px-5 mt-2 mb-6" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-start justify-between gap-4 mb-2" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex-1 min-w-0" }, /*#__PURE__*/
+    React.createElement("h1", { className: "text-2xl font-heading font-bold text-white leading-tight truncate" }, targetUser.full_name), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-2 text-muted text-sm mt-1" }, /*#__PURE__*/
+    React.createElement("span", null, "@", targetUser.username), /*#__PURE__*/
+    React.createElement("span", { className: "w-1 h-1 rounded-full bg-white/20" }), /*#__PURE__*/
+    React.createElement("span", { className: "flex items-center gap-1" }, /*#__PURE__*/React.createElement(Icon, { icon: "MapPin", size: 12 }), " ", targetUser.location || 'Everywhere')
+    )
+    ),
+
+
+    userBadge !== null && /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        vibrate(5);
+        if (window.startInboxConversation && targetUser?.id) {
+          window.startInboxConversation(targetUser.id);
+        } else {
+          console.warn('Inbox chat not available');
+        }
+      },
+      className: "flex flex-col items-center shrink-0 w-14 h-14 rounded-xl bg-[#020205] border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),_0_1px_0_rgba(255,255,255,0.05)] group relative overflow-hidden active:scale-95 transition-transform",
+      title: `Message User #${userBadge}` }, /*#__PURE__*/
+
+    React.createElement("div", { className: "absolute inset-0 bg-gradient-to-b from-transparent to-white/[0.02] pointer-events-none group-hover:bg-white/[0.05] transition-colors z-10" }), /*#__PURE__*/
+    React.createElement("div", { className: "flex-1 w-full bg-[#2f8bff] flex items-center justify-center hover:bg-[#2f8bff]/90 transition-colors" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "PlusOpinionInbox", size: 22, className: "text-white group-hover:scale-110 transition-transform duration-300 stroke-[2.5px]" })
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "h-[18px] w-full bg-[#020205] flex items-center justify-center border-t border-white/5" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-[7px] text-white/30 font-black uppercase tracking-widest leading-none pt-0.5", style: { textShadow: '0 -1px 0 rgba(0,0,0,1)' } }, "EST ", /*#__PURE__*/
+    React.createElement("span", { className: "text-white/40" }, "#", userBadge)
+    )
+    )
+    )
+
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "mb-4" }, /*#__PURE__*/
+    React.createElement("p", { className: "text-sm text-gray-300 font-light leading-relaxed" }, targetUser.bio || 'This user prefers to keep their bio a mystery.')
+    ),
+
+    targetUser.website && /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-1.5 text-xs text-neon font-medium mb-5" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Link", size: 14 }), /*#__PURE__*/
+    React.createElement("a", { href: targetUser.website.startsWith('http') ? targetUser.website : `https://${targetUser.website}`, target: "_blank", className: "hover:underline" }, targetUser.website)
+    ), /*#__PURE__*/
+
+
+
+    React.createElement("div", { className: "flex items-center gap-3 mb-6" }, /*#__PURE__*/
+
+    React.createElement("button", { onClick: () => triggerMySpace('rqs'), className: "flex-1 group relative overflow-hidden rounded-full p-[1px] shadow-[0_0_20px_rgba(47,139,255,0.15)] hover:shadow-[0_0_25px_rgba(47,139,255,0.4)] transition-all duration-300 hover:scale-[1.02] active:scale-95" }, /*#__PURE__*/
+    React.createElement("span", { className: "absolute inset-0 bg-gradient-to-r from-[#2F8BFF] to-[#1A73E8] rounded-full opacity-100 group-hover:opacity-90 transition-opacity" }), /*#__PURE__*/
+    React.createElement("div", { className: "relative h-10 bg-inherit flex items-center justify-between px-1 rounded-full" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex items-center gap-2 pl-3" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Zap", className: "text-white fill-white animate-pulse-slow", size: 16 }), /*#__PURE__*/
+    React.createElement("span", { className: "text-white font-bold tracking-wider text-sm" }, "RQS")
+    ), /*#__PURE__*/
+    React.createElement("div", { className: "bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 mr-1" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-white font-heading font-bold leading-none" }, targetUser.rqs_score || 0)
+    )
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("button", { onClick: () => triggerMySpace('verification'), className: "flex-1 group relative overflow-hidden rounded-full bg-[#020205]/40 backdrop-blur-xl border border-accent-green/30 hover:border-accent-green/80 transition-all duration-300 hover:scale-[1.02] active:scale-95 h-10 shadow-[0_0_15px_rgba(34,197,94,0.05)] hover:shadow-[0_0_20px_rgba(34,197,94,0.2)]" }, /*#__PURE__*/
+    React.createElement("div", { className: "relative h-full flex items-center justify-center gap-2 px-4" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "ShieldCheck", className: "text-accent-green group-hover:text-[#4ade80] transition-colors", size: 18 }), /*#__PURE__*/
+    React.createElement("div", { className: "flex items-baseline gap-1.5" }, /*#__PURE__*/
+    React.createElement("span", { className: "text-white font-bold text-sm tracking-wide" }, targetUser.verified_count || 0), /*#__PURE__*/
+    React.createElement("span", { className: "text-[10px] text-accent-green/80 uppercase font-bold tracking-wider whitespace-nowrap group-hover:text-accent-green transition-colors" }, "Verified Opinions")
+    )
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("button", { onClick: () => triggerMySpace('insights'), className: "h-10 w-10 rounded-full bg-[#020205]/40 backdrop-blur-xl border border-white/10 hover:border-white/40 hover:bg-white/5 transition-all duration-300 hover:scale-110 active:scale-90 flex items-center justify-center group relative overflow-hidden shrink-0 shadow-lg" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "BarChart2", size: 18, className: "text-white/70 group-hover:text-neon transition-all relative z-10" })
+    )
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: `sticky z-20 bg-[#020205] border-b border-white/5 mb-4 shadow-lg before:absolute before:inset-0 before:bg-gradient-to-b before:from-neon/5 before:to-transparent before:opacity-0 before:transition-opacity transition-[top] duration-300 ease-out`, style: { top: navVisible ? '60px' : '0px' } }, /*#__PURE__*/
+    React.createElement("div", { className: "flex w-full px-4" },
+    TABS.map((tab) => /*#__PURE__*/
+    React.createElement("button", {
+      key: tab,
+      onClick: () => {
+        vibrate();
+        setContentTab(tab);
+      },
+      className: `
+                                            flex-1 py-4 text-[13px] font-bold tracking-widest uppercase transition-all relative
+                                            ${contentTab === tab ? 'text-white' : 'text-white/40 hover:text-white/70'}
+                                        ` }, /*#__PURE__*/
+
+    React.createElement("div", { className: "flex items-center gap-2 justify-center" },
+    tab === 'opinions' && "Opinions",
+    tab === 'comments' && "Comments",
+    tab === 'brands' && "Brand Engagement"
+    ),
+    contentTab === tab && /*#__PURE__*/
+    React.createElement("div", { className: "absolute bottom-0 left-0 w-full h-[2px] bg-neon shadow-[0_0_10px_var(--neon)]" })
+
+    )
+    )
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", {
+      className: "px-4 min-h-[300px] transition-transform duration-200 ease-out will-change-transform",
+      style: { transform: `translateX(${swipeOffset}px)` } },
+
+    isGuest ? /*#__PURE__*/
+    React.createElement("div", { className: "animate-enter flex flex-col items-center justify-center py-12 px-6 text-center border-t border-white/5 mt-4 opacity-80" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Lock", size: 28, className: "text-white/40" })
+    ), /*#__PURE__*/
+    React.createElement("h3", { className: "text-lg font-heading font-bold text-white mb-2" }, "Opinions are Hidden"), /*#__PURE__*/
+    React.createElement("p", { className: "text-sm text-muted mb-6" }, "Sign in or create an account to view @", targetUser.username, "'s complete opinions and interactions."), /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => setShowAuthModal(true),
+      className: "bg-neon text-white px-8 py-3 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(47,139,255,0.2)] active:scale-95 transition-transform" },
+    "Sign In to View"
+
+    )
+    ) : /*#__PURE__*/
+
+    React.createElement(React.Fragment, null,
+    contentTab === 'opinions' && /*#__PURE__*/
+    React.createElement("div", { className: "animate-enter" },
+    targetPosts.length === 0 ? /*#__PURE__*/
+    React.createElement("div", { className: "flex flex-col items-center justify-center py-10 opacity-60" }, /*#__PURE__*/
+    React.createElement("div", { className: "w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Feather", size: 32, className: "text-white/40" })
+    ), /*#__PURE__*/
+    React.createElement("p", { className: "text-white font-heading font-medium" }, "No opinions yet"), /*#__PURE__*/
+    React.createElement("p", { className: "text-xs text-muted mt-1" }, "This user hasn't posted anything.")
+    ) :
+
+    targetPosts.map((post, i) => /*#__PURE__*/
+    React.createElement(Post, {
+      key: post.id,
+      targetUserId: targetUser.id,
+      post: {
+        ...post,
+        isHidden: hiddenPostIds.has(String(post.id)),
+        name: post.profiles?.full_name || 'User',
+        username: post.profiles?.username || 'user',
+        avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
+        rqs: post.profiles?.rqs_score || 0,
+        verified: post.is_verified_purchase,
+        category: post.category,
+        product: post.product_name || post.brand_name || 'Product',
+        text: post.text_content,
+        media: post.media_url || post.media || post.image_url || (post.images && post.images.length > 0 ? post.images[0] : null),
+        media_type: post.media_type || 'image',
+        images: post.images || null,
+        time: formatTime(post.created_at),
+        agrees: post.agrees_count || 0,
+        comments: post.comments_count || 0,
+        seenBy: post.brand_name
+      },
+      onShare: handleShare,
+      onReport: handleReport,
+      userProfile: userProfile,
+      onBookmark: toggleBookmark,
+      savedPosts: savedPosts,
+      onRemove: handleRemove,
+      onImageClick: (src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 }) }
+    )
+    )
+
+    ),
+
+
+    contentTab === 'comments' && /*#__PURE__*/
+    React.createElement("div", { className: "animate-enter" },
+    commentedPosts.length === 0 ? /*#__PURE__*/
+    React.createElement("div", { className: "text-center py-12 text-muted/40 tracking-widest font-heading" }, "NO COMMENTS YET"
+
+    ) :
+
+    commentedPosts.map((post, i) => /*#__PURE__*/
+    React.createElement(Post, {
+      key: post.id,
+      targetUserId: targetUser.id,
+      post: {
+        ...post,
+        isHidden: hiddenPostIds.has(String(post.id)),
+        name: post.profiles?.full_name || 'User',
+        username: post.profiles?.username || 'user',
+        avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
+        rqs: post.profiles?.rqs_score || 0,
+        verified: post.is_verified_purchase,
+        category: post.category,
+        product: post.product_name || post.brand_name || 'Product',
+        text: post.text_content,
+        media: post.media_url || post.media || post.image_url || (post.images && post.images.length > 0 ? post.images[0] : null),
+        media_type: post.media_type || 'image',
+        images: post.images || null,
+        time: formatTime(post.created_at),
+        agrees: post.agrees_count || 0,
+        comments: post.comments_count || 0,
+        seenBy: post.brand_name
+      },
+      onShare: handleShare,
+      onReport: handleReport,
+      userProfile: userProfile,
+      onBookmark: toggleBookmark,
+      savedPosts: savedPosts,
+      onRemove: handleRemove,
+      onImageClick: (src, type, images, idx) => setViewingImage({ src, type, images, initialIndex: idx || 0 }) }
+    )
+    )
+
+    ),
+
+
+    contentTab === 'brands' && /*#__PURE__*/
+    React.createElement("div", { className: "h-40 flex flex-col items-center justify-center text-muted/30 animate-enter" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "Grid", size: 32, className: "mb-2 opacity-50" }), /*#__PURE__*/
+    React.createElement("span", { className: "text-xs font-heading tracking-widest" }, "NO ACTIVITY YET")
+    )
+
+    )
+
+    )
+    ), "                        ", /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {vibrate();window.location.href = 'HOMEPAGE_FINAL.HTML#opinion';},
+      className: `absolute bottom-6 right-5 bg-neon text-white h-12 pl-4 pr-5 rounded-full flex items-center gap-2 z-30 transition-all duration-500 opinion-btn ${fabVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}` }, /*#__PURE__*/
+
+    React.createElement("div", { className: "opinion-icon" }, /*#__PURE__*/React.createElement(Icon, { icon: "Plus", size: 20, className: "stroke-[3px]" })), /*#__PURE__*/
+    React.createElement("span", { className: "font-heading font-bold text-sm tracking-wide" }, "OPINION")
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: `fixed top-6 left-1/2 -translate-x-1/2 z-[110] transition-all duration-300 w-auto whitespace-nowrap ${toastMessage ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}` }, /*#__PURE__*/
+    React.createElement("div", { className: "bg-[#0A0F1D]/90 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex items-center gap-3" },
+    toastMessage?.icon && /*#__PURE__*/React.createElement(Icon, { icon: toastMessage.icon, size: 16, className: toastMessage.isSuccess ? "text-[#6BFFB6]" : "text-[#2f8bff]" }), /*#__PURE__*/
+    React.createElement("span", { className: "text-white text-sm font-medium tracking-wide" }, toastMessage?.msg),
+    toastMessage?.action && /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {
+        toastMessage.action.onClick();
+        setToastMessage(null);
+      },
+      className: "ml-2 text-xs font-bold text-[#2f8bff] hover:text-white transition-colors" },
+
+    toastMessage.action.label
+    )
+
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement(ShareModal, { isOpen: isShareModalOpen, onClose: () => setIsShareModalOpen(false), post: sharePostData }), /*#__PURE__*/
+    React.createElement(AuthModal, {
+      isOpen: showAuthModal,
+      onClose: () => setShowAuthModal(false),
+      isClosable: true }
+    )
+
+    ));
+
+};
+
+// AUTH MODAL (Login/Signup) - Mirrored from HOMEPAGE_FINAL
+const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+  const [mode, setMode] = useState('login'); // 'login' or 'signup'
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [inlineEmailError, setInlineEmailError] = useState(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setInlineEmailError(null);
+    vibrate(10);
+
+    if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+      setError("Passwords don't match");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await window.authReadyPromise;
+      if (mode === 'signup') {
+        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+        if (signupData.error) throw signupData.error;
+
+        if (signupData?.session) {
+          window.location.href = 'index.html'; // onboarding now integrated into index.html
+        } else {
+          window.dispatchEvent(new CustomEvent('toast', {
+            detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+          }));
+          onClose();
+        }
+      } else {
+        const user = await window.signInUser(formData.email, formData.password);
+        if (user) {
+          if (user.onboardingRequired) {
+            window.location.href = 'index.html'; // onboarding now integrated into index.html
+          } else {
+            window.location.reload();
+          }
+        }
+      }
+    } catch (err) {
+      const msg = err.message || 'Authentication failed';
+      const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+      const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+
+      if (isSignupEmailErr) {
+        setInlineEmailError('This email is already registered. Please log in.');
+      } else if (isLoginEmailErr) {
+        setInlineEmailError('Email not registered or incorrect password.');
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await window.signInWithProvider('google');
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      setError("Please enter your email first");
+      return;
+    }
+    setLoading(true);
+    try {
+      await window.resetPassword(formData.email);
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (/*#__PURE__*/
+    React.createElement("div", { className: "fixed inset-0 z-[200] flex items-center justify-center p-4" }, /*#__PURE__*/
+    React.createElement("div", { className: "absolute inset-0 bg-black/95 backdrop-blur-xl", onClick: () => isClosable && onClose() }), /*#__PURE__*/
+    React.createElement("div", { className: "w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10", onClick: (e) => e.stopPropagation() },
+    isClosable && /*#__PURE__*/
+    React.createElement("button", { onClick: onClose, className: "absolute top-6 right-6 text-slate-500 hover:text-white transition-colors" }, /*#__PURE__*/
+    React.createElement(Icon, { icon: "X", size: 24 })
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", { className: "text-center mb-8" }, /*#__PURE__*/
+    React.createElement("h2", { className: "text-2xl font-black tracking-tight text-white mb-2 font-heading" },
+    mode === 'login' ? 'Welcome Back' : 'Sign Up'
+    ), /*#__PURE__*/
+    React.createElement("p", { className: "text-slate-400 text-sm" },
+    mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("form", { onSubmit: handleSubmit, className: "space-y-4" },
+    error && /*#__PURE__*/
+    React.createElement("div", { className: "bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm" },
+    error
+    ),
+
+
+    mode === 'signup' && /*#__PURE__*/
+    React.createElement("div", null, /*#__PURE__*/
+    React.createElement("label", { className: "text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase" }, "Full Name"), /*#__PURE__*/
+    React.createElement("input", {
+      required: true,
+      value: formData.name,
+      onChange: (e) => setFormData({ ...formData, name: e.target.value }),
+      type: "text",
+      placeholder: "John Doe",
+      className: "w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
+    )
+    ), /*#__PURE__*/
+
+
+    React.createElement("div", null, /*#__PURE__*/
+    React.createElement("label", { className: "text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase" }, "Email Address"), /*#__PURE__*/
+    React.createElement("input", {
+      required: true,
+      value: formData.email,
+      onChange: (e) => setFormData({ ...formData, email: e.target.value }),
+      type: "email",
+      placeholder: "john@example.com",
+      className: "w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
+    )
+    ), /*#__PURE__*/
+
+    React.createElement("div", null, /*#__PURE__*/
+    React.createElement("label", { className: "text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase" }, "Password"), /*#__PURE__*/
+    React.createElement("input", {
+      required: true,
+      value: formData.password,
+      onChange: (e) => setFormData({ ...formData, password: e.target.value }),
+      type: "password",
+      placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+      className: "w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
+    )
+    ),
+
+    mode === 'signup' && /*#__PURE__*/
+    React.createElement("div", null, /*#__PURE__*/
+    React.createElement("label", { className: "text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase" }, "Confirm Password"), /*#__PURE__*/
+    React.createElement("input", {
+      required: true,
+      value: formData.confirmPassword,
+      onChange: (e) => setFormData({ ...formData, confirmPassword: e.target.value }),
+      type: "password",
+      placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+      className: "w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
+    )
+    ),
+
+
+    mode === 'login' && /*#__PURE__*/
+    React.createElement("button", {
+      type: "button",
+      onClick: handleForgotPassword,
+      className: "text-blue-400 text-sm hover:text-blue-300 transition-colors" },
+    "Forgot Password?"
+
+    ), /*#__PURE__*/
+
+
+    React.createElement("button", {
+      type: "submit",
+      disabled: loading,
+      className: "w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50" },
+
+    loading ? 'PROCESSING...' : mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT', /*#__PURE__*/
+    React.createElement(Icon, { icon: "ArrowRight", size: 18 })
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "relative flex py-2 items-center" }, /*#__PURE__*/
+    React.createElement("div", { className: "flex-grow border-t border-slate-700" }), /*#__PURE__*/
+    React.createElement("span", { className: "flex-shrink-0 mx-4 text-slate-500 text-xs uppercase" }, "OR"), /*#__PURE__*/
+    React.createElement("div", { className: "flex-grow border-t border-slate-700" })
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "google-sso-container", "data-action": "signin" })
+    ), /*#__PURE__*/
+
+    React.createElement("div", { className: "mt-6 text-center text-sm text-slate-400" },
+    mode === 'login' ? "Don't have an account?" : "Already have an account?", /*#__PURE__*/
+    React.createElement("button", {
+      onClick: () => {vibrate(5);setMode(mode === 'login' ? 'signup' : 'login');setError(null);},
+      className: "text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform" },
+
+    mode === 'login' ? 'Sign Up' : 'Log In'
+    )
+    )
+    )
+    ));
+
+};
+
+const root = window.ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(App, null));

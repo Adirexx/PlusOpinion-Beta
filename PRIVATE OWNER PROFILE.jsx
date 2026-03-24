@@ -1,0 +1,3735 @@
+
+        // Default Avatar (SVG Data URI - Rounded Shoulder, Thinner Stroke 1.2px, Scaled Down)
+        // Default Avatar (Refined: Navbar Style Match - Reduced Gap cy=9, Slim 0.8px, Extracted Blue #326bcb)
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+        const { useState, useEffect, useRef } = React;
+
+        // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
+        const goTo = (page) => {
+            window.scrollTo(0, 0);
+            window.location.href = page;
+        };
+
+        const checkMySpaceRedirect = async () => {
+            try {
+                const user = await window.getCurrentUser();
+
+                if (!user) {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    return;
+                }
+                const { data: profile } = await window.supabase
+                    .from('profiles')
+                    .select('is_business_account, company_name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile && profile.is_business_account) {
+                    window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+                } else {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                }
+            } catch (e) {
+                window.location.href = 'MY SPACE FINAL (USER).HTML';
+            }
+        };
+
+        function dispatchAction(action) {
+            if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+                // Already on homepage
+                window.PlusOpinionActions[action]();
+            } else {
+                // On another page → redirect with hash
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        }
+
+        const triggerAction = (action) => {
+            if (window.PlusOpinionActions?.[action]) {
+                window.PlusOpinionActions[action]();
+            } else {
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        };
+
+        // 🔁 PAGE → TAB MAP (GLOBAL)
+        const PAGE_TAB_MAP = {
+            'HOMEPAGE_FINAL.HTML': 'home',
+            'CATAGORYPAGE.HTML': 'categories',
+            'MY SPACE FINAL (USER).HTML': 'myspace',
+            'NOTIFICATION PANEL.HTML': 'notifs',
+            'PRIVATE OWNER PROFILE.HTML': 'profile'
+        };
+
+        // --- ICONS ---
+        const Icons = {
+            Smile: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
+            Running: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 4a2 2 0 10-4 0 2 2 0 004 0z"/><path d="M10 7l-2 4 4 2-1 6"/><path d="M12 13l4-1 2-4"/><path d="M8 7l-2 0 2 3"/></svg>, 
+
+            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>,
+            Search: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
+            MoreVertical: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>,
+            MoreHorizontal: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>,
+            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
+            Link: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>,
+            Edit: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>,
+            BarChart2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="18" y1="20" y2="10" /><line x1="12" x2="12" y1="20" y2="4" /><line x1="6" x2="6" y1="20" y2="14" /></svg>,
+            ShieldCheck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>,
+            Plus: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+            ThumbsUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" /></svg>,
+            Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
+            MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>,
+            MessagesDuo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z" /><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1" /></svg>,
+            InboxArchive: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2" /><path d="M3 10v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9" /><path d="M10 12h4" /></svg>,
+            MailOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.2 8.4c.5.3.8.8.8 1.4v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.8c0-.6.3-1.1.8-1.4l7.5-4.5a2 2 0 0 1 2.4 0l7.5 4.5Z" /><path d="m22 9-10 7L2 9" /><path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4" /></svg>,
+            Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
+            PaperPlane: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 15 22l-4-9L2 9z" /><path d="M22 2 11 13v6l4-3" /></svg>,
+            PlusOpinionInbox: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <polyline points="3 5 12 11 21 5" />
+                </svg>
+            ),
+            ActiveChat: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><circle cx="8" cy="10" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="10" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="10" r="1.5" fill="currentColor" stroke="none" /></svg>,
+            WhatsApp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" /></svg>,
+            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>,
+            Instagram: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+
+            // Edit Icons
+            Camera: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
+
+            // Nav Icons
+            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+            MySpaceLogo: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 3L3 22" strokeLinejoin="bevel" />
+                    <path d="M21 22L11 3" strokeLinejoin="bevel" />
+                    <path d="M22 8L4 18" className="myspace-swoosh" strokeWidth="2.5" />
+                </svg>
+            )
+        };
+
+        const Icon = ({ icon, size = 20, className = "" }) => {
+            const Component = Icons[icon];
+            if (!Component) return null;
+            return <Component width={size} height={size} className={className} />;
+        };
+
+        const vibrate = () => {
+            if (navigator.vibrate) navigator.vibrate(5);
+        };
+
+        // User data will be loaded from database
+        const USER = {
+            name: "Loading...",
+            username: "",
+            avatar: "",
+            bio: "",
+            rqs: 0,
+            verified_count: 0,
+            location: "",
+            joined: "",
+            website: ""
+        };
+
+        // Posts will be loaded from database
+        const POSTS = [];
+
+        // --- HELPER COMPONENTS (FROM HOMEPAGE) ---
+
+        const formatTime = (dateString) => {
+            const date = new Date(dateString);
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+
+            if (seconds < 60) return 'Just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            if (days < 365) return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        };
+
+        const Avatar = ({ src, className, fallbackSize = 20, onClick }) => {
+            const [error, setError] = useState(false);
+
+            if (!src || error) {
+                return (
+                    <div
+                        className={`bg-white/5 flex items-center justify-center ${className}`}
+                        onClick={onClick}
+                    >
+                        <Icon icon="User" size={fallbackSize} className="text-white/20" />
+                    </div>
+                );
+            }
+
+            return (
+                <img
+                    src={src}
+                    className={className}
+                    onError={() => setError(true)}
+                    onClick={onClick}
+                    alt="Avatar"
+                />
+            );
+        };
+
+
+        // --- Clickable @mention renderer ---
+        const renderTextWithMentions = (text) => {
+            if (!text) return text;
+            const parts = text.split(/(@[\w.]+)/g);
+            return parts.map((part, i) => {
+                if (/@[\w.]+/.test(part)) {
+                    const username = part.slice(1);
+                    return (
+                        <span
+                            key={i}
+                            className="text-neon font-semibold cursor-pointer hover:underline"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                vibrate(5);
+                                window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+                            }}
+                        >
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            });
+        };
+
+        // --- Mention Autocomplete ---
+        const MentionAutocomplete = ({ query, onSelect, direction = 'up', coords }) => {
+            const [users, setUsers] = useState([]);
+            const [loading, setLoading] = useState(false);
+
+            useEffect(() => {
+                if (!query || query.length < 1) { setUsers([]); return; }
+                setLoading(true);
+                const timer = setTimeout(async () => {
+                    try {
+                        const results = await window.searchUsersForMention(query);
+                        setUsers(results);
+                    } catch (e) {
+                        setUsers([]);
+                    } finally {
+                        setLoading(false);
+                    }
+                }, 250);
+                return () => clearTimeout(timer);
+            }, [query]);
+
+            if (!query || (users.length === 0 && !loading)) return null;
+
+            const positionClass = direction === 'down' ? 'top-full mt-2' : 'bottom-full mb-2';
+            const style = coords ? {
+                position: 'absolute',
+                top: `${coords.top + 25}px`,
+                left: `${coords.left}px`,
+                width: '220px',
+                zIndex: 100
+            } : {};
+
+            return (
+                <div
+                    style={style}
+                    className={`${coords ? '' : 'absolute ' + positionClass + ' left-0 right-0'} bg-[#1A1C2E] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in`}
+                >
+                    {loading && <div className="px-3 py-2 text-xs text-muted">Searching...</div>}
+                    {users.map(u => (
+                        <button
+                            key={u.id}
+                            onMouseDown={(e) => { e.preventDefault(); onSelect(u); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors text-left"
+                        >
+                            <Avatar src={u.avatar_url} className="w-7 h-7 rounded-full border border-white/10 object-cover flex-shrink-0" fallbackSize={13} />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-white text-xs font-semibold truncate">{u.full_name}</div>
+                                <div className="text-muted text-[10px] truncate">@{u.username}</div>
+                            </div>
+                            <span className="text-[9px] text-neon/60 font-bold shrink-0">RQS {u.rqs_score}</span>
+                        </button>
+                    ))}
+                </div>
+            );
+        };
+
+        // --- Reply item ---
+        const ReplyItem = ({ reply, onReply }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [likesCount, setLikesCount] = useState(reply.likes?.[0]?.count || 0);
+            useEffect(() => {
+                if (window.hasLikedComment) window.hasLikedComment(reply.id).then(setIsLiked).catch(() => { });
+            }, [reply.id]);
+            const handleLike = async () => {
+                vibrate(5);
+                const next = !isLiked;
+                setIsLiked(next);
+                setLikesCount(p => next ? p + 1 : p - 1);
+                try {
+                    next ? await window.likeComment(reply.id) : await window.unlikeComment(reply.id);
+                } catch (e) { setIsLiked(!next); setLikesCount(p => !next ? p + 1 : p - 1); }
+            };
+            return (
+                <div className={`flex gap-2 text-sm mt-2 ${reply.isPending ? 'opacity-50' : ''}`}>
+                    <div className="ml-5 flex-shrink-0">
+                        <Avatar src={reply.avatar} className="w-5 h-5 rounded-full border border-white/10 object-cover cursor-pointer" fallbackSize={10}
+                            onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }} />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span className="font-bold text-white text-[11px] cursor-pointer hover:text-neon transition-colors"
+                                    onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }}>
+                                    {reply.user}
+                                </span>
+                                <span className="text-[9px] text-muted">{reply.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => onReply && onReply(reply)} className="text-[9px] text-muted hover:text-white transition-colors">Reply</button>
+                                <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                    <Icon icon="ThumbsUp" size={10} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
+                                    {likesCount > 0 && <span className="text-[9px]">{likesCount}</span>}
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-gray-300 text-[11px] leading-relaxed mt-0.5">{renderTextWithMentions(reply.text)}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const CommentItem = ({ comment, onReply }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [likesCount, setLikesCount] = useState(comment.likes?.[0]?.count || 0);
+
+            useEffect(() => {
+                const checkLike = async () => {
+                    if (window.hasLikedComment) {
+                        try {
+                            const liked = await window.hasLikedComment(comment.id);
+                            setIsLiked(liked);
+                        } catch (e) { }
+                    }
+                };
+                checkLike();
+            }, [comment.id]);
+
+            const handleLike = async () => {
+                vibrate(5);
+                const newStatus = !isLiked;
+                setIsLiked(newStatus);
+                setLikesCount(prev => newStatus ? prev + 1 : prev - 1);
+
+                try {
+                    if (newStatus) {
+                        await window.likeComment(comment.id);
+                    } else {
+                        await window.unlikeComment(comment.id);
+                    }
+                } catch (e) {
+                    console.error('Comment like failed', e);
+                    setIsLiked(!newStatus);
+                    setLikesCount(prev => !newStatus ? prev + 1 : prev - 1);
+                }
+            };
+
+            return (
+                <div className={`flex gap-3 text-sm animate-fade-in ${comment.isPending ? 'opacity-50' : ''} group`}>
+                    <div className="flex-shrink-0">
+                        <div className="flex-shrink-0">
+                            <Avatar
+                                src={comment.avatar}
+                                className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
+                                fallbackSize={12}
+                                onClick={() => {
+                                    vibrate();
+                                    const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
+                                    window.location.href = `${getPath('PUBLIC POV PROFILE.HTML')}?id=${comment.user_id}`;
+                                }}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-baseline justify-between">
+                            <div className="flex items-baseline gap-2">
+                                <span
+                                    className="font-bold text-white text-xs cursor-pointer hover:text-neon transition-colors"
+                                    onClick={() => {
+                                        vibrate();
+                                        const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
+                                        window.location.href = `${getPath('PUBLIC POV PROFILE.HTML')}?id=${comment.user_id}`;
+                                    }}
+                                >
+                                    {comment.user}
+                                </span>
+                                <span className="text-[10px] text-muted">{comment.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => onReply && onReply(comment)} className="text-[10px] text-muted hover:text-white transition-colors">Reply</button>
+                                <button onClick={handleLike} className={`flex items-center gap-1 transition-colors ${isLiked ? 'text-white' : 'text-muted'}`}>
+                                    <Icon icon="ThumbsUp" size={12} className={`stroke-[1.5px] ${isLiked ? "fill-white" : ""}`} style={{ fill: isLiked ? 'white' : 'none', color: isLiked ? 'white' : 'inherit' }} />
+                                    {likesCount > 0 && <span className="text-[10px]">{likesCount}</span>}
+                                </button>
+                            </div>
+                        </div>
+                        <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{renderTextWithMentions(comment.text)}</p>
+                        {(comment.replies || []).map(r => (
+                            <ReplyItem key={r.id} reply={r} onReply={onReply} />
+                        ))}
+                    </div>
+                </div >
+            );
+        };
+
+        // PREMIUM ZOOMABLE MEDIA COMPONENT (Instagram Style)
+        // ─── SMART MEDIA RATIO DETECTION HELPER ────────────────────────────────────
+        // Decodes the image/video ratio and returns CSS aspect-ratio class
+        const getAspectClass = (ratio) => {
+            if (ratio >= 1.55) return 'aspect-[16/9]';      // Landscape → 16:9
+            if (ratio >= 0.89) return 'aspect-square';       // Square / near-square → 1:1
+            return 'aspect-[4/5]';                           // Portrait → 4:5 (covers tall too)
+        };
+
+        // ─── SMART MEDIA COMPONENT ─────────────────────────────────────────────────
+        // Replaces ZoomableMedia. Handles: single image, single video, multi-image carousel
+        // Props: src (string), type ('image'|'video'), images (string[]), onImageClick
+        const SmartMedia = ({ src, type, images, onImageClick }) => {
+            const isVideo = type === 'video' || type?.startsWith('video/') || src?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
+            const isMulti = images && images.length > 1;
+            const imageList = isMulti ? images : [src].filter(Boolean);
+
+            // Global mute state
+            const [isMuted, setIsMuted] = useState(() => {
+                const stored = localStorage.getItem('globalVideoMuted');
+                return stored ? stored === 'true' : false; // default unmuted
+            });
+            const [isInView, setIsInView] = useState(false);
+
+            useEffect(() => {
+                const handleMuteChange = (e) => setIsMuted(e.detail.isMuted);
+                window.addEventListener('globalMuteToggle', handleMuteChange);
+                return () => window.removeEventListener('globalMuteToggle', handleMuteChange);
+            }, []);
+
+            useEffect(() => {
+                if (!isVideo || !containerRef.current) return;
+                const observer = new IntersectionObserver(([entry]) => {
+                    setIsInView(entry.isIntersecting);
+                }, { threshold: 0.6 });
+
+                observer.observe(containerRef.current);
+                return () => observer.disconnect();
+            }, [isVideo]);
+
+            const toggleMute = (e) => {
+                e.stopPropagation();
+                const newMuted = !isMuted;
+                setIsMuted(newMuted);
+                localStorage.setItem('globalVideoMuted', newMuted);
+                window.dispatchEvent(new CustomEvent('globalMuteToggle', { detail: { isMuted: newMuted } }));
+            };
+
+            // Aspect ratio state (determined after first media loads)
+            const [aspectClass, setAspectClass] = useState('aspect-[4/5]');
+            const [ratioDetected, setRatioDetected] = useState(false);
+
+            // Carousel state
+            const [activeIdx, setActiveIdx] = useState(0);
+            const [dragDelta, setDragDelta] = useState(0);
+            const [isDragging, setIsDragging] = useState(false);
+            const dragStart = useRef(null);
+            const containerRef = useRef(null);
+
+            // Pinch-zoom state (single media only)
+            const [scale, setScale] = useState(1);
+            const [pinchOrigin, setPinchOrigin] = useState({ x: 50, y: 50 });
+            const [isPinching, setIsPinching] = useState(false);
+            const initialDist = useRef(null);
+
+            // Detect ratio from the first image/video
+            const handleMediaLoad = (e) => {
+                if (ratioDetected) return;
+                const el = e.target;
+                const w = el.naturalWidth || el.videoWidth || el.clientWidth;
+                const h = el.naturalHeight || el.videoHeight || el.clientHeight;
+                if (w && h) {
+                    setAspectClass(getAspectClass(w / h));
+                    setRatioDetected(true);
+                }
+            };
+
+            // ── Carousel touch/drag handlers ──────────────────────────────────────
+            const SWIPE_THRESHOLD = 40;
+
+            const onCarouselTouchStart = (e) => {
+                e.stopPropagation();
+                if (e.touches.length !== 1) return;
+                dragStart.current = e.touches[0].clientX;
+                setIsDragging(true);
+            };
+
+            const onCarouselTouchMove = (e) => {
+                e.stopPropagation();
+                if (!isDragging || dragStart.current === null) return;
+                const delta = e.touches[0].clientX - dragStart.current;
+                // Clamp: don't allow dragging past edges
+                if ((activeIdx === 0 && delta > 0) || (activeIdx === imageList.length - 1 && delta < 0)) {
+                    setDragDelta(delta * 0.2); // Rubber-band
+                } else {
+                    setDragDelta(delta);
+                }
+            };
+
+            const onCarouselTouchEnd = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+                    setActiveIdx(i => i + 1);
+                } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+                    setActiveIdx(i => i - 1);
+                }
+                setDragDelta(0);
+                dragStart.current = null;
+            };
+
+            // ── Pinch-zoom handlers (single media) ──────────────────────────────────
+            const onSingleTouchStart = (e) => {
+                if (e.touches.length === 2) {
+                    setIsPinching(true);
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        const mx = (t1.pageX + t2.pageX) / 2;
+                        const my = (t1.pageY + t2.pageY) / 2;
+                        setPinchOrigin({ x: ((mx - rect.left) / rect.width) * 100, y: ((my - rect.top) / rect.height) * 100 });
+                    }
+                }
+            };
+            const onSingleTouchMove = (e) => {
+                if (e.touches.length === 2 && isPinching && initialDist.current) {
+                    e.preventDefault();
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    setScale(Math.min(Math.max(d / initialDist.current, 1), 4));
+                }
+            };
+            const onSingleTouchEnd = () => { setIsPinching(false); setScale(1); initialDist.current = null; };
+
+            const handleClick = () => {
+                if (isPinching || (isMulti && Math.abs(dragDelta) > 5)) return;
+                if (isMulti) onImageClick(null, 'images', imageList, activeIdx);
+                else onImageClick(src, type);
+            };
+
+            // ── Desktop Mouse Drag handlers ───────────────────────────────────────
+            const onCarouselMouseDown = (e) => {
+                if (e.button !== 0) return; // Only left click
+                dragStart.current = e.clientX;
+                setIsDragging(true);
+            };
+
+            const onCarouselMouseMove = (e) => {
+                if (!isDragging || dragStart.current === null) return;
+                const delta = e.clientX - dragStart.current;
+                if ((activeIdx === 0 && delta > 0) || (activeIdx === imageList.length - 1 && delta < 0)) {
+                    setDragDelta(delta * 0.2);
+                } else {
+                    setDragDelta(delta);
+                }
+            };
+
+            const onCarouselMouseUp = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                if (dragDelta < -SWIPE_THRESHOLD && activeIdx < imageList.length - 1) {
+                    setActiveIdx(i => i + 1);
+                } else if (dragDelta > SWIPE_THRESHOLD && activeIdx > 0) {
+                    setActiveIdx(i => i - 1);
+                }
+                setDragDelta(0);
+                dragStart.current = null;
+            };
+
+            // ── Render ──────────────────────────────────────────────────────────────
+            return (
+                <div
+                    ref={containerRef}
+                    className={`w-full rounded-xl mb-3 border border-white/5 relative bg-black overflow-hidden cursor-pointer select-none media-zoom-effect ${aspectClass}`}
+                    style={{ zIndex: isPinching ? 50 : 1 }}
+                    onClick={handleClick}
+                >
+                    {isVideo ? (
+                        /* ── SINGLE VIDEO ─────────────────────────────── */
+                        <div
+                            className="absolute inset-0"
+                            onTouchStart={onSingleTouchStart}
+                            onTouchMove={onSingleTouchMove}
+                            onTouchEnd={onSingleTouchEnd}
+                            style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
+                        >
+                            <video
+                                src={src}
+                                className="w-full h-full object-cover pointer-events-none"
+                                playsInline loop muted={isMuted || !isInView} autoPlay
+                                onLoadedMetadata={handleMediaLoad}
+                            />
+                            {/* Mute/Unmute button */}
+                            <button
+                                onClick={toggleMute}
+                                className="absolute bottom-3 right-3 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full p-2 text-white transition-all z-10 pointer-events-auto">
+                                {isMuted ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                                ) : (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                )}
+                            </button>
+                        </div>
+                    ) : isMulti ? (
+                        /* ── MULTI-IMAGE CAROUSEL ──────────────────────── */
+                        <>
+                            <div
+                                className="absolute inset-0 flex"
+                                style={{
+                                    transform: `translateX(calc(${-activeIdx * (100 / imageList.length)}% + ${dragDelta}px))`,
+                                    transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    width: `${imageList.length * 100}%`
+                                }}
+                                onTouchStart={onCarouselTouchStart}
+                                onTouchMove={onCarouselTouchMove}
+                                onTouchEnd={onCarouselTouchEnd}
+                                onMouseDown={onCarouselMouseDown}
+                                onMouseMove={onCarouselMouseMove}
+                                onMouseUp={onCarouselMouseUp}
+                                onMouseLeave={onCarouselMouseUp}
+                            >
+                                {imageList.map((imgSrc, idx) => (
+                                    <div key={idx} className="h-full flex-shrink-0" style={{ width: `${100 / imageList.length}%` }}>
+                                        <img
+                                            src={imgSrc}
+                                            alt={`Image ${idx + 1}`}
+                                            loading={idx === 0 ? 'eager' : 'lazy'}
+                                            className="w-full h-full object-cover pointer-events-none"
+                                            onLoad={idx === 0 ? handleMediaLoad : undefined}
+                                            draggable="false"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5 pointer-events-none z-10">
+                                {imageList.map((_, idx) => (
+                                    <div key={idx} className="transition-all duration-300" style={{
+                                        width: idx === activeIdx ? '18px' : '6px',
+                                        height: '6px',
+                                        borderRadius: '3px',
+                                        background: idx === activeIdx ? 'white' : 'rgba(255,255,255,0.4)'
+                                    }} />
+                                ))}
+                            </div>
+                            {/* Image count badge */}
+                            <div className="absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] text-white font-bold pointer-events-none z-10">
+                                {activeIdx + 1}/{imageList.length}
+                            </div>
+                        </>
+                    ) : (
+                        /* ── SINGLE IMAGE ──────────────────────────────── */
+                        <div
+                            className="absolute inset-0"
+                            onTouchStart={onSingleTouchStart}
+                            onTouchMove={onSingleTouchMove}
+                            onTouchEnd={onSingleTouchEnd}
+                            style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
+                        >
+                            <img
+                                src={src}
+                                alt="Post media"
+                                loading="lazy"
+                                className="w-full h-full object-cover pointer-events-none"
+                                onLoad={handleMediaLoad}
+                                draggable="false"
+                            />
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // ─── FULL-SCREEN IMAGE VIEWER (multi-image swipe + pinch-zoom) ─────────────
+        const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
+            // Normalize: images[] takes priority; fall back to single src
+            const imgList = (images && images.length > 0) ? images : (src && type !== 'video' ? [src] : []);
+            const isVideo = type === 'video' && (!images || images.length === 0);
+            const isMulti = imgList.length > 1;
+
+            const [currentIdx, setCurrentIdx] = useState(initialIndex || 0);
+            const [scale, setScale] = useState(1);
+            const [position, setPosition] = useState({ x: 0, y: 0 });
+            const [isPinching, setIsPinching] = useState(false);
+            const [isDragging, setIsDragging] = useState(false);
+            const [dragDelta, setDragDelta] = useState(0);
+            const initialDist = useRef(null);
+            const lastScale = useRef(1);
+            const lastTouch = useRef({ x: 0, y: 0 });
+            const dragStart = useRef(null);
+            const SWIPE_THRESHOLD = 50;
+
+            if (!src && imgList.length === 0) return null;
+
+            const resetZoom = () => { setScale(1); setPosition({ x: 0, y: 0 }); };
+
+            // ── Touch handlers (pinch + pan + swipe) ────────────────────────────────
+            const handleTouchStart = (e) => {
+                if (e.touches.length === 2) {
+                    setIsPinching(true);
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    initialDist.current = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    lastScale.current = scale;
+                } else if (e.touches.length === 1) {
+                    if (scale > 1) {
+                        lastTouch.current = { x: e.touches[0].pageX - position.x, y: e.touches[0].pageY - position.y };
+                    } else if (isMulti) {
+                        dragStart.current = e.touches[0].clientX;
+                        setIsDragging(true);
+                    }
+                }
+            };
+
+            const handleTouchMove = (e) => {
+                if (e.touches.length === 2 && isPinching && initialDist.current) {
+                    e.preventDefault();
+                    const t1 = e.touches[0], t2 = e.touches[1];
+                    const d = Math.hypot(t1.pageX - t2.pageX, t1.pageY - t2.pageY);
+                    setScale(Math.min(Math.max((d / initialDist.current) * lastScale.current, 1), 5));
+                } else if (e.touches.length === 1 && scale > 1) {
+                    const newX = e.touches[0].pageX - lastTouch.current.x;
+                    const newY = e.touches[0].pageY - lastTouch.current.y;
+                    const limitX = (scale - 1) * (window.innerWidth / 2);
+                    const limitY = (scale - 1) * (window.innerHeight / 2);
+                    setPosition({ x: Math.min(Math.max(newX, -limitX), limitX), y: Math.min(Math.max(newY, -limitY), limitY) });
+                } else if (e.touches.length === 1 && isDragging && isMulti && scale <= 1) {
+                    const delta = e.touches[0].clientX - dragStart.current;
+                    if ((currentIdx === 0 && delta > 0) || (currentIdx === imgList.length - 1 && delta < 0)) {
+                        setDragDelta(delta * 0.2);
+                    } else {
+                        setDragDelta(delta);
+                    }
+                }
+            };
+
+            const handleTouchEnd = () => {
+                setIsPinching(false);
+                if (scale <= 1) setPosition({ x: 0, y: 0 });
+                if (isDragging) {
+                    setIsDragging(false);
+                    if (dragDelta < -SWIPE_THRESHOLD && currentIdx < imgList.length - 1) {
+                        setCurrentIdx(i => i + 1);
+                        resetZoom();
+                    } else if (dragDelta > SWIPE_THRESHOLD && currentIdx > 0) {
+                        setCurrentIdx(i => i - 1);
+                        resetZoom();
+                    }
+                    setDragDelta(0);
+                    dragStart.current = null;
+                }
+            };
+
+            const handleDoubleTap = (e) => {
+                e.stopPropagation();
+                if (scale > 1) { resetZoom(); } else { setScale(2.5); }
+            };
+
+            return (
+                <div
+                    className="fixed inset-0 z-[100] bg-black animate-fade-in overflow-hidden"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    {/* Close button */}
+                    <button
+                        className="absolute top-5 right-5 p-2.5 bg-white/10 rounded-full text-white z-50 backdrop-blur-sm"
+                        onClick={onClose}
+                    >
+                        <Icon icon="X" size={22} />
+                    </button>
+
+                    {/* Counter */}
+                    {isMulti && (
+                        <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-sm text-white font-bold z-50">
+                            {currentIdx + 1} / {imgList.length}
+                        </div>
+                    )}
+
+                    {isVideo ? (
+                        /* ── Full-screen video ─────────── */
+                        <div className="w-full h-full flex items-center justify-center p-4" onClick={onClose}>
+                            <video
+                                src={src}
+                                className="max-w-full max-h-full object-contain"
+                                controls autoPlay
+                                onClick={e => e.stopPropagation()}
+                            />
+                        </div>
+                    ) : isMulti ? (
+                        /* ── Multi-image swipeable fullscreen ── */
+                        <>
+                            <div
+                                className="absolute inset-0 flex items-center"
+                                style={{
+                                    transform: `translateX(calc(${-currentIdx * (100 / imgList.length)}% + ${dragDelta}px))`,
+                                    transition: isDragging ? 'none' : 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94)',
+                                    width: `${imgList.length * 100}%`
+                                }}
+                            >
+                                {imgList.map((imgSrc, idx) => (
+                                    <div key={idx} className="h-full flex items-center justify-center flex-shrink-0" style={{ width: `${100 / imgList.length}%` }}>
+                                        <img
+                                            src={imgSrc}
+                                            alt={`Image ${idx + 1}`}
+                                            className="max-w-full max-h-full object-contain select-none p-2"
+                                            style={idx === currentIdx ? { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s' } : {}}
+                                            onDoubleClick={idx === currentIdx ? handleDoubleTap : undefined}
+                                            draggable="false"
+                                            onClick={e => e.stopPropagation()}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Dot indicators */}
+                            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 pointer-events-none z-50">
+                                {imgList.map((_, idx) => (
+                                    <div key={idx} style={{
+                                        width: idx === currentIdx ? '20px' : '6px',
+                                        height: '6px', borderRadius: '3px',
+                                        background: idx === currentIdx ? 'white' : 'rgba(255,255,255,0.4)',
+                                        transition: 'all 0.3s'
+                                    }} />
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        /* ── Single image ──────────────── */
+                        <div
+                            className="w-full h-full flex items-center justify-center"
+                            onClick={onClose}
+                        >
+                            <img
+                                src={imgList[0] || src}
+                                className="max-w-full max-h-full object-contain p-2 select-none"
+                                style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s ease-out' }}
+                                onDoubleClick={handleDoubleTap}
+                                onClick={e => e.stopPropagation()}
+                                draggable="false"
+                            />
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- COMPONENTS ---
+
+        const NavItem = ({ icon, label, isActive, onClick, isMySpace, badge }) => (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (typeof vibrate === 'function') vibrate(5);
+                    if (isMySpace) {
+                        checkMySpaceRedirect();
+                    } else {
+                        onClick();
+                    }
+                }}
+                className={`relative group flex flex-col items-center justify-center w-14 h-14 ${isActive ? '' : ''}`}
+            >
+                <div className={`relative ${isMySpace ? 'myspace-trigger' : ''} p-1.5 rounded-xl ${isActive ? 'bg-white/5' : ''}`}>
+                    <Icon icon={icon} size={24} className={`${isActive ? 'text-white glow-white stroke-[2.5px]' : 'text-muted group-hover:text-white stroke-[1.5px]'}`} />
+
+                    {/* Badge Logic */}
+                    {badge > 0 && (
+                        <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-blue-500 rounded-full border-2 border-[#020205] z-50 animate-pulse-subtle">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                            <span className="relative text-[10px] font-bold text-white px-1 leading-none">
+                                {badge > 99 ? '99+' : badge}
+                            </span>
+                        </div>
+                    )}
+
+                </div>
+            </button>
+        );
+
+        const BottomNav = ({ activeTab, setActiveTab, isVisible = true }) => {
+            // Initialize with cached value to prevent flicker
+            const [unreadCount, setUnreadCount] = useState(() => {
+                return window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0;
+            });
+
+            useEffect(() => {
+                // Subscribe to real-time unread count
+                const unsubscribe = window.subscribeToUnreadCount && window.subscribeToUnreadCount((count) => {
+                    setUnreadCount(count);
+                });
+                return () => {
+                    if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
+                };
+            }, []);
+
+
+            return (
+                <div id="bottom-nav-bar" className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                    <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
+                    <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
+                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} />
+                    <NavItem
+                        icon="Bell"
+                        label="Notifications"
+                        isActive={activeTab === 'notifs'}
+                        badge={unreadCount}
+                        onClick={() => goTo('NOTIFICATION PANEL.HTML')}
+                    />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => { }} />
+                </div>
+            );
+        };
+
+        // --- EDIT PROFILE VIEW ---
+        const EditProfile = ({ onClose, currentProfile, onSave }) => {
+            const [formData, setFormData] = useState({
+                full_name: currentProfile.full_name,
+                bio: currentProfile.bio,
+                location: currentProfile.location,
+                website: currentProfile.website
+            });
+
+            const [avatarFile, setAvatarFile] = useState(null);
+            const [avatarPreview, setAvatarPreview] = useState(currentProfile.avatar_url);
+            const [bannerFile, setBannerFile] = useState(null);
+            const [bannerPreview, setBannerPreview] = useState(currentProfile.banner_url);
+            const [saving, setSaving] = useState(false);
+            const avatarInputRef = useRef(null);
+            const bannerInputRef = useRef(null);
+
+            const handleAvatarChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('File size must be less than 2MB');
+                        return;
+                    }
+
+                    setAvatarFile(file);
+                    const reader = new FileReader();
+                    reader.onloadend = () => setAvatarPreview(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleBannerChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must be less than 5MB');
+                        return;
+                    }
+
+                    setBannerFile(file);
+                    const reader = new FileReader();
+                    reader.onloadend = () => setBannerPreview(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const uploadFile = async (file, bucket, path) => {
+                const { data, error } = await window.supabase.storage
+                    .from(bucket)
+                    .upload(path, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = window.supabase.storage
+                    .from(bucket)
+                    .getPublicUrl(path);
+
+                return publicUrl;
+            };
+
+
+
+            const handleRemoveAvatar = (e) => {
+                e.stopPropagation();
+                if (!confirm('Remove profile picture?')) return;
+                setAvatarFile(null);
+                setAvatarPreview(null);
+                // setCurrentProfile is not in scope — we track removal via avatarPreview=null in handleSave
+            };
+
+            const handleRemoveBanner = (e) => {
+                e.stopPropagation();
+                if (!confirm('Remove banner image?')) return;
+                setBannerFile(null);
+                setBannerPreview(null);
+                // setCurrentProfile is not in scope — we track removal via bannerPreview=null in handleSave
+            };
+
+            const handleSave = async () => {
+                try {
+                    setSaving(true);
+
+                    // Get session + access token — required for authenticated REST calls
+                    const { data: { session } } = await window.supabase.auth.getSession();
+                    if (!session) {
+                        alert('Session expired. Please log in again.');
+                        return;
+                    }
+                    const accessToken = session.access_token;
+                    const userId = session.user.id;
+
+                    const SUPABASE_URL = 'https://ogqyemyrxogpnwitumsr.supabase.co';
+                    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM';
+
+                    // Determine final media URLs
+                    // avatarPreview=null means removed; new file means re-upload; else keep existing
+                    let avatarUrl = avatarPreview === null ? null : currentProfile.avatar_url;
+                    let bannerUrl = bannerPreview === null ? null : currentProfile.banner_url;
+
+                    // Upload new avatar if user picked a new file (non-fatal)
+                    if (avatarFile) {
+                        try {
+                            const ext = avatarFile.name.split('.').pop().toLowerCase();
+                            const path = `${userId}/${Date.now()}.${ext}`;
+                            const { error: avErr } = await window.supabase.storage
+                                .from('Avatars').upload(path, avatarFile, { upsert: true });
+                            if (!avErr) {
+                                const { data: { publicUrl } } = window.supabase.storage
+                                    .from('Avatars').getPublicUrl(path);
+                                avatarUrl = publicUrl;
+                            } else {
+                                console.warn('[EditProfile] Avatar upload failed (non-fatal):', avErr.message);
+                            }
+                        } catch (e) {
+                            console.warn('[EditProfile] Avatar upload exception (non-fatal):', e.message);
+                        }
+                    }
+
+                    // Upload new banner if user picked a new file (non-fatal)
+                    if (bannerFile) {
+                        try {
+                            const ext = bannerFile.name.split('.').pop().toLowerCase();
+                            const path = `banners/${userId}/${Date.now()}.${ext}`;
+                            const { error: bnErr } = await window.supabase.storage
+                                .from('profiles').upload(path, bannerFile, { upsert: true });
+                            if (!bnErr) {
+                                const { data: { publicUrl } } = window.supabase.storage
+                                    .from('profiles').getPublicUrl(path);
+                                bannerUrl = publicUrl;
+                            } else {
+                                console.warn('[EditProfile] Banner upload failed (non-fatal):', bnErr.message);
+                            }
+                        } catch (e) {
+                            console.warn('[EditProfile] Banner upload exception (non-fatal):', e.message);
+                        }
+                    }
+
+                    // Build the update payload
+                    const updates = {
+                        full_name: formData.full_name?.trim() || null,
+                        bio: formData.bio?.trim() || null,
+                        location: formData.location?.trim() || null,
+                        website: formData.website?.trim() || null,
+                        avatar_url: avatarUrl,
+                        banner_url: bannerUrl
+                    };
+
+                    // ── Direct REST PATCH — bypasses service worker proxy ──
+                    // window.supabase.from().update() goes through the SW proxy which fails
+                    // on localhost (502) and is CORS-blocked in prod due to content-profile header.
+                    // Direct fetch() to supabase.co works everywhere with the access_token.
+                    const patchRes = await fetch(
+                        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+                        {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify(updates)
+                        }
+                    );
+
+                    if (!patchRes.ok) {
+                        let body = '';
+                        try { body = await patchRes.text(); } catch (_) { }
+                        throw new Error(`Profile update failed (${patchRes.status}): ${body}`);
+                    }
+
+                    console.log('[EditProfile] ✅ Profile updated successfully');
+
+                    // Reload parent profile state and close modal
+                    await onSave();
+                    onClose();
+
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    alert('Failed to update profile: ' + (error.message || 'Please try again.'));
+                } finally {
+                    setSaving(false);
+                }
+            };
+
+
+            return (
+                <div className="absolute inset-0 bg-[#020205] z-50 flex flex-col animate-enter overflow-y-auto">
+                    {/* Header */}
+                    <div className="h-[60px] header-glass sticky top-0 flex items-center justify-between px-4 z-10 shrink-0">
+                        <button onClick={onClose} disabled={saving} className="text-white text-sm font-medium hover:text-white/80">Cancel</button>
+                        <span className="font-heading font-bold text-white">Edit Profile</span>
+                        <button onClick={handleSave} disabled={saving} className="text-neon text-sm font-bold disabled:opacity-50">
+                            {saving ? 'Saving...' : 'Done'}
+                        </button>
+                    </div>
+
+                    <div className="p-5 space-y-6">
+                        {/* Avatar Uploader */}
+                        <div className="flex flex-col items-center gap-4 relative">
+                            <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+                                <div className="w-24 h-24 rounded-full border-4 border-white/5 overflow-hidden bg-black">
+                                    {avatarPreview ? (
+                                        <img src={avatarPreview} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                                            <Icon icon="User" size={32} className="text-neon" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                                    <Icon icon="Camera" size={24} className="text-white drop-shadow-lg" />
+                                </div>
+
+                                {/* Remove Avatar Button */}
+                                {avatarPreview && (
+                                    <button
+                                        onClick={handleRemoveAvatar}
+                                        className="absolute -top-1 -right-1 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
+                                        title="Remove Avatar"
+                                    >
+                                        <Icon icon="Trash" size={12} />
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                ref={avatarInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleAvatarChange}
+                                className="hidden"
+                            />
+                            <button onClick={() => avatarInputRef.current?.click()} className="text-neon text-xs font-bold">
+                                Change Profile Photo
+                            </button>
+                        </div>
+
+                        {/* Banner Uploader */}
+                        <div className="relative h-32 rounded-xl overflow-hidden bg-white/5 border border-white/10 group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
+                            {bannerPreview ? (
+                                <img src={bannerPreview} className="w-full h-full object-cover" />
+                            ) : null}
+                            <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/80 flex items-center justify-center gap-2 group-hover:bg-black/60 transition-colors">
+                                <Icon icon="Camera" size={20} className="text-white" />
+                                <span className="text-xs font-bold text-white">Edit Banner</span>
+                            </div>
+
+                            {/* Remove Banner Button */}
+                            {bannerPreview && (
+                                <button
+                                    onClick={handleRemoveBanner}
+                                    className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors z-20"
+                                    title="Remove Banner"
+                                >
+                                    <Icon icon="Trash" size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <input
+                        ref={bannerInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBannerChange}
+                        className="hidden"
+                    />
+
+                    {/* Fields */}
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Full Name</label>
+                            <input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Bio</label>
+                            <textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Location</label>
+                            <div className="relative">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="MapPin" size={16} /></div>
+                                <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-muted ml-1">Website</label>
+                            <div className="relative">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="Link" size={16} /></div>
+                                <input type="text" value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- OPINION CARD (INTERACTIVE) ---
+        const Post = ({ post, index, onComment, onShare, onSave, comments = [], onAddComment, onImageClick, onRemove, onBookmark, onEdit, onDeleteClick, userProfile, savedPosts }) => {
+            const [isLiked, setIsLiked] = useState(false);
+            const [localLikes, setLocalLikes] = useState(post.agrees);
+            const [showComments, setShowComments] = useState(false);
+            const [localComments, setLocalComments] = useState(comments);
+            const [commentText, setCommentText] = useState('');
+            const [showShareMenu, setShowShareMenu] = useState(false);
+            const [showMoreMenu, setShowMoreMenu] = useState(false);
+            const [isHidden, setIsHidden] = useState(post.isHidden || false);
+            const isSaved = savedPosts?.has(String(post.id));
+            const [isLoadingComments, setIsLoadingComments] = useState(false);
+            const [localCommentCount, setLocalCommentCount] = useState(post.comments);
+            const [replyingTo, setReplyingTo] = useState(null);
+            const [mentionQuery, setMentionQuery] = useState(null);
+            const commentInputRef = useRef(null);
+            const commentsFetchedRef = useRef(false);
+
+            // Portal menu positioning
+            const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+            const moreButtonRef = useRef(null);
+
+            useEffect(() => {
+                if (showMoreMenu && moreButtonRef.current) {
+                    const rect = moreButtonRef.current.getBoundingClientRect();
+                    setMenuPosition({
+                        top: rect.bottom + window.scrollY + 10,
+                        right: window.innerWidth - rect.right
+                    });
+                }
+            }, [showMoreMenu]);
+
+            useEffect(() => {
+                setLocalLikes(post.agrees);
+            }, [post.agrees]);
+
+            useEffect(() => {
+                const checkLikeStatus = async () => {
+                    if (window.hasLikedPost) {
+                        try {
+                            const hasLiked = await window.hasLikedPost(post.id);
+                            setIsLiked(hasLiked);
+                        } catch (e) {
+                            console.error('Like check failed', e);
+                        }
+                    }
+                };
+                checkLikeStatus();
+            }, [post.id]);
+
+            // Realtime Like/Agree Count Logic
+            useEffect(() => {
+                const channel = window.supabase.channel(`post-likes:${post.id}`)
+                    .on('postgres_changes', {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'posts',
+                        filter: `id=eq.${post.id}`
+                    }, (payload) => {
+                        if (payload.new) {
+                            if (payload.new.agrees_count !== undefined) {
+                                setLocalLikes(payload.new.agrees_count);
+                            }
+                            if (payload.new.comments_count !== undefined) {
+                                setLocalCommentCount(payload.new.comments_count);
+                            }
+                        }
+                    })
+                    .subscribe();
+
+                return () => {
+                    window.supabase.removeChannel(channel);
+                };
+            }, [post.id]);
+
+            const handleLike = async () => {
+                vibrate(10);
+                const newStatus = !isLiked;
+                setIsLiked(newStatus);
+                setLocalLikes(prev => newStatus ? prev + 1 : prev - 1);
+
+                try {
+                    if (newStatus) {
+                        await window.likePost(post.id);
+                    } else {
+                        await window.unlikePost(post.id);
+                    }
+                } catch (error) {
+                    console.error('Like failed', error);
+                    // Revert UI on error
+                    setIsLiked(!newStatus);
+                    setLocalLikes(prev => !newStatus ? prev + 1 : prev - 1);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: error.message || 'Action failed', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            const transformComment = (c) => ({
+                id: c.id, user_id: c.user_id,
+                user: c.profiles?.full_name || 'User',
+                username: c.profiles?.username || '',
+                avatar: c.profiles?.avatar_url || '',
+                text: c.text_content,
+                time: formatTime(c.created_at),
+                parent_comment_id: c.parent_comment_id || null,
+                likes: c.likes, replies: (c.replies || []).map(r => transformComment(r))
+            });
+
+            const toggleComments = async () => {
+                vibrate(5);
+                const shouldShow = !showComments;
+                setShowComments(shouldShow);
+                if (shouldShow && !commentsFetchedRef.current) {
+                    setIsLoadingComments(true);
+                    try {
+                        const fetchedComments = await window.getComments(post.id);
+                        setLocalComments(fetchedComments.map(transformComment));
+                        commentsFetchedRef.current = true;
+                    } catch (error) {
+                        console.error('Failed to load comments', error);
+                    } finally {
+                        setIsLoadingComments(false);
+                    }
+                }
+            };
+
+            // Realtime: subscribe once on mount
+            useEffect(() => {
+                const channel = window.supabase.channel(`comments:${post.id}`)
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, async (payload) => {
+                        const currentUser = await window.getCurrentUser();
+                        if (payload.new.user_id === currentUser?.id) return;
+                        const { data: profile } = await window.supabase
+                            .from('profiles').select('full_name, username, avatar_url')
+                            .eq('id', payload.new.user_id).maybeSingle();
+                        const newEntry = {
+                            id: payload.new.id, user_id: payload.new.user_id,
+                            user: profile?.full_name || 'User', username: profile?.username || '',
+                            avatar: profile?.avatar_url || '', text: payload.new.text_content,
+                            time: 'Just now',
+                            parent_comment_id: payload.new.parent_comment_id || null,
+                            likes: [], replies: []
+                        };
+                        const parentId = payload.new.parent_comment_id;
+                        if (!parentId) {
+                            setLocalComments(prev => prev.some(c => c.id === newEntry.id) ? prev : [...prev, newEntry]);
+                        } else {
+                            setLocalComments(prev => {
+                                if (!prev.some(c => c.id === parentId)) return prev;
+                                return prev.map(c => c.id === parentId
+                                    ? { ...c, replies: [...(c.replies || []).filter(r => r.id !== newEntry.id), newEntry] }
+                                    : c);
+                            });
+                        }
+                        vibrate(5);
+                    })
+                    .subscribe();
+                return () => window.supabase.removeChannel(channel);
+            }, [post.id]);
+
+            const toggleShareMenu = () => {
+                vibrate(5);
+                setShowShareMenu(!showShareMenu);
+            };
+
+            const toggleMoreMenu = (e) => {
+                e.stopPropagation();
+                vibrate(5);
+                setShowMoreMenu(!showMoreMenu);
+            };
+
+            const handleSendComment = async () => {
+                if (!commentText.trim()) return;
+                const isReply = !!replyingTo;
+                const tempId = Date.now();
+                const tempEntry = {
+                    id: tempId, user: userProfile?.full_name || 'You',
+                    username: userProfile?.username || '', user_id: userProfile?.id,
+                    avatar: userProfile?.avatar_url || '', text: commentText,
+                    time: 'Just now', isPending: true, likes: [], replies: []
+                };
+                if (isReply) {
+                    setLocalComments(prev => prev.map(c =>
+                        c.id === replyingTo.id ? { ...c, replies: [...(c.replies || []), tempEntry] } : c
+                    ));
+                } else {
+                    setLocalComments(prev => [...prev, tempEntry]);
+                }
+                const textToSend = commentText;
+                setCommentText('');
+                setReplyingTo(null);
+                setMentionQuery(null);
+                vibrate(10);
+                try {
+                    let newData;
+                    if (isReply) {
+                        newData = await window.createReply(post.id, replyingTo.id, textToSend);
+                        setLocalComments(prev => prev.map(c => c.id === replyingTo.id
+                            ? {
+                                ...c, replies: (c.replies || []).map(r => r.id === tempId ? {
+                                    id: newData.id, user: userProfile?.full_name || 'You',
+                                    username: userProfile?.username || '', user_id: userProfile?.id,
+                                    avatar: userProfile?.avatar_url || '', text: newData.text_content,
+                                    time: 'Just now', likes: [], replies: []
+                                } : r)
+                            }
+                            : c
+                        ));
+                    } else {
+                        newData = await window.createComment(post.id, textToSend);
+                        setLocalComments(prev => prev.map(c => c.id === tempId ? {
+                            id: newData.id, user: userProfile?.full_name || 'You',
+                            username: userProfile?.username || '', avatar: userProfile?.avatar_url || '',
+                            text: newData.text_content, time: 'Just now', likes: [], replies: []
+                        } : c));
+                    }
+                    if (onAddComment) onAddComment(post.id, textToSend);
+                } catch (error) {
+                    console.error('Comment failed', error);
+                    if (isReply) {
+                        setLocalComments(prev => prev.map(c =>
+                            c.id === replyingTo?.id ? { ...c, replies: (c.replies || []).filter(r => r.id !== tempId) } : c
+                        ));
+                    } else {
+                        setLocalComments(prev => prev.filter(c => c.id !== tempId));
+                    }
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to post comment', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            const handleReply = (commentOrReply, topLevelId = null) => {
+                const parentId = topLevelId || commentOrReply.parent_comment_id || commentOrReply.id;
+                setReplyingTo({ id: parentId, user: commentOrReply.user, username: commentOrReply.username || '' });
+                setCommentText(`@${commentOrReply.username || commentOrReply.user} `);
+                setShowComments(true);
+                setTimeout(() => commentInputRef.current?.focus(), 50);
+            };
+
+            const handleCommentChange = (e) => {
+                const val = e.target.value;
+                setCommentText(val);
+
+                // Mention logic
+                const cursor = e.target.selectionStart;
+                const atMatch = val.substring(0, cursor).match(/@([\w.]*)$/);
+                setMentionQuery(atMatch ? atMatch[1] : null);
+            };
+
+            const handleMentionSelect = (user) => {
+                const cursor = commentInputRef.current?.selectionStart || commentText.length;
+                const textBeforeCursor = commentText.substring(0, cursor);
+                const textAfterCursor = commentText.substring(cursor);
+                const atIndex = textBeforeCursor.lastIndexOf('@');
+
+                if (atIndex !== -1) {
+                    const newTextBefore = textBeforeCursor.substring(0, atIndex) + '@' + user.username + ' ';
+                    setCommentText(newTextBefore + textAfterCursor);
+                    setMentionQuery(null);
+                    // Reset cursor position after React update
+                    setTimeout(() => {
+                        if (commentInputRef.current) {
+                            const newPos = newTextBefore.length;
+                            commentInputRef.current.focus();
+                            commentInputRef.current.setSelectionRange(newPos, newPos);
+                        }
+                    }, 0);
+                }
+            };
+
+            const handleShareAction = (type) => {
+                vibrate(10);
+                if (type === 'copy') {
+                    // Legacy direct copy if needed, or open modal
+                    if (onRemove) onRemove(post.id, '', 'SHARE_INTENT', post);
+                } else if (type === 'more') {
+                    if (onRemove) onRemove(post.id, '', 'SHARE_INTENT', post);
+                } else {
+                    // For specific intents like 'wa', 'ig', we can handle here or pass to modal
+                    // Simplest: Open modal for all
+                    if (onRemove) onRemove(post.id, '', 'SHARE_INTENT', post);
+                }
+                setShowShareMenu(false);
+            };
+
+            const handleMoreAction = (action) => {
+                vibrate(10);
+                setShowMoreMenu(false);
+
+                if (action === 'edit') {
+                    if (post.is_edited) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'You can only edit a post once.', icon: 'AlertTriangle' } }));
+                        return;
+                    }
+                    if (onEdit) onEdit(post);
+                    else window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Edit feature coming soon!', icon: 'FileText', isSuccess: false } }));
+                } else if (action === 'delete') {
+                    if (onDeleteClick) onDeleteClick(post.id);
+                    else if (onRemove) onRemove(post.id, 'Deleted', 'delete');
+                } else if (action === 'not_interested') {
+                    if (onRemove) onRemove(post.id, 'Marked as not interested', 'not_interested', post.category);
+                } else if (action === 'hide') {
+                    setIsHidden(true);
+                    if (onRemove) onRemove(post.id, 'Opinion hidden', 'hide_post');
+                } else if (action === 'block_brand') {
+                    if (onRemove) onRemove(post.id, `Posts from ${post.seenBy || 'Brand'} hidden`, 'mute_brand', post.seenBy);
+                } else if (action === 'bookmark') {
+                    const nextState = !isSaved;
+                    if (onBookmark) onBookmark(post.id, nextState);
+                } else if (action === 'insight') {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Insight feature coming soon!', icon: 'BarChart', isSuccess: false } }));
+                }
+            };
+
+            const handleReport = () => {
+                vibrate(10);
+                if (onRemove) onRemove(post.id, 'Reported', 'REPORT_INTENT');
+            };
+
+            if (isHidden) {
+                return (
+                    <div className="glass-panel rounded-2xl p-4 mb-4 flex items-center justify-between animate-fade-in">
+                        <div className="flex items-center gap-3">
+                            <Icon icon="EyeOff" size={20} className="text-muted" />
+                            <span className="text-sm text-gray-400">Opinion hidden</span>
+                        </div>
+                        <button onClick={async () => {
+                            try {
+                                await window.unhideItem('post', post.id);
+                                setIsHidden(false);
+                            } catch (e) {
+                                console.error(e);
+                                window.dispatchEvent(new CustomEvent('toast', { detail: { message: `Failed: ${e.message || 'Unknown error'}`, icon: 'AlertTriangle', isSuccess: false } }));
+                            }
+                        }} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-white hover:bg-white/10 transition-colors">
+                            Unhide
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div
+                    className={`glass-panel rounded-2xl p-4 mb-4 relative transition-all duration-300 animate-stagger ${showMoreMenu ? 'z-50' : 'z-0'}`}
+                    style={{ animationDelay: `${Math.min(index * 50, 1000)}ms` }}
+                >
+                    {/* Share Popover - Attached to Share Icon */}
+                    {showShareMenu && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={() => setShowShareMenu(false)}></div>
+                            <div className="absolute bottom-14 right-16 z-20 bg-[#0A0F1D] border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1 w-40 animate-fade-in origin-bottom-right">
+                                <button onClick={() => handleShareAction('copy')} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                    <Icon icon="Link" size={14} /> Copy Link
+                                </button>
+                                <button onClick={() => handleShareAction('wa')} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                    <Icon icon="MessageCircle" size={14} /> WhatsApp
+                                </button>
+                                <button onClick={() => handleShareAction('ig')} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                    <Icon icon="Instagram" size={14} /> Instagram
+                                </button>
+                                <div className="h-px bg-white/10 my-1"></div>
+                                <button onClick={() => handleShareAction('more')} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                    <Icon icon="Share" size={14} /> More Share
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* More Popover - Portal Implementation */}
+                    {showMoreMenu && ReactDOM.createPortal(
+                        <>
+                            <div className="fixed inset-0 z-[9998]" onClick={(e) => { e.stopPropagation(); setShowMoreMenu(false); }}></div>
+                            <div
+                                className="absolute z-[9999] bg-[#1A1C2E] border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1 w-56 animate-fade-in origin-top-right backdrop-blur-xl"
+                                style={{ top: `${menuPosition.top}px`, right: `${menuPosition.right}px` }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Improved user ID comparison - handles string/UUID type mismatches */}
+                                {userProfile && post && (
+                                    String(userProfile.id) === String(post.user_id) ||
+                                    String(userProfile.id) === String(post.profiles?.id)
+                                ) ? (
+                                    /* Owner Options */
+                                    <>
+                                        <button onClick={() => handleMoreAction('edit')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="FileText" size={16} className="text-muted" />
+                                            <span>Edit Opinion</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('delete')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-red-400 group">
+                                            <Icon icon="Trash" size={16} className="text-red-400" />
+                                            <span>Delete Opinion</span>
+                                        </button>
+                                        <div className="h-px bg-white/10 my-1"></div>
+                                        <button onClick={() => handleMoreAction('bookmark')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="BookMark" size={16} className={isSaved ? "text-neon fill-neon" : "text-muted"} />
+                                            <span>{isSaved ? 'Bookmarked' : 'Bookmark'}</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    /* Non-Owner Options */
+                                    <>
+                                        <button onClick={() => handleMoreAction('not_interested')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="EyeOff" size={16} className="text-muted" />
+                                            <span>Not interested in this post</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('hide')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="X" size={16} className="text-muted" />
+                                            <span>Hide this opinion</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('block_brand')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="Flag" size={16} className="text-muted" />
+                                            <span>Don't show posts from {post.seenBy || 'Brand'}</span>
+                                        </button>
+                                        <button onClick={() => handleMoreAction('bookmark')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                            <Icon icon="BookMark" size={16} className={isSaved ? "text-neon" : "text-muted"} />
+                                            <span>{isSaved ? 'Bookmarked' : 'Bookmark'}</span>
+                                        </button>
+                                    </>
+                                )}
+                                {/* Common Options */}
+                                <div className="h-px bg-white/10 my-1"></div>
+                                <button onClick={() => handleMoreAction('insight')} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-lg text-left text-xs text-white">
+                                    <Icon icon="BarChart" size={16} className="text-muted" />
+                                    <div className="flex flex-col items-start">
+                                        <span>View Insights</span>
+                                        <span className="text-[8px] text-neon font-bold tracking-wider">COMING SOON</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </>,
+                        document.body
+                    )}
+
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex gap-3 w-full">
+                            <div
+                                className="group relative cursor-pointer active:scale-95 transition-transform"
+                                onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id}`; }}
+                            >
+                                {post.avatar ? (
+                                    <Avatar
+                                        src={post.avatar}
+                                        className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover"
+                                        fallbackSize={20}
+                                    />
+                                ) : (
+                                    <img src={DEFAULT_AVATAR} className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
+                                )}
+                                <span className="delayed-label absolute top-12 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Public Profile</span>
+                            </div>
+
+                            <div className="flex-1 min-w-0 pr-8">
+                                <div className="flex items-center gap-2">
+                                    <div
+                                        className="group relative cursor-pointer hover:text-neon transition-colors"
+                                        onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id}`; }}
+                                    >
+                                        <span className="font-heading font-bold text-white text-sm truncate">{post.name}</span>
+                                        <span className="delayed-label absolute bottom-6 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Public Profile</span>
+                                    </div>
+                                    <div className="group relative rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0">
+                                        <span className="font-heading font-bold text-[9px] text-white tracking-wide cursor-default">RQS {post.rqs}</span>
+                                        <span className="delayed-label absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">Review Quality Score</span>
+                                    </div>
+                                </div>
+                                <div
+                                    className="group relative inline-block cursor-pointer"
+                                    onClick={() => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id}`; }}
+                                >
+                                    <div className="text-xs text-muted truncate hover:text-white transition-colors">@{post.username}</div>
+                                    <span className="delayed-label absolute top-5 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Public Profile</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute top-4 right-4 touch-scale text-muted/60 hover:text-white group z-10" onClick={toggleMoreMenu} ref={moreButtonRef}>
+                            <Icon icon="MoreVertical" size={18} />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center flex-wrap gap-2 mb-3 mt-1">
+                        <div className="group relative border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium">
+                            <span className="text-neon">{post.category}</span>
+                            <span className="mx-1.5 opacity-30">|</span>
+                            <span>{post.product}</span>
+                            <span className="delayed-label absolute -top-8 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">Filter</span>
+                        </div>
+                        {post.verified && (
+                            <div className="flex items-center text-accent-green touch-scale group relative ml-1" title="Verified Purchase">
+                                <Icon icon="ShieldCheck" size={16} />
+                            </div>
+                        )}
+                    </div>
+
+                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light pr-2">{renderTextWithMentions(post.text)}</p>
+
+                    {(post.media || (post.images && post.images.length > 0)) && (
+                        <SmartMedia
+                            src={post.media}
+                            type={post.media_type}
+                            images={post.images}
+                            onImageClick={onImageClick}
+                        />
+                    )}
+
+                    <div className="flex items-end justify-between pt-3 mt-1 relative">
+                        <div className="flex items-center gap-6">
+                            <button
+                                onClick={handleLike}
+                                className="flex items-center gap-1.5 touch-scale group relative"
+                            >
+                                <div className={isLiked ? "animate-pop" : ""}>
+                                    <Icon icon="ThumbsUp" size={20}
+                                        className={`transition-all duration-300 stroke-[1.5px] ${isLiked ? 'fill-white stroke-black/80 filter drop-shadow-[0_2px_0_rgba(255,255,255,0.4)]' : ''}`}
+                                        style={isLiked ? {
+                                            fill: 'white',
+                                            stroke: '#000',
+                                            strokeWidth: '1.5px',
+                                            filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
+                                        } : {}}
+                                    />
+                                </div>
+                                <span className="text-xs font-medium">{localLikes}</span>
+                            </button>
+                            <button className={`flex items-center gap-1.5 touch-scale transition-transform group relative ${showComments ? 'text-white' : 'text-muted hover:text-white'}`} onClick={toggleComments}>
+                                <Icon icon="MessageCircle" size={20} className="stroke-[1.5]" />
+                                <span className="text-xs font-medium">{showComments ? localComments.length : Math.max(localCommentCount, localComments.length)}</span>
+                            </button>
+                            <button className={`text-muted hover:text-white transition-colors touch-scale group relative ${showShareMenu ? 'text-white' : ''}`} onClick={() => onShare && onShare(post)}>
+                                <Icon icon="Share" size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            {post.seenBy && (
+                                <span className="group relative text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 cursor-default flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
+                                    Seen by {post.seenBy}
+                                </span>
+                            )}
+                            <button className="text-muted/40 hover:text-red-400 transition-colors touch-scale group relative" onClick={handleReport}>
+                                <Icon icon="AlertTriangle" size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[10px] text-muted/40 font-medium">
+                        <Icon icon="Clock" size={12} />
+                        <span>{post.time === 'Just now' ? 'Posted Just now' : `Posted ${post.time} ago`}</span>
+                    </div>
+
+                    {showComments && (
+                        <div className="mt-4 pt-0 border-t border-white/5 animate-fade-in origin-top">
+                            <div className="flex justify-between items-center mb-3 pt-2">
+                                <span className="text-xs font-bold text-white">Comments ({localComments.length})</span>
+                                <button onClick={() => setShowComments(false)} className="text-muted hover:text-white text-xs">Close</button>
+                            </div>
+
+                            <div className="space-y-3 mb-4 max-h-60 overflow-y-auto no-scrollbar">
+                                {isLoadingComments && <div className="text-center text-muted text-xs py-2">Loading comments...</div>}
+
+                                {localComments.map(c => (
+                                    <CommentItem key={c.id} comment={c} onReply={(target, topLevelId = null) => handleReply(target, topLevelId || c.id)} />
+                                ))}
+
+                                {!isLoadingComments && localComments.length === 0 && (
+                                    <div className="text-center text-muted text-xs py-2">No comments yet. Be the first!</div>
+                                )}
+                            </div>
+
+                            <div className="relative">
+                                <MentionAutocomplete query={mentionQuery} onSelect={handleMentionSelect} />
+                                {replyingTo && (
+                                    <div className="flex items-center justify-between px-3 py-1.5 bg-neon/5 border border-neon/20 rounded-t-xl mb-0.5 text-[10px]">
+                                        <span className="text-neon">Replying to <strong>@{replyingTo.username || replyingTo.user}</strong></span>
+                                        <button onClick={() => { setReplyingTo(null); setCommentText(''); }} className="text-muted hover:text-white">✕</button>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/10 focus-within:border-neon/50 transition-colors">
+                                    <input
+                                        ref={commentInputRef}
+                                        value={commentText}
+                                        onChange={handleCommentChange}
+                                        placeholder={replyingTo ? `Reply to @${replyingTo.username || replyingTo.user}...` : 'Add a comment or type @ to mention...'}
+                                        className="bg-transparent flex-1 text-xs text-white outline-none placeholder-white/30"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
+                                    />
+                                    <button onClick={handleSendComment} className={`${commentText.trim() ? 'text-neon' : 'text-muted'} transition-colors`}><Icon icon="Send" size={14} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const DraftCard = ({ draft, onEdit, onPublish, onDelete }) => (
+            <div className="glass-panel rounded-2xl p-4 mb-4 border-l-2 border-l-neon bg-white/[0.02] relative group">
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-neon uppercase tracking-wider">
+                        <Icon icon="Lock" size={12} /> Private Draft
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted">{draft.time}</span>
+                        <button onClick={onDelete} className="text-muted/50 hover:text-red-500 transition-colors p-1">
+                            <Icon icon="X" size={14} />
+                        </button>
+                    </div>
+                </div>
+                <h4 className="text-white font-bold text-sm mb-1">{draft.product} <span className="text-muted font-normal text-xs">• {draft.category}</span></h4>
+                <p className="text-sm text-gray-400 truncate mb-4">{draft.text}</p>
+                <div className="flex gap-2">
+                    <button onClick={onEdit} className="flex-1 bg-white/5 hover:bg-white/10 text-white text-xs font-bold py-2 rounded-lg transition-colors">Edit</button>
+                    <button onClick={onPublish} className="flex-1 bg-neon/10 hover:bg-neon/20 text-neon text-xs font-bold py-2 rounded-lg transition-colors">Publish</button>
+                </div>
+            </div>
+        );
+
+        // --- SHARE MODAL ---
+        const ShareModal = ({ isOpen, onClose, post, user }) => {
+
+            const [internalContacts, setInternalContacts] = useState([]);
+            const [internalLoadingContacts, setInternalLoadingContacts] = useState(false);
+            const [internalSelectedContacts, setInternalSelectedContacts] = useState(new Set());
+            const [internalSending, setInternalSending] = useState(false);
+
+            useEffect(() => {
+                const fetchInternalContacts = async () => {
+                    if (!isOpen || !window.getCurrentUser) return;
+                    setInternalLoadingContacts(true);
+                    try {
+                        const user = await window.getCurrentUser();
+                        if (!user) return;
+                        const { data } = await window.supabase
+                            .from('conversations')
+                            .select('id, participant_1_id, participant_2_id')
+                            .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+                            .order('last_message_at', { ascending: false })
+                            .limit(10);
+                        if (data && data.length > 0) {
+                            const otherIds = [...new Set(data.map(c => c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id))];
+                            const { data: profiles } = await window.supabase
+                                .from('profiles').select('id, full_name, avatar_url, username').in('id', otherIds);
+                            if (profiles) {
+                                const profileMap = {};
+                                profiles.forEach(p => profileMap[p.id] = p);
+                                const contacts = data.map(c => {
+                                    const otherId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id;
+                                    const profile = profileMap[otherId];
+                                    if (!profile) return null;
+                                    return { convId: c.id, ...profile };
+                                }).filter(Boolean);
+                                if (window.rewriteMediaUrl) contacts.forEach(c => { if (c.avatar_url) c.avatar_url = window.rewriteMediaUrl(c.avatar_url); });
+                                setInternalContacts(contacts);
+                            }
+                        }
+                    } catch (e) { console.error('Failed to load contacts', e); }
+                    finally { setInternalLoadingContacts(false); }
+                };
+                fetchInternalContacts();
+            }, [isOpen]);
+
+            const handleInternalSend = async () => {
+                if (internalSelectedContacts.size === 0 || internalSending) return;
+                if (!window.sendPostToUser) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing system initializing...', icon: 'Clock', isSuccess: false } }));
+                    return;
+                }
+                setInternalSending(true);
+                const contactsToSend = internalContacts.filter(c => internalSelectedContacts.has(c.id));
+                const shareTarget = post || user;
+                let successCount = 0;
+                for (const contact of contactsToSend) {
+                    try { await window.sendPostToUser(contact.convId, contact.id, contact.full_name || contact.username, contact.avatar_url, shareTarget); successCount++; }
+                    catch (e) { console.error(`Failed to send to ${contact.username}`, e); }
+                }
+                window.dispatchEvent(new CustomEvent('toast', { detail: { message: `Shared with ${successCount} profile${successCount > 1 ? 's' : ''}`, icon: 'Send', isSuccess: true } }));
+                setInternalSending(false);
+                onClose();
+            };
+
+
+            if (!isOpen || (!post && !user)) return null;
+
+            const isProfile = !!user;
+            const target = isProfile ? user : post;
+
+            const shareUrl = isProfile
+                ? `https://plusopinion.com/profile/${user.username}`
+                : `https://plusopinion.com/post/${post.id}`;
+
+            const shareText = isProfile
+                ? `Check out @${user.username}'s profile on PlusOpinion`
+                : `Check out this interaction by @${post.username}`;
+
+            const handleCopy = async () => {
+                try {
+                    const cleanText = isProfile
+                        ? `Check out @${user.username}'s profile on PlusOpinion:\n\n${user.bio || 'Check out my opinions and reviews!'}\n\nLink: ${shareUrl}`
+                        : `Check out this interaction on PlusOpinion:\n\n"${post.text ? post.text.substring(0, 100) + '...' : ''}"\n\nRead more at: ${shareUrl}`;
+                    await navigator.clipboard.writeText(cleanText);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link & Preview copied', icon: 'Link', isSuccess: true } }));
+                    onClose();
+                } catch (err) { console.error(err); }
+            };
+
+            const handleWhatsApp = () => {
+                const waText = isProfile
+                    ? `🔥 *Check out @${user.username} on PlusOpinion*\n\nRead their opinions and reviews here: ${shareUrl}`
+                    : `🔥 *New Interaction on PlusOpinion!*\n\n"@${post.username}: ${post.text ? post.text.substring(0, 80) : ''}..."\n\nRead full POV here:\n${shareUrl}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
+                onClose();
+            };
+
+            const handleInstagram = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'Top Interaction', text: shareText, url: shareUrl });
+                        onClose();
+                    } catch (e) { }
+                } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied! Open Instagram to share.', icon: 'Instagram', isSuccess: true } }));
+                    setTimeout(() => { window.open('https://instagram.com', '_blank'); }, 1000);
+                    onClose();
+                }
+            };
+
+            const handleMore = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        onClose();
+                    } catch (err) { }
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing not supported', icon: 'AlertTriangle' } }));
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg">{isProfile ? 'Share Profile' : 'Share Interaction'}</span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors">
+                                <Icon icon="X" size={20} />
+                            </button>
+                        </div>
+
+                        {/* Preview Card - EXACT PLATFORM REPLICA */}
+                        <div className="glass-panel rounded-2xl p-5 mb-6 border border-white/5 relative overflow-hidden group flex flex-col animate-fade-in shadow-2xl">
+                            {!isProfile ? (
+                                <>
+                                    {/* Platform Logo - Top Right (Minimalist X-Style Etched Look) */}
+                                    <div className="absolute top-6 right-6 z-20 group/logo">
+                                        <img
+                                            src="icon-192.png"
+                                            className="w-10 h-10 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40"
+                                            style={{
+                                                filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
+                                                mixBlendMode: 'luminosity'
+                                            }}
+                                            alt="PlusOpinion Logo"
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex gap-3 w-full">
+                                            <div className="relative">
+                                                <img src={(post.avatar) || DEFAULT_AVATAR} className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
+                                                {post.verified && (
+                                                    <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-[#121212]">
+                                                        <Icon icon="Check" size={8} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-heading font-bold text-white text-sm truncate">{post.name}</span>
+                                                    <div className="rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0">
+                                                        <span className="font-heading font-bold text-[9px] text-white tracking-wide">RQS {target.rqs || 0}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs text-muted truncate">@{target.username}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center flex-wrap gap-2 mb-3 mt-1">
+                                        <div className="border border-white/10 rounded-full px-3 py-1 flex items-center bg-white/5 text-[10px] text-white/80 font-medium whitespace-nowrap overflow-hidden max-w-full">
+                                            <span className="text-neon truncate">{post.category || 'Others'}</span>
+                                            <span className="mx-1.5 opacity-30">|</span>
+                                            <span className="truncate">plus opinion</span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-sm text-gray-200 leading-relaxed mb-3 font-light line-clamp-3">{post.text}</p>
+
+                                    {post.media && (
+                                        <div className="w-full rounded-xl mb-3 border border-white/5 relative bg-black/20 overflow-hidden">
+                                            {post.media_type === 'video' ? (
+                                                <div className="w-full h-32 flex items-center justify-center">
+                                                    <video src={post.media} className="w-full h-full object-cover opacity-60" />
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+                                                            <Icon icon="Video" size={20} className="text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <img src={post.media} className="w-full h-auto max-h-32 object-cover opacity-90" />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/5">
+                                        <div className="flex items-center gap-5">
+                                            <div className="flex items-center gap-1.5 text-muted">
+                                                <Icon icon="ThumbsUp" size={18} />
+                                                <span className="text-xs font-medium">{post.agrees || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-muted">
+                                                <Icon icon="MessageCircle" size={18} />
+                                                <span className="text-xs font-medium">{post.comments || 0}</span>
+                                            </div>
+                                        </div>
+
+                                        <span className="text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 flex items-center gap-1.5">
+                                            <div className="w-1 h-1 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
+                                            Verified Interaction
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="mt-1 flex flex-col gap-6 relative overflow-hidden">
+                                    {/* Premium Layered Header */}
+                                    <div className="flex items-center gap-6 relative min-h-[110px]">
+                                        {/* Large Background Bleed Avatar */}
+                                        <div className="absolute -left-10 -top-10 w-48 h-48 rounded-full opacity-[0.07] blur-[40px] pointer-events-none">
+                                            <img src={user.avatar_url || DEFAULT_AVATAR} className="w-full h-full object-cover" />
+                                        </div>
+
+                                        {/* Foreground Focus Avatar */}
+                                        <div className="relative group shrink-0">
+                                            <div className="absolute -inset-1.5 bg-white/5 rounded-2xl blur-sm opacity-50"></div>
+                                            <div className="w-24 h-24 rounded-2xl border border-white/10 shadow-2xl overflow-hidden relative z-10 transition-transform duration-500 group-hover:scale-105">
+                                                <img src={user.avatar_url || DEFAULT_AVATAR} className="w-full h-full object-cover" alt="Profile" />
+                                            </div>
+                                        </div>
+
+                                        {/* Balanced Profile Details */}
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center relative z-10">
+                                            <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                                                <span className="font-heading font-extrabold text-white text-2xl tracking-tight truncate">{user.full_name}</span>
+                                                <div className="rqs-pill px-2.5 py-1 rounded-full flex items-center shadow-lg border border-white/5">
+                                                    <span className="font-heading font-black text-[9px] text-white tracking-[0.2em] uppercase">RQS {user.rqs || 0}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="text-sm font-medium text-white/50 tracking-wide flex items-center gap-2">
+                                                    <span>@{user.username}</span>
+                                                </div>
+                                                {user.location && (
+                                                    <div className="flex items-center gap-1.5 text-white/30 text-[11px] font-medium italic">
+                                                        <Icon icon="MapPin" size={12} className="opacity-50" />
+                                                        <span>{user.location}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Glass Bio Box */}
+                                    <div className="relative group z-10">
+                                        <div className="text-gray-300 text-sm leading-relaxed font-light italic bg-white/[0.04] backdrop-blur-xl p-5 rounded-2xl border border-white/[0.08] shadow-inner line-clamp-3">
+                                            {user.bio || 'Sharing opinions and reviews on PlusOpinion!'}
+                                        </div>
+                                    </div>
+
+                                    {/* High-End Footer Layout */}
+                                    <div className="flex items-center justify-between pt-6 mt-1 border-t border-white/5 relative z-10">
+                                        <button
+                                            className="px-8 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white text-[10px] font-black tracking-[0.25em] uppercase transition-all active:scale-95 shadow-xl flex items-center gap-2"
+                                            onClick={() => window.location.href = shareUrl}
+                                        >
+                                            Visit Profile
+                                        </button>
+                                        <div className="flex flex-col items-center gap-1.5 shrink-0">
+                                            <div className="w-10 h-10 z-20 group/logo flex items-center justify-center">
+                                                <img
+                                                    src="icon-192.png"
+                                                    className="w-8 h-8 object-contain opacity-[0.2] grayscale brightness-[1.8] contrast-[1.2] transition-all duration-500 group-hover/logo:opacity-40"
+                                                    style={{
+                                                        filter: 'grayscale(1) brightness(1.8) contrast(1.2) drop-shadow(0.5px 0.5px 0.5px rgba(0,0,0,0.8)) drop-shadow(-0.5px -0.5px 0.5px rgba(255,255,255,0.15))',
+                                                        mixBlendMode: 'luminosity'
+                                                    }}
+                                                    alt="PlusOpinion Logo"
+                                                />
+                                            </div>
+                                            <div className="text-[7px] text-white/20 font-black uppercase tracking-[0.25em] italic leading-tight">PLUSOPINION.COM</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+
+                        {/* Internal Share — Send in Chat */}
+                        <div className="mb-6 overflow-hidden">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Share to Profiles</span>
+                                {internalSelectedContacts.size > 0 && (
+                                    <button onClick={() => setInternalSelectedContacts(new Set())} className="text-[10px] text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase">Clear ({internalSelectedContacts.size})</button>
+                                )}
+                            </div>
+                            <div className="flex gap-4 overflow-x-auto select-none custom-scrollbar pb-2 px-1">
+                                <button
+                                    onClick={() => {
+                                        onClose();
+                                        if (window.toggleInbox) { window.toggleInbox(true); }
+                                        else if (window.openInbox) { window.openInbox(); }
+                                        setTimeout(() => {
+                                            if (window._inboxBootPhase1 && window._inboxBootPhase1.openSearchOverlay) window._inboxBootPhase1.openSearchOverlay();
+                                        }, 500);
+                                    }}
+                                    className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                >
+                                    <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-lg">
+                                        <Icon icon="Search" size={24} className="text-white/70 group-hover:text-white" />
+                                    </div>
+                                    <span className="text-[10px] text-white/70 group-hover:text-white truncate w-14 text-center">Search</span>
+                                </button>
+
+                                {internalLoadingContacts && <div className="text-white/40 text-xs py-3 px-4">Loading...</div>}
+                                {!internalLoadingContacts && internalContacts.map(c => {
+                                    const isSelected = internalSelectedContacts.has(c.id);
+                                    return (
+                                        <button key={c.id} onClick={() => {
+                                            const next = new Set(internalSelectedContacts);
+                                            if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                                            setInternalSelectedContacts(next);
+                                        }} className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0">
+                                            <div className={`w-14 h-14 rounded-full border-2 transition-all duration-300 relative ${isSelected ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/10 hover:border-white/30'}`}>
+                                                <img src={c.avatar_url || DEFAULT_AVATAR} className="w-full h-full rounded-full object-cover" onError={e => { e.target.src = DEFAULT_AVATAR; }} />
+                                                {isSelected && (
+                                                    <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-[#121212]">
+                                                        <Icon icon="Check" size={10} className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] text-white/70 truncate w-14 text-center">{c.full_name || c.username}</span>
+                                        </button>
+                                    );
+                                })}
+                                {!internalLoadingContacts && internalContacts.length === 0 && (
+                                    <div className="text-white/30 text-xs py-3 px-4 flex items-center gap-2">
+                                        <Icon icon="MessageCircle" size={14} /><span>No conversations yet</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {internalSelectedContacts.size > 0 && (
+                                <button
+                                    onClick={handleInternalSend}
+                                    disabled={internalSending}
+                                    className="mt-4 w-full py-3 rounded-2xl bg-[#2f8bff] text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#1a7bf0] active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    <Icon icon={internalSending ? "Clock" : "Send"} size={16} />
+                                    {internalSending ? 'Sending...' : `Send to ${internalSelectedContacts.size} Profile${internalSelectedContacts.size > 1 ? 's' : ''}`}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Share Grid */}
+                        <div className="grid grid-cols-4 gap-4 mb-4">
+                            <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Link" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">Copy Link</span>
+                            </button>
+                            <button onClick={handleWhatsApp} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="WhatsApp" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">WhatsApp</span>
+                            </button>
+                            <button onClick={handleInstagram} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Instagram" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">Instagram</span>
+                            </button>
+                            <button onClick={handleMore} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Share" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">More</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- REPORT MODAL ---
+        const ReportModal = ({ isOpen, onClose, onSubmit }) => {
+            const [step, setStep] = useState(1);
+            const [selectedReason, setSelectedReason] = useState(null);
+
+            if (!isOpen) return null;
+
+            const reasons = [
+                "It's spam",
+                "Nudity or sexual activity",
+                "Hate speech or symbols",
+                "Violence or dangerous organizations",
+                "Bullying or harassment",
+                "Selling illegal or regulated goods",
+                "Intellectual property violations",
+                "Suicide or self-injury",
+                "False information"
+            ];
+
+            const handleSubmit = (action) => {
+                onSubmit(selectedReason, action);
+                onClose();
+                setStep(1);
+                setSelectedReason(null);
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg flex items-center gap-2">
+                                <Icon icon="AlertTriangle" size={20} className="text-red-500" />
+                                {step === 1 ? 'Report Opinion' : 'What would you like to do?'}
+                            </span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        </div>
+
+                        {step === 1 && (
+                            <div className="flex-1 overflow-y-auto no-scrollbar">
+                                <p className="text-sm text-gray-400 mb-4">Why are you reporting this post?</p>
+                                <div className="space-y-2">
+                                    {reasons.map((reason) => (
+                                        <button
+                                            key={reason}
+                                            onClick={() => { setSelectedReason(reason); setStep(2); }}
+                                            className="w-full text-left p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex justify-between items-center group"
+                                        >
+                                            <span className="text-sm text-white">{reason}</span>
+                                            <Icon icon="ArrowLeft" size={16} className="rotate-180 text-white/20 group-hover:text-white transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div className="flex-1 flex flex-col justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-400 mb-6">You've selected: <span className="text-white font-medium">{selectedReason}</span></p>
+
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={() => handleSubmit('remove')}
+                                            className="w-full p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center gap-3 group"
+                                        >
+                                            <div className="p-2 rounded-full bg-red-500/20 text-red-500"><Icon icon="EyeOff" size={20} /></div>
+                                            <div className="text-left">
+                                                <div className="text-white font-bold text-sm">Remove from my feed</div>
+                                                <div className="text-xs text-gray-400">I don't want to see this anymore</div>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleSubmit('keep')}
+                                            className="w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-3"
+                                        >
+                                            <div className="p-2 rounded-full bg-white/10 text-white"><Icon icon="ShieldCheck" size={20} /></div>
+                                            <div className="text-left">
+                                                <div className="text-white font-bold text-sm">Just report it</div>
+                                                <div className="text-xs text-gray-400">Let support review it, but keep seeing it</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button onClick={() => setStep(1)} className="mt-6 text-xs text-muted hover:text-white text-center w-full">Back</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const SettingsModal = ({ isOpen, onClose }) => {
+            const [blockedUsers, setBlockedUsers] = useState([]);
+            const [loadingBlocks, setLoadingBlocks] = useState(false);
+            const [currentView, setCurrentView] = useState('main'); // 'main', 'blocked'
+
+            useEffect(() => {
+                if (isOpen && currentView === 'blocked') {
+                    loadBlocks();
+                }
+            }, [isOpen, currentView]);
+
+            const loadBlocks = async () => {
+                setLoadingBlocks(true);
+                try {
+                    const users = await window.getBlockedUsers();
+                    setBlockedUsers(users);
+                } catch (err) {
+                    console.error('Failed to load blocked users', err);
+                } finally {
+                    setLoadingBlocks(false);
+                }
+            };
+
+            const handleUnblock = async (targetId) => {
+                vibrate();
+                try {
+                    await window.unblockUser(targetId);
+                    setBlockedUsers(prev => prev.filter(u => u.id !== targetId));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'User unblocked', icon: 'Check', isSuccess: true } }));
+                } catch (err) {
+                    console.error('Unblock failed', err);
+                }
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-[70] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[85vh] flex flex-col">
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg flex items-center gap-2">
+                                {currentView === 'blocked' && (
+                                    <button onClick={() => setCurrentView('main')} className="p-1 -ml-1 text-white/60 hover:text-white transition-colors">
+                                        <Icon icon="ArrowLeft" size={20} />
+                                    </button>
+                                )}
+                                {currentView === 'main' ? 'Settings' : 'Blocked Users'}
+                            </span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto no-scrollbar">
+                            {currentView === 'main' ? (
+                                <div className="space-y-4">
+                                    <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                                        <h3 className="text-xs font-bold text-neon uppercase tracking-widest mb-4">Account Privacy</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between opacity-50">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 font-bold"><Icon icon="Lock" size={18} /></div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-white">Private Profile</div>
+                                                        <div className="text-[10px] text-muted">Only followers can see your posts</div>
+                                                    </div>
+                                                </div>
+                                                <div className="w-10 h-5 bg-white/10 rounded-full relative cursor-not-allowed">
+                                                    <div className="absolute left-1 top-1 w-3 h-3 bg-white/30 rounded-full"></div>
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] text-neon/40 font-bold uppercase tracking-wider text-right">Available in Beta 2.0</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                                        <h3 className="text-xs font-bold text-neon uppercase tracking-widest mb-4">Interactions</h3>
+                                        <button
+                                            onClick={() => setCurrentView('blocked')}
+                                            className="w-full flex items-center justify-between hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-red-500/10 text-red-400 font-bold"><Icon icon="EyeOff" size={18} /></div>
+                                                <div className="text-left">
+                                                    <div className="text-sm font-bold text-white">Blocked Users</div>
+                                                    <div className="text-[10px] text-muted">Manage accounts you've blocked</div>
+                                                </div>
+                                            </div>
+                                            <Icon icon="ArrowLeft" size={16} className="rotate-180 text-white/20 group-hover:text-white" />
+                                        </button>
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                                        <h3 className="text-xs font-bold text-neon uppercase tracking-widest mb-4">Preferences</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between opacity-50">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-orange-500/10 text-orange-400 font-bold"><Icon icon="Bell" size={18} /></div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-white">Push Notifications</div>
+                                                        <div className="text-[10px] text-muted">Manage all alerts</div>
+                                                    </div>
+                                                </div>
+                                                <div className="w-10 h-5 bg-white/10 rounded-full relative cursor-not-allowed">
+                                                    <div className="absolute left-1 top-1 w-3 h-3 bg-white/30 rounded-full"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white/5 rounded-xl p-4 text-center">
+                                        <div className="text-[10px] text-white/40 leading-relaxed">
+                                            Version 1.15.2 (Beta)<br />
+                                            PlusOpinion Premium Features coming soon.
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {loadingBlocks ? (
+                                        <div className="flex flex-col items-center justify-center py-10 gap-3">
+                                            <div className="w-8 h-8 rounded-full border-2 border-neon/20 border-t-neon animate-spin"></div>
+                                            <span className="text-xs text-muted">Loading...</span>
+                                        </div>
+                                    ) : blockedUsers.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                                            <Icon icon="Slash" size={48} className="mb-3" />
+                                            <span className="text-sm">No blocked users</span>
+                                        </div>
+                                    ) : (
+                                        blockedUsers.map(u => (
+                                            <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={u.avatar_url || DEFAULT_AVATAR} className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                                                    <div>
+                                                        <div className="text-sm font-bold text-white">{u.full_name}</div>
+                                                        <div className="text-xs text-muted">@{u.username}</div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleUnblock(u.id)}
+                                                    className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all"
+                                                >
+                                                    Unblock
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // SKELETON COMPONENTS
+        const SkeletonProfile = () => (
+            <div className="animate-fade-in flex-1 flex flex-col relative h-full">
+                {/* Header Skeleton */}
+                <div className="h-[60px] header-glass flex items-center px-4 sticky top-0 z-30 shrink-0 border-b border-white/5">
+                    <div className="w-8 h-8 rounded-full bg-[#1c1e1e] animate-pulse"></div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto no-scrollbar pb-24 ptr-enabled">
+                    {/* Banner & Avatar */}
+                    <div className="relative mb-6">
+                        <div className="h-[140px] w-full bg-[#1c1e1e] animate-pulse"></div>
+                        <div className="absolute bottom-1.5 left-4">
+                            <div className="w-[84px] h-[84px] rounded-full bg-[#020205] p-1">
+                                <div className="w-full h-full rounded-full bg-[#1c1e1e] animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="px-5 mt-2 mb-8">
+                        <div className="w-48 h-8 rounded bg-[#1c1e1e] animate-pulse mb-3"></div>
+                        <div className="flex gap-2 mb-4">
+                            <div className="w-20 h-4 rounded bg-[#1c1e1e] animate-pulse"></div>
+                            <div className="w-24 h-4 rounded bg-[#1c1e1e] animate-pulse"></div>
+                        </div>
+                        <div className="w-full h-4 rounded bg-[#1c1e1e] animate-pulse mb-2"></div>
+                        <div className="w-3/4 h-4 rounded bg-[#1c1e1e] animate-pulse mb-6"></div>
+
+                        {/* Edit Button */}
+                        <div className="w-full h-10 rounded-full bg-[#1c1e1e] animate-pulse mb-6"></div>
+
+                        {/* Stats */}
+                        <div className="flex gap-3 h-[72px]">
+                            <div className="flex-1 rounded-xl bg-[#1c1e1e] animate-pulse"></div>
+                            <div className="flex-1 rounded-xl bg-[#1c1e1e] animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex w-full px-4 border-b border-white/5 mb-6">
+                        <div className="flex-1 py-3 flex justify-center"><div className="w-16 h-4 rounded bg-[#1c1e1e] animate-pulse"></div></div>
+                        <div className="flex-1 py-3 flex justify-center"><div className="w-16 h-4 rounded bg-[#1c1e1e] animate-pulse"></div></div>
+                        <div className="flex-1 py-3 flex justify-center"><div className="w-16 h-4 rounded bg-[#1c1e1e] animate-pulse"></div></div>
+                    </div>
+
+                    {/* Posts */}
+                    <div className="px-4">
+                        <SkeletonPost delay="0ms" />
+                        <SkeletonPost delay="100ms" />
+                        <SkeletonPost delay="200ms" />
+                    </div>
+                </div>
+            </div>
+        );
+
+        const SkeletonPost = ({ delay }) => (
+            <div className="glass-panel rounded-2xl p-4 mb-4 animate-fade-in" style={{ animationDelay: delay }}>
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#1c1e1e] animate-pulse"></div>
+                    <div className="flex-1">
+                        <div className="w-24 h-3 rounded bg-[#1c1e1e] animate-pulse mb-2"></div>
+                        <div className="w-16 h-2 rounded bg-[#1c1e1e] animate-pulse"></div>
+                    </div>
+                </div>
+                <div className="w-full h-3 rounded bg-[#1c1e1e] animate-pulse mb-2"></div>
+                <div className="w-3/4 h-3 rounded bg-[#1c1e1e] animate-pulse mb-4"></div>
+                <div className="w-full h-48 rounded-xl bg-[#1c1e1e] animate-pulse"></div>
+            </div>
+        );
+
+        // --- DELETE CONFIRMATION MODAL ---
+        const DeleteModal = ({ isOpen, onClose, onConfirm, title, message }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative bg-[#1A1C2E] border border-white/10 p-6 rounded-2xl shadow-2xl w-full max-w-sm animate-scale-up">
+                        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+                        <p className="text-gray-400 mb-6">{message}</p>
+                        <div className="flex gap-3">
+                            <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors">Cancel</button>
+                            <button onClick={onConfirm} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-colors shadow-lg shadow-red-500/20">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+
+            const [sharedPostsToRender, setSharedPostsToRender] = useState({});
+            const [view, setView] = useState('profile'); // profile, edit
+            const [isGuest, setIsGuest] = useState(false);
+            const [showAuthModal, setShowAuthModal] = useState(false);
+            const [toastMessage, setToastMessage] = useState(null); // Toast State
+            const [menuOpen, setMenuOpen] = useState(false);
+            const [contentTab, setContentTab] = useState('opinions');
+            const [activeTab, setActiveTab] = useState(() => {
+                const page = window.location.pathname.split('/').pop();
+                return PAGE_TAB_MAP[page] || 'profile';
+            });
+            const [navVisible, setNavVisible] = useState(true);
+            const [fabVisible, setFabVisible] = useState(true);
+            const lastY = useRef(0);
+            const touchStartX = useRef(0);
+            const touchStartY = useRef(0);
+            const [posts, setPosts] = useState([]);
+            const [commentedPosts, setCommentedPosts] = useState([]);
+            const [drafts, setDrafts] = useState([]);
+            const [seenPosts, setSeenPosts] = useState([]);
+            const [contentLoading, setContentLoading] = useState(true);
+            const [selectedImage, setSelectedImage] = useState(null);
+            const [savedPosts, setSavedPosts] = useState(new Set());
+            const [swipeOffset, setSwipeOffset] = useState(0);
+
+            // Modal States
+            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+            const [sharePostData, setSharePostData] = useState(null);
+            const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+            const [shareUserData, setShareUserData] = useState(null);
+
+            const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+            const [reportPostId, setReportPostId] = useState(null);
+            const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
+            const [mutedBrands, setMutedBrands] = useState(new Set());
+            const [mutedCategories, setMutedCategories] = useState(new Set());
+
+            // Delete Modal State
+            const [deleteModal, setDeleteModal] = useState({ isOpen: false, postId: null });
+
+            // Setup pull-to-refresh handler
+            useEffect(() => {
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
+
+            // Listen for internal chat post rendering
+            useEffect(() => {
+                const handleRenderSharedPost = async (e) => {
+                    const { postId, containerId } = e.detail;
+                    if (!postId || !containerId) return;
+
+                    setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: true, post: null } }));
+
+                    try {
+                        const fullPost = await window.getPost(postId);
+                        if (fullPost && fullPost.id) {
+                            const uiPost = {
+                                id: fullPost.id,
+                                user_id: fullPost.user_id,
+                                name: fullPost.profiles?.full_name || 'User',
+                                username: fullPost.profiles?.username || 'user',
+                                avatar: fullPost.profiles?.avatar_url || "",
+                                rqs: fullPost.profiles?.rqs_score || 0,
+                                verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+                                category: fullPost.category,
+                                product: fullPost.product_name,
+                                text: fullPost.text_content,
+                                media: fullPost.media_url,
+                                media_type: fullPost.media_type || 'image',
+                                images: fullPost.images || null,
+                                time: "Shared",
+                                agrees: fullPost.agrees_count || 0,
+                                comments: fullPost.comments_count || 0,
+                                seenBy: fullPost.seen_by_brand
+                            };
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, post: uiPost } }));
+                        } else {
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                        }
+                    } catch (err) {
+                        setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                    }
+                };
+                window.addEventListener('render_shared_post', handleRenderSharedPost);
+                
+                // Expose openFullPost globally
+                window.openFullPost = async (postId) => {
+                    if (window.closeInbox) window.closeInbox();
+                    window.location.href = `HOMEPAGE_FINAL.HTML?postId=${postId}`;
+                };
+                window.scrollToPost = window.openFullPost;
+
+                return () => window.removeEventListener('render_shared_post', handleRenderSharedPost);
+            }, []);
+
+            const handleImageClick = (src, type, images, idx) => {
+                vibrate();
+                setSelectedImage({ src, type, images, initialIndex: idx || 0 });
+            };
+
+            // DYNAMIC PROFILE DATA
+            const [profileData, setProfileData] = useState({
+                full_name: "Loading...",
+                username: "",
+                bio: "",
+                avatar_url: "",
+                banner_url: "",
+                rqs: 0,
+                verified_count: 0,
+                location: "",
+                website: "",
+                joined: ""
+            });
+            const [profileLoading, setProfileLoading] = useState(true);
+            const [imgError, setImgError] = useState(false);
+            const [userBadge, setUserBadge] = useState(null); // User Count Badge
+
+            // Load user profile on mount
+            useEffect(() => {
+                loadUserProfile();
+            }, []);
+
+            // Reset image error when avatar URL changes
+            useEffect(() => {
+                setImgError(false);
+            }, [profileData.avatar_url]);
+
+            const loadUserProfile = async () => {
+                try {
+                    // Wait for auth module to fully initialize
+                    if (window.authReadyPromise) await window.authReadyPromise;
+
+                    // Wait for Supabase to be fully available (up to 3s)
+                    let sbRetries = 0;
+                    while ((!window.supabase || !window.supabase.from) && sbRetries < 30) {
+                        await new Promise(r => setTimeout(r, 100));
+                        sbRetries++;
+                    }
+
+                    // Auth Check First
+                    const user = await window.getCurrentUser();
+                    if (!user) {
+                        setIsGuest(true);
+                        setShowAuthModal(true);
+                        setProfileLoading(false);
+                        return;
+                    }
+                    setIsGuest(false);
+
+                    const cacheKey = 'my_profile_data';
+
+                    // CACHE-FIRST: Try to load from cache first
+                    if (window.StateManager) {
+                        const cachedData = await window.StateManager.get(cacheKey);
+                        if (cachedData) {
+                            console.log('📦 Loading own profile from cache');
+                            setProfileData(cachedData);
+                            setProfileLoading(false);
+                            // Continue to fetch fresh data in background
+                        }
+                    }
+
+                    const profile = await window.getMyProfile();
+                    if (profile) {
+                        const profileObj = {
+                            full_name: profile.full_name || "User",
+                            username: profile.username || "",
+                            bio: profile.bio || "",
+                            avatar_url: profile.avatar_url || "",
+                            banner_url: profile.banner_url || "",
+                            rqs: profile.rqs_score || 0,
+                            verified_count: profile.verified_count || 0,
+                            location: profile.location || "",
+                            website: profile.website || "",
+                            joined: new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                            id: profile.id
+                        };
+                        setProfileData(profileObj);
+
+                        // Fetch Badge Number
+                        if (typeof window.getUserBadgeNumber === 'function') {
+                            window.getUserBadgeNumber(profile.id).then(num => setUserBadge(num));
+                        } else {
+                            console.warn('getUserBadgeNumber not available locally');
+                        }
+
+                        // SAVE TO CACHE (no TTL - invalidate on profile update)
+                        if (window.StateManager) {
+                            await window.StateManager.set(cacheKey, profileObj);
+                            console.log('💾 Saved own profile to cache');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                } finally {
+                    setProfileLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                loadContent();
+                setupRealtime();
+            }, []);
+
+            // Toast Handler
+            useEffect(() => {
+                const handler = (e) => showToast(e.detail.message, e.detail.icon, e.detail.isSuccess);
+                window.addEventListener('toast', handler);
+                return () => window.removeEventListener('toast', handler);
+            }, []);
+
+            const showToast = (msg, icon = null, isSuccess = false, action = null) => {
+                setToastMessage({ msg, icon, isSuccess, action });
+                setTimeout(() => setToastMessage(null), 4000);
+            };
+
+            const loadContent = async (isBackground = false) => {
+                try {
+                    if (!isBackground) setContentLoading(true);
+
+                    // FETCH HIDDEN ITEMS for Strict Filtering
+                    const newHiddenPosts = new Set();
+                    const newMutedBrands = new Set();
+                    const newMutedCategories = new Set();
+
+                    try {
+                        const hiddenItemsFn = window.getHiddenItems || (async () => []);
+                        const hiddenItems = await hiddenItemsFn();
+
+                        if (hiddenItems && hiddenItems.length > 0) {
+                            hiddenItems.forEach(item => {
+                                if (item.type === 'post') newHiddenPosts.add(String(item.post_id));
+                                if (item.type === 'brand') newMutedBrands.add(item.brand_name);
+                                if (item.type === 'category') newMutedCategories.add(item.category);
+                            });
+                        }
+                        setHiddenPostIds(newHiddenPosts);
+                        setMutedBrands(newMutedBrands);
+                        setMutedCategories(newMutedCategories);
+                    } catch (e) { console.error("Filter loading failed", e); }
+
+                    const localPostFilter = (p) => {
+                        if (newMutedBrands.has(p.product_name)) return false;
+                        if (newMutedCategories.has(p.category)) return false;
+                        return true;
+                    };
+
+                    const localTransform = (p) => {
+                        const tr = transformPost(p);
+                        tr.isHidden = newHiddenPosts.has(String(p.id));
+                        return tr;
+                    };
+
+                    // 1. My Opinions (Published)
+                    const myPosts = await window.getMyPosts();
+                    if (myPosts) setPosts(myPosts.filter(localPostFilter).map(localTransform));
+
+                    // 2. My Drafts
+                    const myDrafts = await window.getMyDrafts();
+                    if (myDrafts) setDrafts(myDrafts.map(transformDraft));
+
+                    // 3. Commented Posts & Received Comments
+                    const commentedRaw = await window.getMyCommentedPosts();
+                    const commentedByMe = commentedRaw ? commentedRaw.filter(localPostFilter).map(localTransform) : [];
+
+                    // Also include my posts that have received comments
+                    const myPostsWithComments = myPosts ? myPosts.filter(p => (p.comments_count || 0) > 0).filter(localPostFilter).map(localTransform) : [];
+
+                    // Merge and unique by ID
+                    const allCommentedMap = new Map();
+                    commentedByMe.forEach(p => allCommentedMap.set(p.id, p));
+                    myPostsWithComments.forEach(p => allCommentedMap.set(p.id, p));
+
+                    setCommentedPosts(Array.from(allCommentedMap.values()));
+
+                    // 4. BOOKMARKS (for keeping consistency)
+                    const currentUser = await window.getCurrentUser();
+                    if (currentUser) {
+                        const { data: bookmarks } = await window.supabase
+                            .from('bookmarks')
+                            .select('post_id')
+                            .eq('user_id', currentUser.id);
+                        if (bookmarks) {
+                            setSavedPosts(new Set(bookmarks.map(b => String(b.post_id))));
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error loading content:', error);
+                } finally {
+                    if (!isBackground) setContentLoading(false);
+                }
+            };
+
+            const handleEditPost = (post) => {
+                vibrate(5);
+                // Save post data to localStorage to pass to Homepage Composer
+                localStorage.setItem('plusopinion_draft_edit', JSON.stringify(post));
+                triggerAction('openOpinion');
+            };
+
+            const handleRemovePost = async (postId, reason = 'Removed', type = 'delete', target = null) => {
+                if (type === 'REPORT_INTENT') {
+                    setReportPostId(postId);
+                    setIsReportModalOpen(true);
+                    return;
+                }
+
+                if (type === 'SHARE_INTENT') {
+                    // Find post data to share
+                    // Check posts first, then commented
+                    let postToShare = posts.find(p => p.id === postId) || commentedPosts.find(p => p.id === postId);
+                    // Or construct from target if available and complete
+                    if (!postToShare && target) {
+                        // We might need to fetch it if we lack details, but for now reuse target if passed appropriately
+                    }
+                    if (postToShare) {
+                        setSharePostData(postToShare);
+                        setIsShareModalOpen(true);
+                    }
+                    return;
+                }
+
+                // Optimistic UI Removal
+                if (type !== 'hide_post') {
+                    setPosts(prev => prev.filter(p => p.id !== postId));
+                    setCommentedPosts(prev => prev.filter(p => p.id !== postId));
+                }
+
+                window.dispatchEvent(new CustomEvent('toast', { detail: { message: reason, icon: type === 'delete' ? "Trash" : "EyeOff", isSuccess: true } }));
+
+                try {
+                    if (type === 'hide_post') await window.hideItem('post', postId);
+                    else if (type === 'not_interested') await window.hideItem('category', target || 'General');
+                    else if (type === 'delete') await window.deletePost(postId);
+                    // Note: We don't soft delete 'my posts' usually unless it's actual deletion
+                } catch (e) { console.error("Persistence failed", e); }
+            };
+
+            const toggleBookmark = async (postId, shouldSave) => {
+                vibrate(10);
+                try {
+                    if (shouldSave) {
+                        await window.bookmarkPost(postId);
+                        setSavedPosts(prev => new Set(prev).add(postId));
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Added to Bookmarks', icon: 'BookMark', isSuccess: true } }));
+                    } else {
+                        await window.removeBookmark(postId);
+                        setSavedPosts(prev => {
+                            const next = new Set(prev);
+                            next.delete(postId);
+                            return next;
+                        });
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Removed from Bookmarks', icon: 'BookMark', isSuccess: true } }));
+                    }
+                } catch (err) {
+                    console.error('Bookmark toggle failed', err);
+                }
+            };
+
+            const submitReport = async (reason, action) => {
+                if (!reportPostId) return;
+
+                // Lookup post in either my posts or commented posts
+                const post = posts.find(p => String(p.id) === String(reportPostId)) ||
+                    commentedPosts.find(p => String(p.id) === String(reportPostId));
+
+                // Send Report to API
+                try {
+                    const currentUser = await window.getCurrentUser();
+                    let reporterUsername = 'Anonymous';
+                    if (currentUser) {
+                        const { data: profile } = await window.supabase
+                            .from('profiles')
+                            .select('username')
+                            .eq('id', currentUser.id)
+                            .single();
+                        if (profile) reporterUsername = profile.username;
+                    }
+
+                    const additionalData = {
+                        reporter_username: reporterUsername,
+                        reported_username: post ? post.username : null,
+                        post_url: reportPostId ? `https://plusopinion.com/post/${reportPostId}` : null
+                    };
+
+                    // Use default action 'pending' if not 'remove'
+                    const actionTaken = action === 'remove' ? 'remove' : 'pending';
+                    await window.reportPost(reportPostId, reason, actionTaken, additionalData);
+
+                    if (action === 'remove') {
+                        setPosts(prev => prev.filter(p => p.id !== reportPostId));
+                        setCommentedPosts(prev => prev.filter(p => p.id !== reportPostId));
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Opinion removed from feed', icon: 'Check', isSuccess: true } }));
+                    } else {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Report submitted', icon: 'Check', isSuccess: true } }));
+                    }
+                } catch (e) {
+                    console.error("Report failed", e);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Report failed', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            const setupRealtime = () => {
+                const subscription = window.supabase
+                    .channel('profile_changes')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, (payload) => {
+                        // Refresh content silently on any post change
+                        loadContent(true);
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
+                        // Refresh content silently on comment changes
+                        loadContent(true);
+                    })
+                    .subscribe();
+
+                return () => {
+                    window.supabase.removeChannel(subscription);
+                };
+            };
+
+
+
+
+
+            // Transform DB post to UI format
+            const transformPost = (post) => ({
+                id: post.id,
+                name: post.profiles?.full_name || 'User',
+                username: post.profiles?.username || 'user',
+                avatar: post.profiles?.avatar_url || DEFAULT_AVATAR,
+                rqs: post.profiles?.rqs_score || 0,
+                is_verified_purchase: post.is_verified_purchase, // Exact DB flag
+                verified: post.is_verified_purchase || post.profiles?.is_verified || (post.is_verified_purchase === null && !!post.media_url),
+                category: post.category,
+                product: post.product_name,
+                text: post.text_content,
+                media: post.media_url || post.media || post.image_url || ((post.images && post.images.length > 0) ? post.images[0] : null),
+                media_type: post.media_type || 'image',
+                images: post.images || null,
+                agrees: post.agrees_count || 0,
+                comments: post.comments_count || 0,
+                shares: post.shares_count || 0,
+                time: formatTime(post.created_at),
+                isHidden: hiddenPostIds.has(String(post.id)),
+                seenBy: post.seen_by_brand ? post.seen_by_brand : null,
+                user_id: post.user_id
+            });
+
+            const transformDraft = (post) => ({
+                id: post.id,
+                category: post.category,
+                product: post.product_name || 'Untitled Draft',
+                text: post.text_content,
+                time: "Last edited " + new Date(post.updated_at || post.created_at).toLocaleDateString(),
+                originalData: post // Keep full data for editing
+            });
+
+            // TABS CONFIG
+            const TABS = ['opinions', 'comments', 'seen', 'drafts'];
+
+            const handleScroll = (e) => {
+                const currentY = e.target.scrollTop;
+                const isScrollingDown = currentY > lastY.current;
+
+                if (isScrollingDown && currentY > 50) {
+                    setNavVisible(false);
+                    setFabVisible(false);
+                } else {
+                    setNavVisible(true);
+                    setFabVisible(true);
+                }
+                lastY.current = currentY;
+            };
+
+            const triggerMySpace = (section) => {
+                vibrate();
+                const viewMap = {
+                    'rqs': 'rqs',
+                    'verification': 'rqs', // Both RQS and Verified counts lead to RQS breakdown
+                    'insights': 'insights'
+                };
+                const view = viewMap[section] || 'dashboard';
+                window.location.href = `MY SPACE FINAL (USER).HTML?view=${view}`;
+            };
+
+            // SWIPE LOGIC FIXED
+            const handleTouchStart = (e) => {
+                touchStartX.current = e.touches[0].clientX;
+                touchStartY.current = e.touches[0].clientY;
+                setSwipeOffset(0);
+            };
+
+            const handleTouchMove = (e) => {
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const diffX = touchX - touchStartX.current;
+                const diffY = touchY - touchStartY.current;
+
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+                    const resistance = 0.4;
+                    let offset = diffX * resistance;
+                    if (offset > 100) offset = 100 + (offset - 100) * 0.2;
+                    if (offset < -100) offset = -100 + (offset + 100) * 0.2;
+                    setSwipeOffset(offset);
+                }
+            };
+
+            const handleTouchEnd = (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+
+                const diffX = touchStartX.current - touchEndX;
+                const diffY = touchStartY.current - touchEndY;
+
+                // Only trigger horizontal swipe if horizontal movement is significant AND vertical movement is small
+                // This prevents swiping while scrolling down
+                if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+                    const currentIndex = TABS.indexOf(contentTab);
+                    if (diffX > 0) {
+                        // Swipe Left -> Next Tab
+                        if (currentIndex < TABS.length - 1) {
+                            setContentTab(TABS[currentIndex + 1]);
+                            vibrate();
+                        }
+                    } else {
+                        // Swipe Right -> Prev Tab
+                        if (currentIndex > 0) {
+                            setContentTab(TABS[currentIndex - 1]);
+                            vibrate();
+                        }
+                    }
+                }
+                setSwipeOffset(0);
+            };
+
+            if (profileLoading) {
+                return (
+                    <div className="flex-1 flex flex-col relative h-full overflow-hidden">
+                        <div className="h-[60px] header-glass flex items-center justify-between px-4 sticky top-0 z-30 shrink-0">
+                            <button className="p-2 rounded-full hover:bg-white/5 relative z-10" onClick={() => window.history.back()}><Icon icon="ArrowLeft" size={20} /></button>
+                        </div>
+                        <SkeletonProfile />
+                        <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
+                    <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isVisible={true} />
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex-1 flex flex-col relative h-full overflow-hidden">
+                    <ImageViewer src={selectedImage?.src} type={selectedImage?.type} images={selectedImage?.images} initialIndex={selectedImage?.initialIndex || 0} onClose={() => setSelectedImage(null)} />
+
+                    {/* EDIT PROFILE MODAL */}
+                    {view === 'edit' && <EditProfile onClose={() => setView('profile')} currentProfile={profileData} onSave={loadUserProfile} />}
+
+                    <ShareModal
+                        isOpen={isShareModalOpen}
+                        onClose={() => { setIsShareModalOpen(false); setShareUserData(null); setSharePostData(null); }}
+                        post={sharePostData}
+                        user={shareUserData}
+                    />
+                    <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+                    <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} onSubmit={submitReport} />
+
+                    {/* TOP NAVIGATION (OWNER POV) */}
+                    <div className={`header-glass fixed top-0 left-0 w-full h-[60px] flex items-center justify-between px-4 z-30 transition-transform duration-500 ease-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                        <button className="p-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors relative z-10" onClick={() => { vibrate(); window.history.back(); }}>
+                            <Icon icon="ArrowLeft" size={20} />
+                        </button>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="font-heading font-bold text-sm tracking-widest uppercase text-white/90">Profile</span>
+                        </div>
+                        <div className="flex items-center gap-2 relative z-10">
+                            {/* Lens Button */}
+                            <button
+                                className="p-2 text-white/80 hover:text-white"
+                                onClick={() => {
+                                    vibrate();
+                                    triggerAction('openLens');
+                                }}
+                            >
+                                <Icon icon="Search" size={20} />
+                            </button>
+
+                            {/* Menu Button */}
+                            <button
+                                className="p-2 text-white/80 hover:text-white relative"
+                                onClick={() => { vibrate(); setMenuOpen(!menuOpen); }}
+                            >
+                                <Icon icon="MoreVertical" size={20} />
+                            </button>
+
+                            {/* MENU DROPDOWN */}
+                            {menuOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)}></div>
+                                    <div className="absolute top-10 right-0 w-40 bg-[#1A1C2E] border border-white/10 rounded-xl shadow-2xl z-40 overflow-hidden animate-enter">
+                                        <button className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 flex items-center gap-2"
+                                            onClick={() => {
+                                                setMenuOpen(false);
+                                                vibrate();
+                                                setShareUserData(profileData);
+                                                setIsShareModalOpen(true);
+                                            }}>
+                                            <Icon icon="Share" size={16} /> Share Profile
+                                        </button>
+                                        <button className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 flex items-center gap-2 border-t border-white/5"
+                                            onClick={() => {
+                                                setMenuOpen(false);
+                                                vibrate();
+                                                setIsSettingsModalOpen(true);
+                                            }}>
+                                            <Icon icon="Settings" size={16} /> Settings
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* SCROLLABLE CONTENT AREA */}
+                    <div
+                        className="absolute inset-0 overflow-y-auto smooth-scroll-container pb-24 ptr-enabled"
+                        onScroll={handleScroll}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        {/* SPACER FOR FIXED HEADER */}
+                        <div className="h-[60px] shrink-0"></div>
+
+                        {/* PROFILE HEADER */}
+                        <div className="relative mb-6">
+                            {profileData.banner_url ? (
+                                <div className="h-[140px] w-full relative overflow-hidden">
+                                    <img src={profileData.banner_url} alt="Banner" className="w-full h-full object-cover" />
+                                </div>
+                            ) : (
+                                <div className="h-[140px] w-full banner-gradient"></div>
+                            )}
+
+                            <div className="absolute bottom-1.5 left-4 flex items-end">
+                                <div className="profile-avatar-container bg-[#020205]">
+                                    {profileData.avatar_url && !imgError ? (
+                                        <img
+                                            src={profileData.avatar_url}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                            onError={() => setImgError(true)}
+                                        />
+                                    ) : (
+                                        <img src={DEFAULT_AVATAR} className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* OWNER EDIT BUTTON */}
+                            <div className="absolute bottom-3 right-4 flex gap-2">
+                                <button onClick={() => { vibrate(); setView('edit'); }} className="bg-black/40 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all">
+                                    Edit Profile
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="px-5 mt-2 mb-8">
+                            <div className="flex items-start justify-between gap-4 mb-1">
+                                <div className="flex-1 min-w-0">
+                                    <h1 className="text-2xl font-heading font-bold text-white leading-tight truncate">{profileData.full_name}</h1>
+                                    <div className="flex items-center gap-2 text-sm text-white/60 flex-wrap mt-1">
+                                        <span>@{profileData.username}</span>
+                                        {profileData.location && (
+                                            <>
+                                                <span className="text-white/40">•</span>
+                                                <span className="flex items-center gap-1"><Icon icon="MapPin" size={12} /> {profileData.location}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Message / EST User Badge */}
+                                {(userBadge !== null) && (
+                                    <button 
+                                        onClick={() => {
+                                            vibrate(5);
+                                            // Owner looking at their own profile doesn't need to message themselves, 
+                                            // but we'll open the main inbox just in case, or show a toast
+                                            if (window.openInbox) {
+                                                window.openInbox();
+                                            } else {
+                                                console.warn('Inbox chat not available');
+                                            }
+                                        }}
+                                        className="flex flex-col items-center shrink-0 w-14 h-14 rounded-xl bg-[#020205] border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),_0_1px_0_rgba(255,255,255,0.05)] group relative overflow-hidden active:scale-95 transition-transform" 
+                                        title={`Inbox (EST #${userBadge})`}
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/[0.02] pointer-events-none group-hover:bg-white/[0.05] transition-colors z-10"></div>
+                                        <div className="flex-1 w-full bg-[#2f8bff] flex items-center justify-center hover:bg-[#2f8bff]/90 transition-colors">
+                                            <Icon icon="PlusOpinionInbox" size={22} className="text-white group-hover:scale-110 transition-transform duration-300 stroke-[2.5px]" />
+                                        </div>
+                                        <div className="h-[18px] w-full bg-[#020205] flex items-center justify-center border-t border-white/5">
+                                            <span className="text-[7px] text-white/30 font-black uppercase tracking-widest leading-none pt-0.5" style={{ textShadow: '0 -1px 0 rgba(0,0,0,1)' }}>
+                                                EST <span className="text-white/40">#{userBadge}</span>
+                                            </span>
+                                        </div>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="mb-4">
+                                {profileData.bio && (
+                                    <p className="text-sm text-gray-300 font-light leading-relaxed">{profileData.bio}</p>
+                                )}
+                                {!profileData.bio && (
+                                    <p className="text-sm text-gray-500 font-light italic">This user prefers to keep their bio a mystery.</p>
+                                )}
+                            </div>
+
+                            {profileData.website && (
+                                <div className="flex items-center gap-2 text-sm text-neon mb-6">
+                                    <Icon icon="Link" size={14} />
+                                    <a href="#" className="hover:underline">{profileData.website}</a>
+                                </div>
+                            )} {/* REDESIGNED CREDIBILITY BLOCK (SERIOUS TRUST) */}
+                            <div className="flex items-center gap-3 mb-6">
+                                {/* RQS Badge - Blue Glass Gradient Pill */}
+                                <button onClick={() => triggerMySpace('rqs')} className="flex-1 group relative overflow-hidden rounded-full p-[1px] shadow-[0_0_20px_rgba(47,139,255,0.15)] hover:shadow-[0_0_25px_rgba(47,139,255,0.4)] transition-all duration-300 hover:scale-[1.02] active:scale-95">
+                                    <span className="absolute inset-0 bg-gradient-to-r from-[#2F8BFF] to-[#1A73E8] rounded-full opacity-100 group-hover:opacity-90 transition-opacity"></span>
+                                    <div className="relative h-10 bg-inherit flex items-center justify-between px-1 rounded-full">
+                                        <div className="flex items-center gap-2 pl-3">
+                                            <Icon icon="Zap" className="text-white fill-white animate-pulse-slow" size={16} />
+                                            <span className="text-white font-bold tracking-wider text-sm">RQS</span>
+                                        </div>
+                                        <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 mr-1">
+                                            <span className="text-white font-heading font-bold leading-none">{profileData.rqs}</span>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                {/* Verified Badge - Dark Glass Pill */}
+                                <button onClick={() => triggerMySpace('verification')} className="flex-1 group relative overflow-hidden rounded-full bg-[#020205]/40 backdrop-blur-xl border border-accent-green/30 hover:border-accent-green/80 transition-all duration-300 hover:scale-[1.02] active:scale-95 h-10 shadow-[0_0_15px_rgba(34,197,94,0.05)] hover:shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                                    <div className="relative h-full flex items-center justify-center gap-2 px-4">
+                                        <Icon icon="ShieldCheck" className="text-accent-green group-hover:text-[#4ade80] transition-colors" size={18} />
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-white font-bold text-sm tracking-wide">{profileData.verified_count || 0}</span>
+                                            <span className="text-[10px] text-accent-green/80 uppercase font-bold tracking-wider whitespace-nowrap group-hover:text-accent-green transition-colors">Verified Opinions</span>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                {/* Insight Tool - Glass Icon Pill */}
+                                <button onClick={() => triggerMySpace('insights')} className="h-10 w-10 rounded-full bg-[#020205]/40 backdrop-blur-xl border border-white/10 hover:border-white/40 hover:bg-white/5 transition-all duration-300 hover:scale-110 active:scale-90 flex items-center justify-center group relative overflow-hidden shrink-0 shadow-lg">
+                                    <Icon icon="BarChart2" size={18} className="text-white/70 group-hover:text-neon transition-all relative z-10" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* STICKY TABS (TOP-0 FIX) */}
+                        <div className={`sticky z-20 bg-[#020205] border-b border-white/5 mb-4 shadow-lg transition-[top] duration-300 ease-out`} style={{ top: navVisible ? '60px' : '0px' }}>
+                            <div className="flex overflow-x-auto no-scrollbar px-4">
+                                {TABS.map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => { setContentTab(tab); vibrate(); }}
+                                        className={`
+                                            flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors relative
+                                            ${contentTab === tab ? 'text-white' : 'text-muted hover:text-white'}
+                                        `}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {tab === 'opinions' && "Your Opinions"}
+                                            {tab === 'comments' && "Comments"}
+                                            {tab === 'seen' && <span className="flex items-center gap-1">Seen <Icon icon="Zap" size={12} className={contentTab === tab ? "text-neon" : ""} /></span>}
+                                            {tab === 'drafts' && <span className="flex items-center gap-1">Drafts <Icon icon="Lock" size={12} /></span>}
+                                        </div>
+                                        {contentTab === tab && (
+                                            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-neon shadow-[0_0_10px_var(--neon)]"></div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* TABS CONTENT */}
+                        <div
+                            className="px-4 min-h-[300px] transition-transform duration-200 ease-out will-change-transform"
+                            style={{ transform: `translateX(${swipeOffset}px)` }}
+                        >
+                            {contentLoading && (
+                                <div className="text-center py-20 text-muted">
+                                    <div className="animate-spin w-6 h-6 border-2 border-neon border-t-transparent rounded-full mx-auto mb-2"></div>
+                                    Loading...
+                                </div>
+                            )}
+
+                            {!contentLoading && contentTab === 'opinions' && (
+                                <div className="animate-enter">
+                                    {posts.length === 0 ? (
+                                        <div className="text-center py-20 text-muted/40 tracking-widest font-heading">
+                                            NO OPINIONS YET
+                                        </div>
+                                    ) : (
+                                        posts.map((post) => (
+                                            <Post
+                                                key={post.id}
+                                                post={post}
+                                                userProfile={profileData}
+                                                onImageClick={handleImageClick}
+                                                onRemove={handleRemovePost}
+                                                onEdit={handleEditPost}
+                                                onShare={(p) => { setSharePostData(p); setIsShareModalOpen(true); }}
+                                                onBookmark={toggleBookmark}
+                                                savedPosts={savedPosts}
+                                                onDeleteClick={(postId) => setDeleteModal({ isOpen: true, postId })}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {!contentLoading && contentTab === 'comments' && (
+                                <div className="animate-enter">
+                                    {commentedPosts.length === 0 ? (
+                                        <div className="text-center py-20 text-muted/40 tracking-widest font-heading">
+                                            NO COMMENTS YET
+                                        </div>
+                                    ) : (
+                                        commentedPosts.map((post) => (
+                                            <Post
+                                                key={post.id}
+                                                post={post}
+                                                userProfile={profileData}
+                                                onImageClick={handleImageClick}
+                                                onRemove={handleRemovePost}
+                                                onEdit={handleEditPost}
+                                                onShare={(p) => { setSharePostData(p); setIsShareModalOpen(true); }}
+                                                onBookmark={toggleBookmark}
+                                                savedPosts={savedPosts}
+                                                onDeleteClick={(postId) => setDeleteModal({ isOpen: true, postId })}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {!contentLoading && contentTab === 'drafts' && (
+                                <div className="animate-enter">
+                                    <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-neon/5 border border-neon/10">
+                                        <Icon icon="Lock" size={16} className="text-neon" />
+                                        <p className="text-xs text-neon/80">These are private drafts visible only to you.</p>
+                                    </div>
+                                    {drafts.length === 0 ? (
+                                        <div className="text-center text-xs text-muted/40 py-10">
+                                            No drafts yet
+                                        </div>
+                                    ) : (
+                                        drafts.map(draft => (
+                                            <DraftCard
+                                                key={draft.id}
+                                                draft={draft}
+                                                onEdit={() => {
+                                                    // Save draft data to localStorage to pass to Homepage Composer
+                                                    // Then redirect
+                                                    localStorage.setItem('plusopinion_draft_edit', JSON.stringify(draft.originalData));
+                                                    triggerAction('openOpinion');
+                                                }}
+                                                onPublish={() => {
+                                                    // Quick Publish (Switch is_draft to false)
+                                                    // OR redirect to edit (safer)
+                                                    localStorage.setItem('plusopinion_draft_edit', JSON.stringify(draft.originalData));
+                                                    triggerAction('openOpinion');
+                                                }}
+                                                onDelete={async () => {
+                                                    if (confirm('Delete this draft?')) {
+                                                        try {
+                                                            await window.deletePost(draft.id);
+                                                            // Realtime will auto-update state, but we can optimistically remove
+                                                            setDrafts(prev => prev.filter(d => d.id !== draft.id));
+                                                        } catch (e) { console.error(e); alert('Error deleting draft'); }
+                                                    }
+                                                }}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {!contentLoading && contentTab === 'seen' && (
+                                <div className="h-40 flex flex-col items-center justify-center text-muted/30 animate-enter">
+                                    <Icon icon="Grid" size={32} className="mb-2 opacity-50" />
+                                    <span className="text-xs font-heading tracking-widest">Coming Soon</span>
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+
+                    {/* FAB (RESTORED ANIMATION) */}
+                    <button
+                        onClick={() => {
+                            vibrate();
+                            triggerAction('openOpinion');
+                        }}
+                        className={`absolute bottom-24 right-5 bg-neon text-white h-12 pl-4 pr-5 rounded-full flex items-center gap-2 z-30 transition-all duration-500 opinion-btn ${fabVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
+                    >
+                        <div className="opinion-icon"><Icon icon="Plus" size={20} className="stroke-[3px]" /></div>
+                        <span className="font-heading font-bold text-sm tracking-wide">OPINION</span>
+                    </button>
+
+                    {/* BOTTOM NAV */}
+                    <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} isVisible={navVisible} />
+
+                    <DeleteModal
+                        isOpen={deleteModal.isOpen}
+                        onClose={() => setDeleteModal({ isOpen: false, postId: null })}
+                        message="Are you sure you want to delete this opinion? This action cannot be undone."
+                        title="Delete Opinion?"
+                        onConfirm={async () => {
+                            if (deleteModal.postId) {
+                                await handleRemovePost(deleteModal.postId, 'Opinion deleted', 'delete');
+                                setDeleteModal({ isOpen: false, postId: null });
+                            }
+                        }}
+                    />
+
+                    {/* Auth Modal for Guests */}
+                    <AuthModal
+                        isOpen={showAuthModal}
+                        onClose={() => setShowAuthModal(false)}
+                        isClosable={!isGuest}
+                    />
+
+                </div>
+            );
+        };
+
+        // AUTH MODAL (Login/Signup) - Mirrored from HOMEPAGE_FINAL
+        const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+            const [mode, setMode] = useState('login'); // 'login' or 'signup'
+            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [inlineEmailError, setInlineEmailError] = useState(null);
+
+            if (!isOpen) return null;
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+                setInlineEmailError(null);
+                vibrate(10);
+
+                if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+                    setError("Passwords don't match");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await window.authReadyPromise;
+                    if (mode === 'signup') {
+                        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                        if (signupData.error) throw signupData.error;
+
+                        if (signupData?.session) {
+                            window.location.href = 'onboarding.html';
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+                            }));
+                            onClose();
+                        }
+                    } else {
+                        const user = await window.signInUser(formData.email, formData.password);
+                        if (user) {
+                            if (user.onboardingRequired) {
+                                window.location.href = 'onboarding.html';
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    const msg = err.message || 'Authentication failed';
+                    const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+                    const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+
+                    if (isSignupEmailErr) {
+                        setInlineEmailError('This email is already registered. Please log in.');
+                    } else if (isLoginEmailErr) {
+                        setInlineEmailError('Email not registered or incorrect password.');
+                    } else {
+                        setError(msg);
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleGoogleLogin = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    await window.signInWithProvider('google');
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const handleForgotPassword = async () => {
+                if (!formData.email) {
+                    setError("Please enter your email first");
+                    return;
+                }
+                setLoading(true);
+                try {
+                    await window.resetPassword(formData.email);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+                    }));
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => isClosable && onClose()}></div>
+                    <div className="w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10" onClick={e => e.stopPropagation()}>
+                        {isClosable && (
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                                <Icon icon="X" size={24} />
+                            </button>
+                        )}
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
+                                {mode === 'login' ? 'Welcome Back' : 'Sign Up'}
+                            </h2>
+                            <p className="text-slate-400 text-sm">
+                                {mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name</label>
+                                    <input
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        type="text"
+                                        placeholder="John Doe"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address</label>
+                                <input
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password</label>
+                                <input
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password</label>
+                                    <input
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+                                >
+                                    Forgot Password?
+                                </button>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? 'PROCESSING...' : (mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT')}
+                                <Icon icon="ArrowRight" size={18} />
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase">OR</span>
+                                <div className="flex-grow border-t border-slate-700"></div>
+                            </div>
+
+                            <div className="google-sso-container" data-action="signin"></div>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm text-slate-400">
+                            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button
+                                onClick={() => { vibrate(5); setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
+                                className="text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform"
+                            >
+                                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = window.ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    

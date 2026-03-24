@@ -1,0 +1,1895 @@
+
+        // Default Avatar (SVG Data URI - Rounded Shoulder, Thinner Stroke 1.2px, Scaled Down)
+        // Default Avatar (Refined: Navbar Style Match - Reduced Gap cy=9, Slim 0.8px, Extracted Blue #326bcb)
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+        const { useState, useEffect, useMemo, useRef } = React;
+        const { motion, AnimatePresence, useMotionValue, useTransform } = window.Motion;
+
+        // 🔗 GLOBAL NAVIGATION FUNCTION
+        const goTo = (page) => {
+            window.scrollTo(0, 0);
+            window.location.href = page;
+        };
+
+        const checkMySpaceRedirect = async () => {
+            try {
+                const user = await window.getCurrentUser();
+
+                if (!user) {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    return;
+                }
+                const { data: profile } = await window.supabase
+                    .from('profiles')
+                    .select('is_business_account, company_name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile && profile.is_business_account) {
+                    window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+                } else {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                }
+            } catch (e) {
+                window.location.href = 'MY SPACE FINAL (USER).HTML';
+            }
+        };
+
+        function dispatchAction(action) {
+            if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+                // Already on homepage
+                window.PlusOpinionActions[action]();
+            } else {
+                // On another page → redirect with hash
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        }
+
+        const triggerAction = (action) => {
+            if (window.PlusOpinionActions?.[action]) {
+                window.PlusOpinionActions[action]();
+            } else {
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        };
+
+        // 🔁 PAGE → TAB MAP (GLOBAL)
+        const PAGE_TAB_MAP = {
+            'HOMEPAGE_FINAL.HTML': 'home',
+            'CATAGORYPAGE.HTML': 'categories',
+            'MY SPACE FINAL (USER).HTML': 'myspace',
+            'NOTIFICATION PANEL.HTML': 'notifs',
+            'PRIVATE OWNER PROFILE.HTML': 'profile'
+        };
+
+        // --- ICONS ---
+        const Icons = {
+            Smile: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
+            Running: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 4a2 2 0 10-4 0 2 2 0 004 0z"/><path d="M10 7l-2 4 4 2-1 6"/><path d="M12 13l4-1 2-4"/><path d="M8 7l-2 0 2 3"/></svg>, 
+
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
+            Trash: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>,
+            Bookmark: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>,
+            BookmarkFilled: (p) => <svg {...p} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>,
+            Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4Z" /></svg>,
+            Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
+            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
+            Shield: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>,
+            ShieldCheck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>,
+            Undo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>,
+            Filter: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>,
+            MySpaceLogo: (p) => (
+                <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 3L3 22" strokeLinejoin="bevel" />
+                    <path d="M21 22L11 3" strokeLinejoin="bevel" />
+                    <path d="M22 8L4 18" className="myspace-swoosh" strokeWidth="2.5" />
+                </svg>
+            ),
+            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+            CheckCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>,
+            ToggleLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="6" ry="6" /><circle cx="8" cy="12" r="2" /></svg>,
+            ToggleRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="6" ry="6" /><circle cx="16" cy="12" r="2" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+        };
+
+        const Icon = ({ icon, size = 20, className = "" }) => {
+            const Component = Icons[icon];
+            if (!Component) return null;
+            return <Component width={size} height={size} className={className} />;
+        };
+
+        const renderTextWithMentions = (text) => {
+            if (!text) return text;
+            const parts = text.split(/(@[\w.]+)/g);
+            return parts.map((part, i) => {
+                if (/@[\w.]+/.test(part)) {
+                    const username = part.slice(1);
+                    return (
+                        <span key={i} className="text-neon font-semibold cursor-pointer hover:underline"
+                            onClick={(e) => {
+                                e.stopPropagation(); vibrate(5);
+                                window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+                            }}>
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            });
+        };
+
+        const vibrate = (pattern = 5) => {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern);
+        };
+
+        const BRAND_LOGOS = {
+            "OnePlus": "https://cdn.simpleicons.org/oneplus",
+            "Samsung": "https://cdn.simpleicons.org/samsung",
+            "Sony": "https://cdn.simpleicons.org/sony",
+            "Ola Electric": "https://cdn.simpleicons.org/tesla", // Placeholder
+            "Nike": "https://cdn.simpleicons.org/nike",
+            "Dyson": "https://vectorlogo.zone/logos/dyson/dyson-icon.svg",
+            "Apple": "https://cdn.simpleicons.org/apple",
+            "Tesla": "https://cdn.simpleicons.org/tesla"
+        };
+
+        // Format time ago for notifications
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const past = new Date(timestamp);
+            const diffMs = now - past;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return past.toLocaleDateString();
+        }
+
+        function formatNotification(dbNotif) {
+            const metadata = dbNotif.metadata || {};
+
+            return {
+                id: dbNotif.id,
+                type: dbNotif.type || 'system',
+                category: dbNotif.category || 'system',
+                title: dbNotif.title,
+                desc: dbNotif.message,
+                time: formatTimeAgo(dbNotif.created_at),
+                unread: !dbNotif.is_read,
+                icon: dbNotif.icon || 'Bell',
+                avatar: metadata.actor_avatar,
+                actor_id: dbNotif.related_user_id,
+                related_post_id: dbNotif.related_post_id,
+                metadata: metadata,
+                brand: metadata.brand_name,
+                tag: metadata.tag,
+                critical: dbNotif.priority === 'critical',
+                action_url: dbNotif.action_url,
+                _dbId: dbNotif.id,
+                is_bookmarked: metadata.is_bookmarked === true
+            };
+        }
+
+        // --- COMPONENTS ---
+
+        const UndoRow = ({ action, onUndo, onDismiss }) => {
+            useEffect(() => {
+                const timer = setTimeout(onDismiss, 5000);
+                return () => clearTimeout(timer);
+            }, [onDismiss]);
+
+            return (
+                <div className="relative py-4 px-4 flex items-center justify-between border-b border-white/[0.05] bg-[#020205]">
+                    <span className="text-[11px] text-muted font-medium">
+                        {action === 'delete' ? 'Notification deleted' : 'Saved to Bookmarks'}
+                    </span>
+                    <button
+                        onClick={onUndo}
+                        className="text-neon text-xs font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg active:bg-white/[0.05] transition-colors"
+                    >
+                        <Icon icon="Undo" size={14} /> UNDO
+                    </button>
+                </div>
+            );
+        };
+
+        // NotificationItem - Matching Prototype Design
+        const NotificationItem = ({ data, onSwipe, onClick, highlightId }) => {
+            const x = useMotionValue(0);
+
+            // --- ANIMATION VALUES ---
+            const bg = useTransform(
+                x,
+                [-100, -50, 0, 50, 100],
+                ["rgba(62, 22, 22, 1)", "rgba(62, 22, 22, 0.5)", "rgba(2, 2, 5, 0)", "rgba(14, 24, 51, 0.5)", "rgba(14, 24, 51, 1)"]
+            );
+
+            const deleteOpacity = useTransform(x, [-60, -20], [1, 0]);
+            const deleteScale = useTransform(x, [-100, -50], [1.2, 0.8]);
+            const deleteX = useTransform(x, [-100, 0], [0, 40]);
+
+            const bookmarkOpacity = useTransform(x, [20, 60], [0, 1]);
+            const bookmarkScale = useTransform(x, [50, 100], [0.8, 1.2]);
+            const bookmarkX = useTransform(x, [0, 100], [-40, 0]);
+
+            const handleDragEnd = (_, info) => {
+                if (info.offset.x < -100) onSwipe(data.id, 'delete');
+                else if (info.offset.x > 100) {
+                    onSwipe(data.id, 'bookmark');
+                    x.set(0); // Reset position for bookmark toggle
+                } else {
+                    x.set(0);
+                }
+            };
+
+            // Handle click on avatar/icon - navigate to relevant page
+            const handleIconClick = (e) => {
+                e.stopPropagation();
+                const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
+                if (data.actor_id) {
+                    window.location.href = `${getPath('PUBLIC POV PROFILE.HTML')}?id=${data.actor_id}`;
+                } else if (data.metadata?.company_id) {
+                    window.location.href = `${getPath('MY SPACE FINAL(COMPANIES).HTML')}?id=${data.metadata.company_id}`;
+                } else if (data.category === 'revenue') {
+                    window.location.href = `${getPath('MY SPACE FINAL (USER).HTML')}#revenue`;
+                } else if (data.category === 'security') {
+                    window.location.href = `${getPath('PRIVATE OWNER PROFILE.HTML')}#security`;
+                } else if (data.type === 'rqs_updated') {
+                    window.location.href = `${getPath('MY SPACE FINAL (USER).HTML')}#rqs`;
+                }
+            };
+
+            // Determine if this is a user interaction notification
+            const isUserInteraction = () => {
+                const type = (data.type || '').toLowerCase();
+                const category = (data.category || '').toLowerCase();
+                if (data.actor_id || data.metadata?.actor_avatar) return true;
+                const types = ['post_liked', 'post_agreed', 'post_commented', 'comment_replied', 'comment_liked', 'mention', 'follow', 'post_bookmarked', 'comment', 'reply', 'agree', 'like', 'saved'];
+                return types.includes(type) || category === 'interaction' || category === 'social';
+            };
+
+            // Helpers for context extraction
+            const getActorName = () => data.metadata?.actor_name || 'Someone';
+            const getProductContext = () => data.metadata?.product_name || data.metadata?.item_name || '';
+            const getCommentPreview = () => data.metadata?.comment_preview || '';
+            const getPostPreview = () => data.metadata?.post_preview || '';
+
+
+
+            // Build title and message based on notification type
+            const getNotificationContent = () => {
+                const metadata = data.metadata || {};
+                const actorName = getActorName();
+                const productName = getProductContext();
+                const postPreview = getPostPreview();
+                const commentPreview = getCommentPreview();
+
+                const type = (data.type || '').toLowerCase();
+                const category = (data.category || '').toLowerCase();
+
+                // 1. REVENUE
+                if (category === 'revenue' || type === 'revenue_credit') {
+                    return {
+                        title: 'Wallet Credited',
+                        message: `You earned ₹${metadata.amount || '0'} for your review on '${productName}'.`,
+                        tag: `+ ₹${metadata.amount || '0'}`
+                    };
+                }
+
+                // 2. SYSTEM: RQS
+                if (type === 'rqs_updated' || data.title?.includes('RQS')) {
+                    return {
+                        title: 'RQS Level Up',
+                        message: `Your score increased to ${metadata.new_score || '0'}. You are now Level ${metadata.level || '1'}.`,
+                        tag: `Level ${metadata.level || '1'}`
+                    };
+                }
+
+                // 3. USER INTERACTIONS
+                if (isUserInteraction()) {
+                    if (type === 'post_commented' || type === 'comment_replied' || type === 'comment' || type === 'reply') {
+                        const isReply = type === 'comment_replied' || type === 'reply';
+                        const actorDisplay = metadata.actor_username ? `@${metadata.actor_username}` : actorName;
+                        const title = actorName ? `${actorName} ${isReply ? 'replied' : 'commented'}` : (isReply ? 'New Reply' : 'New Comment');
+
+                        // For replies: show the reply text + the original comment as context
+                        const replyText = metadata.reply_text || '';
+                        const fullComment = metadata.comment_preview || metadata.comment_text || commentPreview || replyText;
+
+                        // Build category/product context
+                        const ctxCategory = metadata.category;
+                        const product = productName;
+                        let contextLine = '';
+                        if (ctxCategory && product) {
+                            contextLine = `${ctxCategory} / ${product}`;
+                        } else if (product) {
+                            contextLine = product;
+                        } else if (ctxCategory) {
+                            contextLine = ctxCategory;
+                        }
+
+                        const fallbackMessage = (!fullComment && !contextLine)
+                            ? (data.message || (isReply ? 'replied to your comment' : 'commented on your post'))
+                            : '';
+
+                        return {
+                            title,
+                            message: fallbackMessage,
+                            commentText: isReply && replyText ? replyText : fullComment,
+                            // For replies, show the original comment being replied to
+                            replyContext: (isReply && metadata.comment_preview && replyText) ? metadata.comment_preview : null,
+                            postContext: contextLine,
+                            categoryBadge: ctxCategory
+                        };
+                    }
+
+                    if (type === 'post_liked' || type === 'post_agreed' || type === 'agree' || type === 'like') {
+                        const title = actorName ? `${actorName} agreed` : 'New Agreement';
+                        const category = metadata.category;
+                        const product = productName;
+                        let contextLine = '';
+                        if (category && product) {
+                            contextLine = `${category} / ${product}`;
+                        } else if (product) {
+                            contextLine = product;
+                        }
+
+                        // Fallback message if no context available
+                        const fallbackMessage = !contextLine
+                            ? (data.message || 'found your review helpful')
+                            : '';
+
+                        return {
+                            title,
+                            message: fallbackMessage,
+                            postContext: contextLine,
+                            categoryBadge: category
+                        };
+                    }
+
+                    if (type === 'comment_liked' || type === 'like_comment') {
+                        const title = actorName ? `${actorName} agreed with you` : 'New Agreement';
+                        // Show the actual comment text that was agreed with as main context
+                        const likedComment = metadata.comment_preview || commentPreview || '';
+                        const ctx = productName ? `on '${productName}'` : '';
+                        const message = !likedComment
+                            ? (ctx ? `Agreed with your comment ${ctx}` : (data.message || 'Agreed with your comment'))
+                            : '';
+                        return {
+                            title,
+                            message,
+                            commentText: likedComment || undefined,
+                            postContext: productName || undefined
+                        };
+                    }
+
+                    if (type === 'post_bookmarked' || type === 'saved') {
+                        const title = actorName ? `${actorName} saved` : 'Post Saved';
+                        const message = productName ? `Saved your review on '${productName}'` : 'Saved your opinion';
+                        return { title, message };
+                    }
+
+                    if (type === 'mention' || type === 'mentioned' || data.title?.includes('mention')) {
+                        const actorDisplay = metadata.actor_username ? `@${metadata.actor_username}` : actorName;
+                        const title = actorName ? `${actorName} mentioned you` : 'New Mention';
+                        // Show the actual comment text containing the mention
+                        const mentionComment = metadata.comment_text || metadata.comment_preview || '';
+                        const postCtx = productName || '';
+                        const message = !mentionComment
+                            ? (postCtx
+                                ? `Mentioned you in a comment on '${postCtx}'`
+                                : (data.message || 'Mentioned you in a comment'))
+                            : '';
+                        return {
+                            title,
+                            message,
+                            commentText: mentionComment || undefined,
+                            postContext: postCtx || undefined
+                        };
+                    }
+                }
+
+                // 4. MONETIZATION / WITHDRAWALS
+                if (category === 'monetization' || type.includes('withdrawal')) {
+                    const amount = metadata.amount || '0';
+                    const isRejected = type.includes('declined') || type.includes('rejected');
+                    const isPaid = type.includes('paid');
+
+                    return {
+                        title: data.title || (isRejected ? 'Withdrawal Declined' : isPaid ? 'Withdrawal Paid' : 'Withdrawal Requested'),
+                        message: data.message || (isRejected ? `Requested for ₹${amount} was declined.` : `₹${amount} has been processed.`),
+                        tag: isRejected ? 'Declined' : isPaid ? `+ ₹${amount}` : 'Pending'
+                    };
+                }
+
+                // 5. BRAND NOTIFICATIONS
+                if (category === 'brand' || type === 'brand_view' || type.includes('brand')) {
+                    const brandName = metadata.brand_name || 'Brand';
+                    return {
+                        title: `${brandName} viewed your post`,
+                        message: productName ? `Your review on '${productName}' caught the brand's attention.` : `Your content caught the brand's attention.`
+                    };
+                }
+
+                // 5. SECURITY
+                if (category === 'security' || type.includes('login')) {
+                    const location = metadata.location || 'Unknown';
+                    return {
+                        title: 'Security Alert',
+                        message: `New login detected from ${location}. Was this you?`
+                    };
+                }
+
+                // Default
+                return { title: data.title || 'Notification', message: data.message || data.desc || '' };
+            };
+
+            const { title, message, tag: contentTag, commentText, replyContext, postContext, categoryBadge } = getNotificationContent();
+            const displayTag = contentTag || data.tag;
+
+            // Render icon/avatar based on notification type
+            const renderIcon = () => {
+                // User interaction - show circular avatar
+                if (isUserInteraction()) {
+                    const avatarUrl = data.metadata?.actor_avatar || data.avatar || DEFAULT_AVATAR;
+                    return (
+                        <div className="w-12 h-12 rounded-full overflow-hidden cursor-pointer" onClick={handleIconClick}>
+                            <img
+                                src={avatarUrl}
+                                alt="User"
+                                className="w-full h-full object-cover hover:opacity-80 transition-opacity"
+                                onError={(e) => e.target.src = DEFAULT_AVATAR}
+                            />
+                        </div>
+                    );
+                }
+
+                // System: RQS - Zap icon in rounded rectangle
+                if (data.type === 'rqs_updated' || data.title?.includes('RQS')) {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-[#0d1117] rounded-2xl flex items-center justify-center cursor-pointer hover:bg-[#161b22] transition-colors border border-white/5"
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon="Zap" size={22} className="text-white/80" />
+                        </div>
+                    );
+                }
+
+                // Security - Shield icon in rounded rectangle with red tint
+                if (data.category === 'security' || data.type?.includes('login') || data.type?.includes('security')) {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-red-500/15 transition-colors border border-red-500/20"
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon="ShieldAlert" size={22} className="text-red-400" />
+                        </div>
+                    );
+                }
+
+                // Revenue - Wallet icon
+                if (data.category === 'revenue') {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-blue-500/15 transition-colors border border-blue-500/20"
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon="Wallet" size={22} className="text-blue-400" />
+                        </div>
+                    );
+                }
+
+                // Monetization - Withdrawal icons
+                if (data.category === 'monetization') {
+                    const isRejected = data.type?.includes('declined') || data.type?.includes('rejected');
+                    const isPaid = data.type?.includes('paid');
+                    const bgColor = isRejected ? 'bg-red-500/10' : isPaid ? 'bg-emerald-500/10' : 'bg-amber-500/10';
+                    const borderColor = isRejected ? 'border-red-500/20' : isPaid ? 'border-emerald-500/20' : 'border-amber-500/20';
+                    const iconColor = isRejected ? 'text-red-400' : isPaid ? 'text-emerald-400' : 'text-amber-400';
+
+                    return (
+                        <div
+                            className={`w-12 h-12 ${bgColor} rounded-2xl flex items-center justify-center cursor-pointer border ${borderColor}`}
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon={data.icon} size={22} className={iconColor} />
+                        </div>
+                    );
+                }
+
+                // Brand notifications
+                if (data.category === 'brand' && data.metadata?.brand_name) {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors border border-white/5"
+                            onClick={handleIconClick}
+                        >
+                            <img src={BRAND_LOGOS[data.metadata.brand_name] || 'https://via.placeholder.com/40'} alt={data.metadata.brand_name} className="w-6 h-6 object-contain" />
+                        </div>
+                    );
+                }
+
+                // Default - Bell icon
+                return (
+                    <div className="w-12 h-12 bg-[#0d1117] rounded-2xl flex items-center justify-center border border-white/5">
+                        <Icon icon={data.icon || 'Bell'} size={22} className="text-white/60" />
+                    </div>
+                );
+            };
+
+            return (
+                <div className="relative mb-0 overflow-hidden group">
+                    <motion.div
+                        style={{ backgroundColor: bg }}
+                        className="absolute inset-0 z-0 flex items-center justify-between px-6 pointer-events-none"
+                    >
+                        <motion.div style={{ opacity: bookmarkOpacity, x: bookmarkX, scale: bookmarkScale }} className="text-neon flex items-center gap-2">
+                            <Icon icon={data.is_bookmarked ? "BookmarkFilled" : "Bookmark"} size={24} />
+                        </motion.div>
+                        <motion.div style={{ opacity: deleteOpacity, x: deleteX, scale: deleteScale }} className="text-danger flex items-center gap-2">
+                            <Icon icon="Trash" size={24} />
+                        </motion.div>
+                    </motion.div>
+
+                    {/* FOREGROUND CARD - Matching Prototype */}
+                    <motion.div
+                        id={`notif-${data.id}`}
+                        style={{ x }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => onClick(data.id)}
+                        className={`relative py-3.5 px-4 flex items-start gap-3 cursor-pointer transition-all border-b border-white/[0.05] z-10 hover:bg-white/[0.02] ${data.unread ? 'bg-white/[0.03]' : 'bg-transparent'} ${highlightId && String(highlightId).toLowerCase() === String(data.id).toLowerCase() ? 'highlight-flash' : ''}`}
+                    >
+                        {/* Unread Indicator Dot with Glow */}
+                        {data.unread && (
+                            <div className="absolute left-1.5 top-7 w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_12px_var(--neon)]"></div>
+                        )}
+
+                        {/* Avatar/Icon - 48px */}
+                        <div className="shrink-0">
+                            {renderIcon()}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 pt-0.5">
+                            {/* Header: Title + Time */}
+                            <div className="flex justify-between items-start mb-1">
+                                <div className="flex items-center gap-2">
+                                    {isUserInteraction() && data.actor_id ? (
+                                        <h4
+                                            className={`text-[14px] leading-tight cursor-pointer hover:text-neon transition-colors ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.location.href = `PUBLIC POV PROFILE.HTML?id=${data.actor_id}`;
+                                            }}
+                                        >
+                                            {title}
+                                        </h4>
+                                    ) : (
+                                        <h4 className={`text-[14px] leading-tight ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`}>
+                                            {title}
+                                        </h4>
+                                    )}
+                                    {data.is_bookmarked && (
+                                        <div className="flex items-center justify-center">
+                                            <Icon icon="BookmarkFilled" size={16} className="text-neon fill-neon" />
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-xs text-slate-500 whitespace-nowrap ml-3 mt-0.5">{data.time}</span>
+                            </div>
+
+                            <div className="flex gap-3 justify-between items-start">
+                                <div className="flex-1 min-w-0">
+                                    {/* Description - Only show if not empty */}
+                                    {message && (
+                                        <p className={`text-[13px] leading-relaxed tracking-tight ${data.unread ? 'text-slate-300 font-medium' : 'text-slate-500 font-normal'}`}>
+                                            {message}
+                                        </p>
+                                    )}
+
+                                    {/* Comment Text - Quoted and prominent */}
+                                    {commentText && (
+                                        <div className="mt-1">
+                                            <p className="text-[13px] text-slate-300 leading-snug break-words">
+                                                "{renderTextWithMentions(commentText)}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Reply Context - shows the original comment being replied to */}
+                                    {replyContext && (
+                                        <div className="mt-1.5 pl-2 border-l-2 border-white/15 flex items-start gap-1">
+                                            <p className="text-[11px] text-slate-500 italic line-clamp-2">
+                                                In reply to: "{renderTextWithMentions(replyContext)}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Post Context - PREVIEW TEXT */}
+                                    {data.metadata?.post_preview && (
+                                        <div className="mt-1.5 pl-2 border-l-2 border-white/10">
+                                            <p className="text-[12px] text-slate-500 italic line-clamp-2">
+                                                {renderTextWithMentions(data.metadata.post_preview)}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Footer Context - Category/Product */}
+                                    {postContext && (
+                                        <div className="mt-1 text-[11px] text-slate-600">
+                                            on {postContext}
+                                        </div>
+                                    )}
+
+                                    {/* Badge/Tag */}
+                                    {displayTag && (
+                                        <div className="mt-2">
+                                            <span className={`text-[11px] font-bold px-3 py-1.5 rounded-lg inline-block transition-all shadow-sm ${data.category === 'revenue' ? 'bg-white/10 text-white border border-white/20' :
+                                                data.type === 'rqs_updated' ? 'bg-white/10 text-white border border-white/20' :
+                                                    'bg-white/5 text-white/70 border border-white/10'
+                                                }`}>
+                                                {displayTag}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* THUMBNAIL PREVIEW - Square Top Right */}
+                                {data.metadata?.post_media && (
+                                    <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 bg-black/20 ml-1 mt-0">
+                                        {data.metadata.post_media_type === 'video' ? (
+                                            <video
+                                                src={data.metadata.post_media}
+                                                className="w-full h-full object-cover opacity-90"
+                                                muted
+                                                playsInline
+                                            />
+                                        ) : (
+                                            <img
+                                                src={`${data.metadata.post_media}?width=150&quality=70&resize=cover`}
+                                                className="w-full h-full object-cover opacity-90"
+                                                alt="Post"
+                                                onError={(e) => {
+                                                    // Fallback if transformation fails
+                                                    e.target.src = data.metadata.post_media;
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            );
+        };
+
+        const BottomNav = ({ activeTab, explicitCount, isVisible = true }) => {
+            const [internalCount, setInternalCount] = useState(0);
+
+            // Use explicit count if provided (synced with parent), otherwise use internal subscription
+            const unreadCount = (typeof explicitCount !== 'undefined') ? explicitCount : internalCount;
+
+            useEffect(() => {
+                // If explicit count is passed, we rely on parent. Otherwise subscribe.
+                if (typeof explicitCount === 'undefined') {
+                    const unsubscribe = window.subscribeToUnreadCount && window.subscribeToUnreadCount(setInternalCount);
+                    return () => unsubscribe && unsubscribe();
+                }
+            }, [explicitCount]);
+
+            return (
+                <div id="bottom-nav-bar" className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                    <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
+                    <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
+                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} onClick={() => { }} isMySpace={true} />
+                    <NavItem
+                        icon="Bell"
+                        label="Notifications"
+                        isActive={activeTab === 'notifs'}
+                        badge={unreadCount}
+                        onClick={() => {
+                            // Already on page, maybe scroll top or refresh?
+                        }}
+                    />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
+                </div>
+            );
+        };
+
+        const NavItem = ({ icon, label, isActive, onClick, isMySpace, badge }) => (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (typeof vibrate === 'function') vibrate(5);
+                    if (isMySpace) {
+                        checkMySpaceRedirect();
+                    } else {
+                        onClick();
+                    }
+                }}
+                className={`relative group flex flex-col items-center justify-center w-14 h-14 ${isActive ? '' : ''}`}
+            >
+                <div className={`relative ${isMySpace ? 'myspace-trigger' : ''} p-1.5 rounded-xl ${isActive ? 'bg-white/5' : ''}`}>
+                    <Icon icon={icon} size={24} className={`${isActive ? 'text-white glow-white stroke-[2.5px]' : 'text-muted group-hover:text-white stroke-[1.5px]'}`} />
+
+                    {/* Badge Logic */}
+                    {badge > 0 && (
+                        <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-blue-500 rounded-full border-2 border-[#020205] z-50 animate-pulse-subtle">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                            <span className="relative text-[10px] font-bold text-white px-1 leading-none">
+                                {badge > 99 ? '99+' : badge}
+                            </span>
+                        </div>
+                    )}
+
+                </div>
+            </button>
+        );
+        // --- FILTER MODAL ---
+        const FilterModal = ({ isOpen, onClose, activeFilter, onSelect }) => {
+            if (!isOpen) return null;
+            const filters = ['All', 'Unread', 'System', 'Brand Activity', 'Mentions'];
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-heading font-bold text-lg text-white">Filter Feed</h3>
+                            <button onClick={onClose}><Icon icon="Trash" size={0} className="hidden" /><span className="text-sm text-neon font-bold">Done</span></button>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {filters.map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => onSelect(f)}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${activeFilter === f ? 'bg-neon/10 border-neon text-neon' : 'bg-white/5 border-white/5 text-muted hover:border-white/20'}`}
+                                >
+                                    {f}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SETTINGS MODAL ---
+        const SettingsModal = ({ isOpen, onClose, settings, onToggle }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-heading font-bold text-lg text-white mb-6">Notification Preferences</h3>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-white font-medium">Show Unread Count</p>
+                                    <p className="text-xs text-muted">Badge in header</p>
+                                </div>
+                                <button onClick={() => onToggle('showCount')} className="text-neon">
+                                    <Icon icon={settings.showCount ? 'ToggleRight' : 'ToggleLeft'} size={32} className={settings.showCount ? 'text-neon' : 'text-muted'} />
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-white font-medium">Push Notifications</p>
+                                    <p className="text-xs text-muted">Real-time alerts</p>
+                                </div>
+                                <button onClick={() => onToggle('push')} className="text-neon">
+                                    <Icon icon={settings.push ? 'ToggleRight' : 'ToggleLeft'} size={32} className={settings.push ? 'text-neon' : 'text-muted'} />
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-white font-medium">Email Digest</p>
+                                    <p className="text-xs text-muted">Weekly summary</p>
+                                </div>
+                                <button onClick={() => onToggle('email')} className="text-neon">
+                                    <Icon icon={settings.email ? 'ToggleRight' : 'ToggleLeft'} size={32} className={settings.email ? 'text-neon' : 'text-muted'} />
+                                </button>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="w-full mt-8 bg-white/5 py-3 rounded-xl text-white font-bold text-sm">Close</button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
+        // SHARE MODAL (New Visual Interface)
+        const ShareModal = ({ isOpen, onClose, post }) => {
+            const [recentContacts, setRecentContacts] = useState([]);
+            const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+            const [selectedContacts, setSelectedContacts] = useState(new Set());
+            const [isSending, setIsSending] = useState(false);
+
+            useEffect(() => {
+                const fetchContacts = async () => {
+                    if (!isOpen || !window.getCurrentUser) return;
+                    setIsLoadingContacts(true);
+                    try {
+                        const user = await window.getCurrentUser();
+                        if (!user) return;
+
+                        const { data } = await window.supabase
+                            .from('conversations')
+                            .select(`
+                                id,
+                                participant_1_id,
+                                participant_2_id
+                            `)
+                            .or(`participant_1_id.eq.${user.id},participant_2_id.eq.${user.id}`)
+                            .order('last_message_at', { ascending: false })
+                            .limit(10);
+
+                        if (data && data.length > 0) {
+                            const otherIds = [...new Set(data.map(c => c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id))];
+
+                            const { data: profiles } = await window.supabase
+                                .from('profiles')
+                                .select('id, full_name, avatar_url, username')
+                                .in('id', otherIds);
+
+                            if (profiles) {
+                                const profileMap = {};
+                                profiles.forEach(p => profileMap[p.id] = p);
+
+                                const contacts = data.map(c => {
+                                    const otherId = c.participant_1_id === user.id ? c.participant_2_id : c.participant_1_id;
+                                    const profile = profileMap[otherId];
+                                    if (!profile) return null;
+                                    return { convId: c.id, ...profile };
+                                }).filter(Boolean);
+
+                                if (window.rewriteMediaUrl) {
+                                    contacts.forEach(c => {
+                                        if (c.avatar_url) c.avatar_url = window.rewriteMediaUrl(c.avatar_url);
+                                    });
+                                }
+                                setRecentContacts(contacts);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to load contacts for share menu', e);
+                    } finally {
+                        setIsLoadingContacts(false);
+                    }
+                };
+                fetchContacts();
+            }, [isOpen]);
+
+            const toggleContact = (contact) => {
+                const next = new Set(selectedContacts);
+                if (next.has(contact.id)) next.delete(contact.id);
+                else next.add(contact.id);
+                setSelectedContacts(next);
+                vibrate(5);
+            };
+
+            const handleBatchSend = async () => {
+                if (selectedContacts.size === 0 || isSending) return;
+
+                if (!window.sendPostToUser) {
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Sharing system initializing...', icon: 'Clock', isSuccess: false }
+                    }));
+                    return;
+                }
+
+                setIsSending(true);
+                vibrate(10);
+
+                const contactsToSend = recentContacts.filter(c => selectedContacts.has(c.id));
+                let successCount = 0;
+
+                for (const contact of contactsToSend) {
+                    try {
+                        await window.sendPostToUser(contact.convId, contact.id, contact.full_name || contact.username, contact.avatar_url, post);
+                        successCount++;
+                    } catch (e) {
+                        console.error(`Failed to send to ${contact.username}`, e);
+                    }
+                }
+
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: `Post shared with ${successCount} profile${successCount > 1 ? 's' : ''}`,
+                        icon: 'Send',
+                        isSuccess: true
+                    }
+                }));
+
+                setIsSending(false);
+                onClose();
+            };
+
+            if (!isOpen || !post) return null;
+
+            const shareUrl = `https://plusopinion.com/post/${post.id}`;
+            const shareText = `Check out this opinion by @${post.username}`;
+
+            const handleCopy = async () => {
+                try {
+                    const cleanText = `Check out this opinion on PlusOpinion:\n\n"${post.text ? post.text.substring(0, 100) + '...' : ''}"\n\nRead more at: ${shareUrl}`;
+                    await navigator.clipboard.writeText(cleanText);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link & Preview copied', icon: 'Link', isSuccess: true } }));
+                    if (window.trackShare) window.trackShare(post.id);
+                    onClose();
+                } catch (err) { console.error(err); }
+            };
+
+            const handleWhatsApp = () => {
+                const waText = `🔥 *New Opinion on PlusOpinion!*\n\n"@${post.username}: ${post.text ? post.text.substring(0, 80) : ''}..."\n\nRead full POV here:\n${shareUrl}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
+                if (window.trackShare) window.trackShare(post.id);
+                onClose();
+            };
+
+            const handleInstagram = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'Top Opinion', text: shareText, url: shareUrl });
+                        if (window.trackShare) window.trackShare(post.id);
+                        onClose();
+                    } catch (e) { }
+                } else {
+                    await navigator.clipboard.writeText(shareUrl);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied! Open Instagram to share.', icon: 'Instagram', isSuccess: true } }));
+                    if (window.trackShare) window.trackShare(post.id);
+                    setTimeout(() => { window.open('https://instagram.com', '_blank'); }, 1000);
+                    onClose();
+                }
+            };
+
+            const handleMore = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        if (window.trackShare) window.trackShare(post.id);
+                        onClose();
+                    } catch (err) { }
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Web Share not supported', icon: 'AlertTriangle', isSuccess: false } }));
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden max-h-[90vh] flex flex-col">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <span className="text-white font-heading font-bold text-lg">Share Opinion</span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors">
+                                <Icon icon="X" size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                            {/* Post Preview Card - REPLACED WITH PostCard */}
+                            <div className="mb-6 shrink-0 transform scale-[0.98] origin-top">
+                                <PostCard post={post} isGuest={true} hideActions={true} />
+                            </div>
+
+                            {/* Internal Share Strip (PLATFORM) */}
+                            <div className="mb-8 overflow-hidden">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Share to Profiles</span>
+                                    {selectedContacts.size > 0 && (
+                                        <button onClick={() => setSelectedContacts(new Set())} className="text-[10px] text-blue-400 font-bold hover:text-blue-300 transition-colors uppercase">Clear Selection ({selectedContacts.size})</button>
+                                    )}
+                                </div>
+                                <div className="flex gap-4 overflow-x-auto select-none custom-scrollbar pb-2 px-1">
+                                    {/* Search Button - Fixed functionality */}
+                                    <button
+                                        onClick={() => {
+                                            onClose();
+                                            if (window.openInbox) {
+                                                window.openInbox();
+                                                setTimeout(() => {
+                                                    if (window._inboxBootPhase1 && window._inboxBootPhase1.openSearchOverlay) {
+                                                        window._inboxBootPhase1.openSearchOverlay();
+                                                    }
+                                                }, 500);
+                                            }
+                                        }}
+                                        className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-lg">
+                                            <Icon icon="Search" size={24} className="text-white/70 group-hover:text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-white/70 group-hover:text-white truncate w-14 text-center">Search</span>
+                                    </button>
+
+                                    {isLoadingContacts && <div className="text-white/40 text-xs py-3 px-4">Loading...</div>}
+
+                                    {!isLoadingContacts && recentContacts.map(c => {
+                                        const isSelected = selectedContacts.has(c.id);
+                                        return (
+                                            <button
+                                                key={c.id}
+                                                onClick={() => toggleContact(c)}
+                                                className="flex flex-col items-center gap-2 group min-w-[64px] shrink-0"
+                                            >
+                                                <div className={`w-14 h-14 rounded-full border-2 transition-all duration-300 relative ${isSelected ? 'border-blue-500 scale-105 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/10 hover:border-white/30'}`}>
+                                                    <Avatar src={c.avatar_url} className="w-full h-full rounded-full object-cover" fallbackSize={24} />
+                                                    {isSelected && (
+                                                        <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border-2 border-[#121212] animate-pop">
+                                                            <Icon icon="Check" size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[10px] truncate w-14 text-center transition-colors ${isSelected ? 'text-blue-400 font-bold' : 'text-white/70 group-hover:text-white'}`}>
+                                                    {c.full_name?.split(' ')[0] || c.username}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* External Share Grid (OUTSIDE PLATFORM) */}
+                            <div className="mt-2 mb-20">
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block mb-4">Share Everywhere</span>
+                                <div className="grid grid-cols-4 gap-4 mb-4">
+                                    <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="Link" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">Copy Link</span>
+                                    </button>
+                                    <button onClick={handleWhatsApp} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="WhatsApp" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">WhatsApp</span>
+                                    </button>
+                                    <button onClick={handleInstagram} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="Instagram" size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">Instagram</span>
+                                    </button>
+                                    <button onClick={handleMore} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                            <Icon icon="MoreHorizontal" size={24} className="text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] text-muted text-center">More</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Batch Send Confirmation Bar */}
+                        {selectedContacts.size > 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#121212] border-t border-white/10 animate-slide-up z-20">
+                                <button
+                                    onClick={handleBatchSend}
+                                    disabled={isSending}
+                                    className="w-full py-4 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/10"
+                                >
+                                    {isSending ? (
+                                        <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Icon icon="Send" size={20} />
+                                    )}
+                                    <span>Send to {selectedContacts.size} profile{selectedContacts.size > 1 ? 's' : ''}</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // REPORT MODAL (2-Step Flow)
+        
+
+        const App = () => {
+
+            const [sharedPostsToRender, setSharedPostsToRender] = useState({});
+            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+            const [sharePostData, setSharePostData] = useState(null);
+            const [isGuest, setIsGuest] = useState(false);
+            const [showAuthModal, setShowAuthModal] = useState(false);
+            const [filter, setFilter] = useState('All');
+            const [notifications, setNotifications] = useState([]);
+            const [hasUnread, setHasUnread] = useState(false);
+            const [activeTab, setActiveTab] = useState('notifs');
+            const [isFilterOpen, setIsFilterOpen] = useState(false);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [highlightId, setHighlightId] = useState(null);
+            const [navVisible, setNavVisible] = useState(true);
+            const lastY = useRef(0);
+
+            const handleScroll = (e) => {
+                const currentY = e.target.scrollTop;
+                const isScrollingDown = currentY > lastY.current;
+
+                if (isScrollingDown && currentY > 50) {
+                    setNavVisible(false);
+                } else {
+                    setNavVisible(true);
+                }
+                lastY.current = currentY;
+            };
+
+            const [settings, setSettings] = useState({
+                showCount: true,
+                push: true,
+                email: false
+            });
+
+            // Load current user
+            useEffect(() => {
+                async function loadUser() {
+                    const user = await window.getCurrentUser();
+                    if (!user) {
+                        setIsGuest(true);
+                        setShowAuthModal(true);
+                        setLoading(false);
+                        return;
+                    }
+                    setIsGuest(false);
+                    setCurrentUser(user);
+                }
+                loadUser();
+            }, []);
+
+
+            // Listen for internal chat post rendering
+            useEffect(() => {
+                const handleRenderSharedPost = async (e) => {
+                    const { postId, containerId } = e.detail;
+                    if (!postId || !containerId) return;
+
+                    setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: true, post: null } }));
+
+                    try {
+                        const fullPost = await window.getPost(postId);
+                        if (fullPost && fullPost.id) {
+                            const uiPost = {
+                                id: fullPost.id,
+                                user_id: fullPost.user_id,
+                                name: fullPost.profiles?.full_name || 'User',
+                                username: fullPost.profiles?.username || 'user',
+                                avatar: fullPost.profiles?.avatar_url || "",
+                                rqs: fullPost.profiles?.rqs_score || 0,
+                                verified: fullPost.is_verified_purchase || fullPost.profiles?.is_verified,
+                                category: fullPost.category,
+                                product: fullPost.product_name,
+                                text: fullPost.text_content,
+                                media: fullPost.media_url,
+                                media_type: fullPost.media_type || 'image',
+                                images: fullPost.images || null,
+                                time: "Shared",
+                                agrees: fullPost.agrees_count || 0,
+                                comments: fullPost.comments_count || 0,
+                                seenBy: fullPost.seen_by_brand
+                            };
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, post: uiPost } }));
+                        } else {
+                            setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                        }
+                    } catch (err) {
+                        setSharedPostsToRender(prev => ({ ...prev, [containerId]: { isLoading: false, error: true } }));
+                    }
+                };
+                window.addEventListener('render_shared_post', handleRenderSharedPost);
+                
+                // Expose openFullPost globally
+                window.openFullPost = async (postId) => {
+                    if (window.closeInbox) window.closeInbox();
+                    window.location.href = `POST_VIEWER_HTML_OR_SIMILAR?id=${postId}`;
+                };
+                window.scrollToPost = window.openFullPost;
+
+                return () => window.removeEventListener('render_shared_post', handleRenderSharedPost);
+            }, []);
+
+            // Load notifications from database
+            useEffect(() => {
+                if (!currentUser) return;
+
+                async function loadNotifications() {
+                    try {
+                        const cacheKey = `notifications_${currentUser.id}`;
+
+                        // CACHE-FIRST: Try to load from cache first
+                        if (window.StateManager) {
+                            const cachedData = await window.StateManager.get(cacheKey);
+                            if (cachedData) {
+                                console.log('📦 Loading notifications from cache');
+                                setNotifications(cachedData);
+                                setHasUnread(cachedData.some(n => n.unread));
+                                setLoading(false);
+                                // Continue to fetch fresh data in background
+                            }
+                        }
+
+                        // ⚡ OPTIMIZED LOADING - Fetch notifications, then profiles in parallel
+                        const data = await window.getNotifications({ limit: 50 });
+                        const formatted = data.map(formatNotification);
+
+                        // Get unique user IDs that need avatar fetching
+                        const notificationsWithMissingAvatars = formatted.filter(
+                            n => n.actor_id && !n.metadata?.actor_avatar
+                        );
+
+                        // Fetch profiles in parallel if needed
+                        let profileMap = {};
+                        if (notificationsWithMissingAvatars.length > 0) {
+                            const userIds = [...new Set(notificationsWithMissingAvatars.map(n => n.actor_id))];
+
+                            const { data: profiles } = await window.supabase
+                                .from('profiles')
+                                .select('id, full_name, username, avatar_url')
+                                .in('id', userIds);
+
+                            if (profiles) {
+                                profiles.forEach(p => {
+                                    profileMap[p.id] = p;
+                                });
+                            }
+
+                            // Enrich notifications with avatar and name data
+                            formatted.forEach(n => {
+                                if (n.actor_id && profileMap[n.actor_id]) {
+                                    const profile = profileMap[n.actor_id];
+                                    if (!n.metadata) n.metadata = {};
+                                    if (!n.metadata.actor_avatar && profile.avatar_url) {
+                                        n.metadata.actor_avatar = profile.avatar_url;
+                                    }
+                                    if (!n.metadata.actor_name) {
+                                        n.metadata.actor_name = profile.full_name || profile.username;
+                                    }
+                                    if (!n.avatar && profile.avatar_url) {
+                                        n.avatar = profile.avatar_url;
+                                    }
+                                }
+                            });
+                        }
+
+                        // SAVE TO CACHE (2 minute TTL - notifications change frequently)
+                        if (window.StateManager) {
+                            await window.StateManager.set(cacheKey, formatted, { ttl: 2 * 60 * 1000 });
+                            console.log('💾 Saved notifications to cache');
+                        }
+
+                        setNotifications(formatted);
+                        setHasUnread(formatted.some(n => n.unread));
+                        setLoading(false);
+                    } catch (err) {
+                        console.error('Error loading notifications:', err);
+                        setLoading(false);
+                    }
+                }
+                loadNotifications();
+            }, [currentUser]);
+
+            // Subscribe to real-time notification updates
+            useEffect(() => {
+                if (!currentUser) return;
+
+                const subscription = window.supabase
+                    .channel('user_notifications')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `user_id=eq.${currentUser.id}`
+                    }, async (payload) => {
+                        let newPayload = { ...payload.new };
+
+                        // If there is a related user (actor), we MUST fetch their profile to show avatar/name
+                        if (newPayload.related_user_id) {
+                            try {
+                                const { data: profile } = await window.supabase
+                                    .from('profiles')
+                                    .select('full_name, username, avatar_url')
+                                    .eq('id', newPayload.related_user_id)
+                                    .single();
+
+                                if (profile) {
+                                    // Initialize metadata if null (it often is for simple inserts)
+                                    if (!newPayload.metadata) newPayload.metadata = {};
+
+                                    // Inject the fetched profile data into metadata so formatNotification can find it
+                                    newPayload.metadata.actor_avatar = profile.avatar_url;
+                                    newPayload.metadata.actor_name = profile.full_name || profile.username;
+                                }
+                            } catch (err) {
+                                console.error('Error fetching real-time actor profile:', err);
+                            }
+                        }
+
+                        const newNotif = formatNotification(newPayload);
+                        setNotifications(prev => [newNotif, ...prev]);
+                        setHasUnread(true);
+                        vibrate(10);
+                    })
+                    .subscribe();
+
+                return () => {
+                    subscription.unsubscribe();
+                };
+            }, [currentUser]);
+
+            useEffect(() => {
+                if (activeTab === 'notifs') setHasUnread(false);
+            }, [activeTab]);
+
+            // Setup pull-to-refresh handler
+            useEffect(() => {
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
+
+            // Redirection Highlighting Logic
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const highlight = params.get('highlight');
+                if (highlight && !loading && notifications.length > 0) {
+                    const id = highlight.toLowerCase();
+                    const match = notifications.find(n => String(n.id).toLowerCase() === id);
+
+                    if (match) {
+                        // Set highlight independently of DOM lookup to ensure React drives the UI
+                        setHighlightId(match.id);
+
+                        // Handle scrolling in a separate step
+                        setTimeout(() => {
+                            const element = document.getElementById(`notif-${match.id}`);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 700);
+
+                        // Clear the flash state after animation ends
+                        setTimeout(() => setHighlightId(null), 3500);
+                    }
+                }
+            }, [loading, notifications]);
+
+            const handleSwipeV2 = async (id, action) => {
+                vibrate(10);
+                const notif = notifications.find(n => n.id === id);
+                if (!notif) return;
+
+                if (action === 'delete') {
+                    // Store original data for potential undo
+                    const originalNotifData = { ...notif };
+
+                    // Optimistic UI update for delete
+                    setNotifications(prev => prev.map(n =>
+                        n.id === id ? { ...n, _status: 'deleted', _action: action, _deleteTime: Date.now(), _originalData: originalNotifData } : n
+                    ));
+
+                    // PERSISTENT DELETE + CACHE INVALIDATION
+                    const deleteFromDB = async () => {
+                        try {
+                            const dbId = notif._dbId;
+                            if (dbId) {
+                                await window.deleteNotification(dbId);
+                                // Invalidate cache so deleted item doesn't reappear on refresh
+                                if (window.StateManager) {
+                                    await window.StateManager.delete(`notifications_${currentUser.id}`);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('❌ Persistent delete failed:', err);
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Failed to delete from DB', icon: 'AlertTriangle', isSuccess: false }
+                            }));
+                        }
+                    };
+                    deleteFromDB();
+                } else if (action === 'bookmark') {
+                    const newBookmarkState = !notif.is_bookmarked;
+
+                    // Direct optimistic update for bookmark (stays in list)
+                    setNotifications(prev => prev.map(n =>
+                        n.id === id ? { ...n, is_bookmarked: newBookmarkState } : n
+                    ));
+
+                    try {
+                        const dbId = notif._dbId;
+                        if (dbId) {
+                            await window.toggleNotificationBookmark(dbId, newBookmarkState);
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: {
+                                    message: newBookmarkState ? 'Saved to Bookmarks' : 'Removed from Bookmarks',
+                                    icon: newBookmarkState ? 'BookmarkFilled' : 'Bookmark',
+                                    isSuccess: true
+                                }
+                            }));
+                        }
+                    } catch (err) {
+                        console.error('Failed to toggle bookmark:', err);
+                        // Revert on error
+                        setNotifications(prev => prev.map(n =>
+                            n.id === id ? { ...n, is_bookmarked: !newBookmarkState } : n
+                        ));
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Failed to update bookmark', icon: 'AlertTriangle', isSuccess: false }
+                        }));
+                    }
+                }
+            };
+
+            const handleUndoV2 = async (id) => {
+                vibrate(5);
+                const notif = notifications.find(n => n.id === id);
+                const action = notif?._action;
+
+                // 1. Revert UI
+                setNotifications(prev => prev.map(n =>
+                    n.id === id ? { ...n, _status: 'active', _action: null } : n
+                ));
+
+                // 2. Revert database if it was a deletion (Re-insert)
+                if (action === 'delete' && notif._originalData) {
+                    try {
+                        // Re-insert the deleted notification
+                        const { id: _, _dbId: __, _status: ___, _action: ____, _deleteTime: _____, _originalData: ______, ...dataToInsert } = notif._originalData;
+                        // Use window.supabase directly to re-insert
+                        const { data, error } = await window.supabase
+                            .from('notifications')
+                            .insert({
+                                user_id: currentUser.id,
+                                type: dataToInsert.type,
+                                category: dataToInsert.category,
+                                title: dataToInsert.title,
+                                message: dataToInsert.desc,
+                                metadata: dataToInsert.metadata,
+                                priority: dataToInsert.critical ? 'critical' : 'normal',
+                                related_post_id: dataToInsert.related_post_id,
+                                related_user_id: dataToInsert.actor_id,
+                                action_url: dataToInsert.action_url,
+                                is_read: !dataToInsert.unread,
+                                icon: dataToInsert.icon
+                            })
+                            .select()
+                            .single();
+
+                        if (error) throw error;
+
+                        // Update the notification in list with new DB ID
+                        setNotifications(prev => prev.map(n =>
+                            n.id === id ? { ...n, _dbId: data.id } : n
+                        ));
+                    } catch (err) {
+                        console.error('Failed to undo deletion (re-insert failed):', err);
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Failed to restore notification', icon: 'AlertTriangle', isSuccess: false }
+                        }));
+                    }
+                }
+
+                // 3. Revert database if it was a bookmark
+                if (action === 'bookmark') {
+                    try {
+                        const dbId = notif?._dbId;
+                        if (dbId) {
+                            await window.toggleNotificationBookmark(dbId, false);
+                        }
+                    } catch (err) {
+                        console.error('Failed to undo bookmark:', err);
+                    }
+                }
+            };
+
+            const handleDismissV2 = async (id) => {
+                const notif = notifications.find(n => n.id === id);
+                const action = notif?._action;
+
+                // Only perform persistent delete if the action was 'delete'
+                // Immediate delete is now handled in handleSwipeV2
+                // This just cleans up the UI state
+                setNotifications(prev => prev.filter(n => n.id !== id));
+            };
+
+            const markAsRead = async (id) => {
+                const notif = notifications.find(n => n.id === id);
+                if (!notif || !notif.unread) return; // skip if already read
+
+                // Update UI immediately (optimistic)
+                setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+
+                // Mark as read in database
+                if (notif._dbId && window.markNotificationRead) {
+                    try {
+                        await window.markNotificationRead(notif._dbId);
+                        // Update the cache entry so read state persists within TTL window
+                        if (window.StateManager) {
+                            const cacheKey = `notifications_${currentUser.id}`;
+                            const cached = await window.StateManager.get(cacheKey);
+                            if (cached) {
+                                const updated = cached.map(n => n.id === id ? { ...n, unread: false } : n);
+                                await window.StateManager.set(cacheKey, updated, { ttl: 2 * 60 * 1000 });
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Failed to mark notification as read:', err);
+                    }
+                }
+            };
+
+            const toggleSetting = (key) => {
+                vibrate(5);
+                setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            const filteredList = useMemo(() => {
+                let list = notifications;
+                if (filter === 'Unread') list = list.filter(n => n.unread);
+                if (filter === 'System') list = list.filter(n => ['system', 'security', 'revenue'].includes(n.type));
+                if (filter === 'Brand Activity') list = list.filter(n => n.type === 'brand_seen');
+                if (filter === 'Mentions') list = list.filter(n => n.type === 'social');
+                return list;
+            }, [filter, notifications]);
+
+            const derivedUnreadCount = notifications.filter(n => n.unread && n._status !== 'deleted').length;
+            // Use cached count while loading to prevent flicker (0 -> N)
+            const unreadCount = loading ? (window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0) : derivedUnreadCount;
+
+            return (
+                <div className="flex-1 flex flex-col h-full relative bg-[#020205] overflow-hidden">
+
+                    {/* Header */}
+                    <div className={`header-glass fixed top-0 left-0 w-full h-[65px] flex items-center justify-between px-6 z-30 transition-transform duration-500 ease-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                        <div className="flex items-center gap-2">
+                            <span className="font-heading font-bold text-xl tracking-tight text-white">Notifications</span>
+                            {settings.showCount && unreadCount > 0 && (
+                                <div className="flex items-center gap-1.5 ml-2">
+                                    <span className="text-[12px] font-bold text-neon">{unreadCount} New</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-neon animate-pulse shadow-[0_0_8px_var(--neon)]"></span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button onClick={() => setIsFilterOpen(true)} className={`w-9 h-9 flex items-center justify-center rounded-full border transition-colors active:scale-90 ${filter !== 'All' ? 'bg-neon/10 border-neon text-neon' : 'bg-white/5 border-white/10 text-muted hover:text-white'}`}>
+                                <Icon icon="Filter" size={18} />
+                            </button>
+                            <button onClick={() => setIsSettingsOpen(true)} className="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-white transition-colors active:scale-90">
+                                <Icon icon="Settings" size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="absolute inset-0 overflow-y-auto px-0 pt-[65px] pb-28 no-scrollbar" onScroll={handleScroll}>
+                        {/* Active Filter Indicator */}
+                        {filter !== 'All' && (
+                            <div className="px-6 py-2 flex items-center gap-2">
+                                <span className="text-xs text-muted">Showing:</span>
+                                <span className="text-xs text-white font-bold bg-white/10 px-2 py-0.5 rounded">{filter}</span>
+                                <button onClick={() => setFilter('All')} className="text-xs text-neon font-bold ml-auto">Clear</button>
+                            </div>
+                        )}
+
+                        <AnimatePresence mode='popLayout'>
+                            {filteredList.length > 0 ? (
+                                filteredList.map(n => {
+                                    if (n._status === 'deleted') {
+                                        return (
+                                            <motion.div
+                                                key={n.id}
+                                                layout
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                            >
+                                                <UndoRow
+                                                    action={n._action}
+                                                    onUndo={() => handleUndoV2(n.id)}
+                                                    onDismiss={() => handleDismissV2(n.id)}
+                                                />
+                                            </motion.div>
+                                        );
+                                    }
+                                    return (
+                                        <motion.div
+                                            key={n.id}
+                                            layout
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                        >
+                                            <NotificationItem
+                                                data={n}
+                                                onSwipe={handleSwipeV2}
+                                                onClick={markAsRead}
+                                                highlightId={highlightId}
+                                            />
+                                        </motion.div>
+                                    );
+                                })
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-64 opacity-30">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                                        <Icon icon="Bell" size={24} className="text-white" />
+                                    </div>
+                                    <p className="text-xs font-medium text-white">No notifications</p>
+                                </div>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="py-8 flex flex-col items-center gap-3 opacity-30">
+                            <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent"></div>
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-white">End of List</span>
+                        </div>
+                    </div>
+
+                    {/* Modals */}
+                    <FilterModal
+                        isOpen={isFilterOpen}
+                        onClose={() => setIsFilterOpen(false)}
+                        activeFilter={filter}
+                        onSelect={(f) => { setFilter(f); setIsFilterOpen(false); }}
+                    />
+                    <SettingsModal
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        settings={settings}
+                        onToggle={toggleSetting}
+                    />
+
+                    {/* Auth Modal for Guests */}
+                    <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
+                    <AuthModal
+                        isOpen={showAuthModal}
+                        onClose={() => setShowAuthModal(false)}
+                        isClosable={!isGuest}
+                    />
+
+                    {/* Bottom Nav */}
+                    <BottomNav activeTab={activeTab} explicitCount={unreadCount} isVisible={navVisible} />
+                </div>
+            );
+        };
+
+        // AUTH MODAL (Login/Signup) - Mirrored from HOMEPAGE_FINAL
+        const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
+            const [mode, setMode] = useState('login'); // 'login' or 'signup'
+            const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [inlineEmailError, setInlineEmailError] = useState(null);
+
+            if (!isOpen) return null;
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+                setInlineEmailError(null);
+                vibrate(10);
+
+                if (mode === 'signup' && formData.password !== formData.confirmPassword) {
+                    setError("Passwords don't match");
+                    setLoading(false);
+                    return;
+                }
+
+                try {
+                    await window.authReadyPromise;
+                    if (mode === 'signup') {
+                        const signupData = await window.signUpUser(formData.email, formData.password, formData.name);
+                        if (signupData.error) throw signupData.error;
+
+                        if (signupData?.session) {
+                            window.location.href = 'index.html'; // onboarding now integrated into index.html
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Verification email sent!', icon: 'Mail', isSuccess: true }
+                            }));
+                            onClose();
+                        }
+                    } else {
+                        const user = await window.signInUser(formData.email, formData.password);
+                        if (user) {
+                            if (user.onboardingRequired) {
+                                window.location.href = 'index.html'; // onboarding now integrated into index.html
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    const msg = err.message || 'Authentication failed';
+                    const isSignupEmailErr = mode === 'signup' && (err.status === 422 || msg.toLowerCase().includes('registered') || msg.toLowerCase().includes('duplicate'));
+                    const isLoginEmailErr = mode === 'login' && (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('user not found'));
+                    
+                    if (isSignupEmailErr) {
+                        setInlineEmailError('This email is already registered. Please log in.');
+                    } else if (isLoginEmailErr) {
+                        setInlineEmailError('Email not registered or incorrect password.');
+                    } else {
+                        setError(msg);
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleGoogleLogin = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    await window.signInWithProvider('google');
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const handleForgotPassword = async () => {
+                if (!formData.email) {
+                    setError("Please enter your email first");
+                    return;
+                }
+                setLoading(true);
+                try {
+                    await window.resetPassword(formData.email);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Reset link sent to your email!', icon: 'Mail', isSuccess: true }
+                    }));
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => isClosable && onClose()}></div>
+                    <div className="w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10" onClick={e => e.stopPropagation()}>
+                        {isClosable && (
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                                <Icon icon="X" size={24} />
+                            </button>
+                        )}
+
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-heading">
+                                {mode === 'login' ? 'Welcome Back' : 'Sign Up'}
+                            </h2>
+                            <p className="text-slate-400 text-sm">
+                                {mode === 'login' ? 'Login to access your account' : 'Join the future of consumer intelligence.'}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name</label>
+                                    <input
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        type="text"
+                                        placeholder="John Doe"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address</label>
+                                <input
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    type="email"
+                                    placeholder="john@example.com"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Password</label>
+                                <input
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    type="password"
+                                    placeholder="••••••••"
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                />
+                            </div>
+
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Confirm Password</label>
+                                    <input
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+                                >
+                                    Forgot Password?
+                                </button>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? 'PROCESSING...' : (mode === 'login' ? 'LOGIN' : 'CREATE ACCOUNT')}
+                                <Icon icon="ArrowRight" size={18} />
+                            </button>
+
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-700"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase">OR</span>
+                                <div className="flex-grow border-t border-slate-700"></div>
+                            </div>
+
+                            <div className="google-sso-container" data-action="signin"></div>
+                        </form>
+
+                        <div className="mt-6 text-center text-sm text-slate-400">
+                            {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button
+                                onClick={() => { vibrate(5); setMode(mode === 'login' ? 'signup' : 'login'); setError(null); }}
+                                className="text-blue-400 hover:text-blue-300 font-bold ml-1 active:scale-95 transition-transform"
+                            >
+                                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = window.ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    
