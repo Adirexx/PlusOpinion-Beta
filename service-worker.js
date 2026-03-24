@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR24_2026_V10.0.0
+// Updated at: MAR24_2026_V9.1.0
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260324_V10.1.0';
+  : 'BUILD_20260324_V9.1.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
@@ -67,15 +67,15 @@ const FILES_TO_CACHE = [
   "/updater.js",
   "/build-version.js",
 
-  // ── Dist — Compiled React Bundles ──────────────────────────────────────────
-  "/dist/HOMEPAGE_FINAL.compiled.js",
-  "/dist/BOOKMARKS.compiled.js",
-  "/dist/CATAGORYPAGE.compiled.js",
-  "/dist/MY SPACE FINAL (USER).compiled.js",
-  "/dist/MY SPACE FINAL(COMPANIES).compiled.js",
-  "/dist/NOTIFICATION PANEL.compiled.js",
-  "/dist/PRIVATE OWNER PROFILE.compiled.js",
-  "/dist/PUBLIC POV PROFILE.compiled.js",
+  // ── Compiled React Bundles (root level) ───────────────────────────────────
+  "/HOMEPAGE_FINAL.compiled.js",
+  "/BOOKMARKS.compiled.js",
+  "/CATAGORYPAGE.compiled.js",
+  "/MY SPACE FINAL (USER).compiled.js",
+  "/MY SPACE FINAL(COMPANIES).compiled.js",
+  "/NOTIFICATION PANEL.compiled.js",
+  "/PRIVATE OWNER PROFILE.compiled.js",
+  "/PUBLIC POV PROFILE.compiled.js",
 
   // ── Static Assets ──────────────────────────────────────────────────────────
   "/global.css",
