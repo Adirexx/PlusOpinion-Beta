@@ -3,6 +3,19 @@
     "@supabase/functions-js": "^2.98.0"
   },
   "dependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-react": "^7.28.5",
     "playwright": "^1.58.2"
-  }
+  },
+  "name": "plusopinion-beta-",
+  "version": "1.0.0",
+  "description": "",
+  "main": "_worker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }
