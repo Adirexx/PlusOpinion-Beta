@@ -169,13 +169,36 @@ async function signOutUser() {
 }
 
 /* ============================
-   GET CURRENT USER
+   GET CURRENT USER (Optimistic Cache)
 ============================ */
 async function getCurrentUser() {
+  // 1. In-memory cache for instant returns within the same session
+  if (window._currentUserCache) return window._currentUserCache;
+
+  // 2. Optimistic LocalStorage Parse (Zero Network Latency)
+  try {
+    const authKeys = Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    if (authKeys.length > 0) {
+      const authData = localStorage.getItem(authKeys[0]);
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        if (parsed.user) {
+          window._currentUserCache = parsed.user;
+          return parsed.user; // Instant return!
+        }
+      }
+    }
+  } catch(e) {}
+
+  // 3. Fallback to Supabase Network (Slow)
   try {
     const { data: { session } } = await window.supabase.auth.getSession();
-    if (session?.user) return session.user;
+    if (session?.user) {
+      window._currentUserCache = session.user;
+      return session.user;
+    }
     const { data: { user } } = await window.supabase.auth.getUser();
+    if (user) window._currentUserCache = user;
     return user || null;
   } catch (err) {
     return null;
