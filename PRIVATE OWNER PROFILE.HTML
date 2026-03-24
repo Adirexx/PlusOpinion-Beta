@@ -359,18 +359,6 @@
 
     <div id="root"></div>
 
-    <!-- Auth bridge: proxy getCurrentUser that waits for auth.js to finish -->
-    <script>
-        window.getCurrentUser = function () {
-            return (window.authReadyPromise || Promise.resolve()).then(function () {
-                if (typeof window._authGetCurrentUser === 'function') {
-                    return window._authGetCurrentUser();
-                }
-                return null;
-            });
-        };
-    </script>
-
     <script src="/PRIVATE OWNER PROFILE.compiled.js"></script>
 
     <!-- ===================================================== -->
