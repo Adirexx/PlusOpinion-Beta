@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: MAR11_PRELAUNCH_V9.5.0
+// Updated at: MAR24_2026_V9.9.0
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260311_PRELAUNCH_V9.6.0';
+  : 'BUILD_20260324_V10.0.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
@@ -11,8 +11,13 @@ const PROD_PROXY_BASE = 'https://plusopinion.com/supabase-api';
 // Complete list of files to cache for offline support
 // NOTE: onboarding.html removed — onboarding is now integrated into index.html
 const FILES_TO_CACHE = [
+  // ── Root / Auth Pages ─────────────────────────────────────────────────────
   "/",
   "/index.html",
+  "/reset-password.html",
+  "/change-password.html",
+
+  // ── App Pages ──────────────────────────────────────────────────────────────
   "/HOMEPAGE_FINAL.HTML",
   "/BOOKMARKS.HTML",
   "/CATAGORYPAGE.HTML",
@@ -21,8 +26,16 @@ const FILES_TO_CACHE = [
   "/MY SPACE FINAL (USER).HTML",
   "/MY SPACE FINAL(COMPANIES).HTML",
   "/NOTIFICATION PANEL.HTML",
-  "/reset-password.html",
-  "/change-password.html",
+
+  // ── Static / Legal Pages ───────────────────────────────────────────────────
+  "/ABOUT.HTML",
+  "/SUPPORT.HTML",
+  "/PRIVACY_POLICY.HTML",
+  "/TERMS_AND_CONDITIONS.HTML",
+  "/MAINTENANCE.HTML",
+  "/COOKIES.HTML",
+
+  // ── Core JS — Auth & Data ──────────────────────────────────────────────────
   "/runtime.js",
   "/bridge.js",
   "/data.seed.js",
@@ -30,21 +43,46 @@ const FILES_TO_CACHE = [
   "/auth_guard.js",
   "/supabase.js",
   "/api.js",
+
+  // ── Core JS — App Logic ────────────────────────────────────────────────────
   "/state_manager.js",
   "/router.js",
-  "/pull_to_refresh.js",
+  "/spa_router.js",
+  "/navigation.js",
   "/navigation_preloader.js",
+  "/pull_to_refresh.js",
   "/notifications.js",
   "/rqs_calculator.js",
   "/payment_gateway.js",
+
+  // ── Core JS — Inbox & Crypto ───────────────────────────────────────────────
+  "/inbox.js",
+  "/inbox_panel.js",
+  "/inbox_crypto.js",
+
+  // ── Core JS — PWA & Utility ────────────────────────────────────────────────
+  "/pwa_installer.js",
+  "/security-config.js",
+  "/cookie-consent.js",
+  "/updater.js",
   "/build-version.js",
+
+  // ── Dist — Compiled React Bundles ──────────────────────────────────────────
+  "/dist/HOMEPAGE_FINAL.compiled.js",
+  "/dist/BOOKMARKS.compiled.js",
+  "/dist/CATAGORYPAGE.compiled.js",
+  "/dist/MY SPACE FINAL (USER).compiled.js",
+  "/dist/MY SPACE FINAL(COMPANIES).compiled.js",
+  "/dist/NOTIFICATION PANEL.compiled.js",
+  "/dist/PRIVATE OWNER PROFILE.compiled.js",
+  "/dist/PUBLIC POV PROFILE.compiled.js",
+
+  // ── Static Assets ──────────────────────────────────────────────────────────
   "/global.css",
   "/icon-192.png",
   "/icon-512.png",
   "/manifest.json",
-  "/inbox.js",
-  "/inbox_panel.js",
-  "/inbox_crypto.js"
+  "/version.json"
 ];
 
 self.addEventListener("install", (event) => {
@@ -108,7 +146,8 @@ const CLEAN_TO_PHYSICAL_MAP = {
   "/support": "/SUPPORT.HTML",
   "/privacy-policy": "/PRIVACY_POLICY.HTML",
   "/t&c": "/TERMS_AND_CONDITIONS.HTML",
-  "/maintenance": "/MAINTENANCE.HTML"
+  "/maintenance": "/MAINTENANCE.HTML",
+  "/cookies-policy": "/COOKIES.HTML"
 };
 
 // ─────────────────────────────────────────────────────────────────
