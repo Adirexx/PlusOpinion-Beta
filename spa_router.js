@@ -126,25 +126,28 @@
          * Main page transition logic
          */
         async transitionToPage(page, options = {}) {
-            // Phase 1: Fade out current content (50ms)
-            await this.fadeOut();
-
-            // Phase 2: Load new content (100-150ms)
+            // Phase 1: Pre-fetch next page shell (Optimistic fetching)
+            // If cached, this is 0ms. If network, this prevents sequential waterfalls.
             const content = await this.loadPage(page);
 
-            // Phase 3: Swap content (0ms - instant)
+            // We no longer manually fade out the DOM! 
+            // Manual fading ruins the React Skeleton loaders because it dims the whole viewport and flashes black.
+            // By doing a hard-swap, React instantly boots on the new page and renders its gorgeous skeleton,
+            // which then instantly hydrates from the aggressive api.js mem-caches we just built!
+
+            // Phase 2: Swap content (0ms)
             this.swapContent(content);
 
-            // Phase 4: Update URL
+            // Phase 3: Update URL history
             this.updateURL(page, options.replace);
 
-            // Phase 5: Restore/reset scroll
+            // Phase 4: Restore explicit scroll metrics if available before React mounts
             this.restoreScroll(page);
 
-            // Phase 6: Fade in new content (50ms)
-            await this.fadeIn();
+            // Phase 5: Fast fade-in protection (just to ensure opacity: 1 is hard set if it was trapped)
+            document.body.style.opacity = '1';
 
-            // Phase 7: Re-initialize page scripts
+            // Phase 6: Re-initialize the active React DOM bundle for the new route
             this.reinitializePage();
         }
 
@@ -270,21 +273,28 @@
          * Re-initialize page after content swap
          */
         reinitializePage() {
-            // Re-run Babel transformations for React components
-            if (window.Babel) {
-                const scripts = document.querySelectorAll('script[type="text/babel"]');
-                scripts.forEach(script => {
+            // Dynamically execute all scripts that were injected via innerHTML
+            const scripts = document.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                // Only re-execute scripts from the dist/ folder (our compiled React components)
+                // or specific inline scripts if needed. Avoid re-running global libraries.
+                if (oldScript.src && oldScript.src.includes('/dist/')) {
+                    const newScript = document.createElement('script');
+                    newScript.src = oldScript.src + '?v=' + Date.now(); // Cache busting for navigation
+                    newScript.async = false; // Maintain execution order
+                    
+                    // Replace the old inert script with the new active one
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                } 
+                else if (!oldScript.src && !oldScript.type) {
+                    // Inline scripts (like specific page setups)
                     try {
-                        const code = script.textContent;
-                        const transformed = window.Babel.transform(code, {
-                            presets: ['react']
-                        }).code;
-                        eval(transformed);
-                    } catch (error) {
-                        console.warn('Script execution error:', error);
+                        eval(oldScript.textContent);
+                    } catch(e) {
+                        console.error('Inline script execution error:', e);
                     }
-                });
-            }
+                }
+            });
 
             // Trigger global init if exists
             if (window.initializePage && typeof window.initializePage === 'function') {
