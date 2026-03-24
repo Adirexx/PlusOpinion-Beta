@@ -170,6 +170,14 @@ window.getFeed = async function (options = {}) {
         verifiedOnly = false
     } = options;
 
+    if (offset === 0 && (!options.excludeIds || options.excludeIds.length === 0)) {
+        const cacheKey = `feed_${category_id || category || 'all'}_${brand_id || 'all'}_${verifiedOnly}`;
+        const cached = window._feedCacheStore?.[cacheKey];
+        if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
+            return cached.data;
+        }
+    }
+
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase client not initialized');
 
     let query = window.supabase
@@ -292,7 +300,18 @@ window.getFeed = async function (options = {}) {
         // Final randomized mix of the batch
         const shuffled = selection.sort(() => Math.random() - 0.5);
         // Rewrite all media URLs before returning (defense-in-depth vs ISP block)
-        return window.rewritePostUrls ? window.rewritePostUrls(shuffled) : shuffled;
+        const finalResult = window.rewritePostUrls ? window.rewritePostUrls(shuffled) : shuffled;
+
+        if (offset === 0 && (!options.excludeIds || options.excludeIds.length === 0)) {
+            window._feedCacheStore = window._feedCacheStore || {};
+            const cacheKey = `feed_${category_id || category || 'all'}_${brand_id || 'all'}_${verifiedOnly}`;
+            window._feedCacheStore[cacheKey] = {
+                data: finalResult,
+                timestamp: Date.now()
+            };
+        }
+
+        return finalResult;
     }
 
     const { data, error } = await query
@@ -302,7 +321,18 @@ window.getFeed = async function (options = {}) {
     if (error) throw error;
     // Rewrite all media/avatar URLs so HTML never sees raw supabase.co URLs
     const posts = data || [];
-    return window.rewritePostUrls ? window.rewritePostUrls(posts) : posts;
+    const finalResult = window.rewritePostUrls ? window.rewritePostUrls(posts) : posts;
+
+    if (offset === 0 && (!options.excludeIds || options.excludeIds.length === 0)) {
+        window._feedCacheStore = window._feedCacheStore || {};
+        const cacheKey = `feed_${category_id || category || 'all'}_${brand_id || 'all'}_${verifiedOnly}`;
+        window._feedCacheStore[cacheKey] = {
+            data: finalResult,
+            timestamp: Date.now()
+        };
+    }
+
+    return finalResult;
 };
 
 // ============================================
@@ -414,6 +444,14 @@ window.getUserFingerprint = async function () {
 // All posts sorted by composite PSE score.
 
 window.getSmartFeed = async function (limit = 20, excludeIds = []) {
+    // Phase 4: Instant SPA Data Cache
+    if (excludeIds.length === 0) {
+        const cached = window._feedCacheStore?.smartFeed;
+        if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
+            return cached.data;
+        }
+    }
+
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
 
     // Get user fingerprint + hidden items in parallel
@@ -534,7 +572,17 @@ window.getSmartFeed = async function (limit = 20, excludeIds = []) {
         return true;
     }).slice(0, limit);
 
-    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+    const finalResult = window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+
+    if (excludeIds.length === 0) {
+        window._feedCacheStore = window._feedCacheStore || {};
+        window._feedCacheStore.smartFeed = {
+            data: finalResult,
+            timestamp: Date.now()
+        };
+    }
+
+    return finalResult;
 };
 
 // ============================================
@@ -545,6 +593,13 @@ window.getSmartFeed = async function (limit = 20, excludeIds = []) {
 // Higher decay exponent = faster drop-off = truly captures "right now"
 
 window.getTrendingFeed = async function (limit = 20, excludeIds = []) {
+    if (excludeIds.length === 0) {
+        const cached = window._feedCacheStore?.trendingFeed;
+        if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
+            return cached.data;
+        }
+    }
+
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
 
     const [hiddenData, user] = await Promise.all([
@@ -602,7 +657,17 @@ window.getTrendingFeed = async function (limit = 20, excludeIds = []) {
     scored.sort((a, b) => b._trendScore - a._trendScore);
 
     const final = scored.slice(0, limit);
-    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+    const finalResult = window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+
+    if (excludeIds.length === 0) {
+        window._feedCacheStore = window._feedCacheStore || {};
+        window._feedCacheStore.trendingFeed = {
+            data: finalResult,
+            timestamp: Date.now()
+        };
+    }
+
+    return finalResult;
 };
 
 // ============================================
@@ -611,6 +676,13 @@ window.getTrendingFeed = async function (limit = 20, excludeIds = []) {
 // Only posts where is_verified_purchase = true, ranked by PSE score.
 
 window.getVerifiedFeed = async function (limit = 20, excludeIds = []) {
+    if (excludeIds.length === 0) {
+        const cached = window._feedCacheStore?.verifiedFeed;
+        if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
+            return cached.data;
+        }
+    }
+
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
 
     const [hiddenData, user] = await Promise.all([
@@ -659,7 +731,17 @@ window.getVerifiedFeed = async function (limit = 20, excludeIds = []) {
     scored.sort((a, b) => b._score - a._score);
 
     const final = scored.slice(0, limit);
-    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+    const finalResult = window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+
+    if (excludeIds.length === 0) {
+        window._feedCacheStore = window._feedCacheStore || {};
+        window._feedCacheStore.verifiedFeed = {
+            data: finalResult,
+            timestamp: Date.now()
+        };
+    }
+
+    return finalResult;
 };
 
 // ============================================
@@ -669,6 +751,13 @@ window.getVerifiedFeed = async function (limit = 20, excludeIds = []) {
 // Sorted by a combination of author credibility + recency.
 
 window.getHighRQSFeed = async function (limit = 20, excludeIds = []) {
+    if (excludeIds.length === 0) {
+        const cached = window._feedCacheStore?.highRQSFeed;
+        if (cached && (Date.now() - cached.timestamp < 5 * 60 * 1000)) {
+            return cached.data;
+        }
+    }
+
     if (!window.supabase || !window.supabase.from) throw new Error('Supabase not initialized');
 
     const [hiddenData, user] = await Promise.all([
@@ -726,7 +815,17 @@ window.getHighRQSFeed = async function (limit = 20, excludeIds = []) {
     scored.sort((a, b) => b._rqsWeightedScore - a._rqsWeightedScore);
 
     const final = scored.slice(0, limit);
-    return window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+    const finalResult = window.rewritePostUrls ? window.rewritePostUrls(final) : final;
+
+    if (excludeIds.length === 0) {
+        window._feedCacheStore = window._feedCacheStore || {};
+        window._feedCacheStore.highRQSFeed = {
+            data: finalResult,
+            timestamp: Date.now()
+        };
+    }
+
+    return finalResult;
 };
 
 // ============================================
@@ -1407,6 +1506,10 @@ window.hideItem = async function (type, target, postId = null) {
         .insert(payload);
 
     if (error) throw error;
+    
+    // Invalidate local cache instantly so next feed load fetches fresh exclusions
+    delete window._hiddenItemsCache;
+    
     return true;
 };
 
@@ -1414,6 +1517,9 @@ window.hideItem = async function (type, target, postId = null) {
  * Get all hidden items for current user (to filter feed)
  */
 window.getHiddenItems = async function () {
+    // 1. Instant Cache Return
+    if (window._hiddenItemsCache) return window._hiddenItemsCache;
+
     const user = await window.getCurrentUser();
     if (!user) return { posts: [], brands: [], categories: [] };
 
@@ -1427,11 +1533,14 @@ window.getHiddenItems = async function () {
         return { posts: [], brands: [], categories: [] };
     }
 
-    return {
+    const result = {
         posts: data.filter(i => i.type === 'post').map(i => i.post_id),
         brands: data.filter(i => i.type === 'brand').map(i => i.brand_name),
         categories: data.filter(i => i.type === 'category').map(i => i.category)
     };
+    
+    window._hiddenItemsCache = result;
+    return result;
 };
 
 
