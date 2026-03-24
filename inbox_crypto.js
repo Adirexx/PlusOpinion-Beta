@@ -83,17 +83,10 @@
         );
     }
 
-    /**
-     * Ensure the current user has keys.
-     * Generates and saves keys if they don't exist.
-     * Uploads public key to Supabase.
-     * @param {string} userId  - The current user's Supabase UUID
-     * @returns {Promise<CryptoKey>} The user's private CryptoKey
-     */
     async function ensureKeys(userId) {
         const storageKey = STORAGE_KEY_PREFIX + userId;
 
-        // Check if we already have a private key stored
+        // 1. Check local storage first
         let privateKeyJwk = null;
         try {
             privateKeyJwk = localStorage.getItem(storageKey);
@@ -102,17 +95,36 @@
         }
 
         if (privateKeyJwk) {
-            // Keys already exist — import and return the private key
             try {
+                // Return if valid
                 const privateKey = await importPrivateKey(privateKeyJwk);
                 return privateKey;
             } catch (e) {
-                console.warn('[Crypto] Stored key invalid, regenerating:', e);
-                // Fall through to regenerate
+                console.warn('[Crypto] Stored key invalid, fetching backup:', e);
             }
         }
 
-        // Generate new key pair
+        // 2. Check Supabase profiles for a backup private key (for multi-device/logout sync)
+        try {
+            const { data, error } = await window.supabase
+                .from('profiles')
+                .select('private_key, public_key')
+                .eq('id', userId)
+                .single();
+            
+            if (data && data.private_key && data.public_key) {
+                console.log('[Crypto] Found E2EE key backup in Supabase. Syncing locally.');
+                try {
+                    localStorage.setItem(storageKey, data.private_key);
+                } catch(e) {}
+                
+                return await importPrivateKey(data.private_key);
+            }
+        } catch (e) {
+            console.error('[Crypto] Failed checking profile for key backup:', e);
+        }
+
+        // 3. Generate new key pair
         console.log('[Crypto] Generating new E2EE key pair for user:', userId);
         const keyPair = await generateKeyPair();
 
@@ -120,22 +132,25 @@
         const privateKeyString = await exportKey(keyPair.privateKey);
         const publicKeyString = await exportKey(keyPair.publicKey);
 
-        // Save private key to localStorage (never sent to server)
+        // Save private key to localStorage
         try {
             localStorage.setItem(storageKey, privateKeyString);
         } catch (e) {
             console.error('[Crypto] Failed to save private key:', e);
         }
 
-        // Upload public key to Supabase profiles table
+        // Upload BOTH keys to Supabase profiles table backup
         try {
             await window.supabase
                 .from('profiles')
-                .update({ public_key: publicKeyString })
+                .update({ 
+                    public_key: publicKeyString,
+                    private_key: privateKeyString 
+                })
                 .eq('id', userId);
-            console.log('[Crypto] ✅ Public key uploaded to Supabase');
+            console.log('[Crypto] ✅ E2EE keys backed up to Supabase');
         } catch (e) {
-            console.error('[Crypto] Failed to upload public key:', e);
+            console.error('[Crypto] Failed to upload E2EE keys:', e);
         }
 
         return keyPair.privateKey;
