@@ -19,6 +19,10 @@
 /*.js
   Cache-Control: public, max-age=300, must-revalidate
 
+# Dist compiled bundles (React components)
+/dist/*.js
+  Cache-Control: public, max-age=300, must-revalidate
+
 # CSS - Short cache with revalidation (5 minutes)
 /*.css
   Cache-Control: public, max-age=300, must-revalidate
