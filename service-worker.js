@@ -2,7 +2,7 @@
 // Updated at: MAR24_2026_V9.1.0
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260324_V9.2.0';
+  : 'BUILD_20260324_V9.3.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
