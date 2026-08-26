@@ -443,7 +443,8 @@ const ReplyItem = ({ reply, onReply }) => {
 
   // Real-time like count for this reply
   useEffect(() => {
-    const ch = window.supabase.channel(`comment-likes-rt:${reply.id}`).
+    const chName = `comment-likes-rt:${reply.id}:${Math.random().toString(36).slice(2)}`;
+    const ch = window.supabase.channel(chName).
     on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${reply.id}` },
     () => setLikesCount((p) => p + 1)).
     on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${reply.id}` },
@@ -523,7 +524,8 @@ const CommentItem = ({ comment, onReply }) => {
   // Real-time like count via Supabase channel
   useEffect(() => {
     if (!comment.id || comment.isPending) return;
-    const ch = window.supabase.channel(`comment-likes-rt:${comment.id}`).
+    const chName = `comment-likes-rt:${comment.id}:${Math.random().toString(36).slice(2)}`;
+    const ch = window.supabase.channel(chName).
     on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${comment.id}` },
     () => setLikesCount((p) => p + 1)).
     on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'comment_likes', filter: `comment_id=eq.${comment.id}` },
@@ -739,7 +741,8 @@ const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAd
 
   // Realtime Like/Agree Count Logic
   useEffect(() => {
-    const channel = window.supabase.channel(`post-likes:${post.id}`).
+    const chName = `post-likes:${post.id}:${Math.random().toString(36).slice(2)}`;
+    const channel = window.supabase.channel(chName).
     on('postgres_changes', {
       event: 'UPDATE',
       schema: 'public',
@@ -831,7 +834,7 @@ const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAd
 
   // Realtime Comments - subscribe once on mount, independent of showComments toggle
   useEffect(() => {
-    const channel = window.supabase.channel(`comments:${post.id}`).
+    const channel = window.supabase.channel(`comments:${post.id}:${Math.random().toString(36).slice(2)}`).
     on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, async (payload) => {
       const currentUser = await window.getCurrentUser();
       if (payload.new.user_id === currentUser?.id) return; // Handled optimistically
@@ -2237,10 +2240,10 @@ const LensOverlay = ({ isOpen, onClose, handleRemove, onShare, onAddComment, onS
         // Save search query to history
         const user = await window.getCurrentUser();
         if (user) {
-          await window.saveSearchQuery(user.id, q);
+          if (window.saveSearchQuery) await window.saveSearchQuery(user.id, q);
           // Refresh recent searches
-          const searches = await window.getRecentSearches(user.id, 10);
-          setQuickSearches(searches);
+          const searches = window.getRecentSearches ? await window.getRecentSearches(user.id, 10) : [];
+          setQuickSearches(searches || []);
         }
 
         // Search profiles
