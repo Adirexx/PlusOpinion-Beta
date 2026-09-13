@@ -1,5 +1,6 @@
 // Dynamic version - will be replaced at build time
-// Updated at: AUG26_2026_V9.4.0const VERSION = self.registration.scope.includes('localhost')
+// Updated at: AUG26_2026_V9.4.0
+const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
   : 'BUILD_20260826_V9.4.0';
 
