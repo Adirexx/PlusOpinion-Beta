@@ -418,7 +418,7 @@ const renderTextWithMentions = (text) => {
           onClick: (e) => {
             e.stopPropagation();
             if (typeof vibrate === 'function') vibrate(5);
-            window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+            window.location.href = `/profile?username=${username}`;
           }
         },
 
@@ -480,7 +480,7 @@ const ReplyItem = ({ reply, onReply }) => {
           src: reply.avatar,
           className: "w-5 h-5 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer",
           fallbackSize: 10,
-          onClick: () => { vibrate(); if (reply.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }
+          onClick: () => { vibrate(); if (reply.user_id) window.location.href = `/profile?id=${reply.user_id}`; }
         }
         )
       ), /*#__PURE__*/
@@ -489,7 +489,7 @@ const ReplyItem = ({ reply, onReply }) => {
           React.createElement("div", { className: "flex items-baseline gap-1.5" }, /*#__PURE__*/
             React.createElement("span", {
               className: "font-bold text-white text-[11px] cursor-pointer hover:text-neon transition-colors",
-              onClick: () => { vibrate(); if (reply.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${reply.user_id}`; }
+              onClick: () => { vibrate(); if (reply.user_id) window.location.href = `/profile?id=${reply.user_id}`; }
             },
               reply.user), /*#__PURE__*/
             React.createElement("span", { className: "text-[9px] text-muted" }, reply.time)
@@ -570,14 +570,14 @@ const CommentItem = ({ comment, onReply }) => {
         React.createElement("div", { className: "flex-shrink-0" }, /*#__PURE__*/
           React.createElement("div", {
             className: "flex-shrink-0 cursor-pointer active:scale-95 transition-transform",
-            onClick: () => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }
+            onClick: () => { vibrate(5); if (comment.user_id) window.location.href = `/profile?id=${comment.user_id}`; }
           }, /*#__PURE__*/
 
             React.createElement(Avatar, {
               src: comment.avatar,
               className: "w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer",
               fallbackSize: 12,
-              onClick: () => { vibrate(); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }
+              onClick: () => { vibrate(); if (comment.user_id) window.location.href = `/profile?id=${comment.user_id}`; }
             }
             )
           )
@@ -586,7 +586,7 @@ const CommentItem = ({ comment, onReply }) => {
           React.createElement("div", { className: "flex items-baseline justify-between focus-within:ring-0" }, /*#__PURE__*/
             React.createElement("div", {
               className: "flex items-baseline gap-2 cursor-pointer group/name",
-              onClick: () => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC POV PROFILE.HTML?id=${comment.user_id}`; }
+              onClick: () => { vibrate(5); if (comment.user_id) window.location.href = `/profile?id=${comment.user_id}`; }
             }, /*#__PURE__*/
 
               React.createElement("span", { className: "font-bold text-white text-xs group-hover/name:text-neon transition-colors" }, comment.user), /*#__PURE__*/
@@ -1240,7 +1240,7 @@ const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAd
         React.createElement("div", { className: "flex gap-3 w-full" }, /*#__PURE__*/
           React.createElement("div", {
             className: "group relative cursor-pointer active:scale-95 transition-transform",
-            onClick: () => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }
+            onClick: () => { vibrate(5); window.location.href = `/profile?id=${post.user_id || post.profiles?.id}`; }
           },
 
             post.avatar ? /*#__PURE__*/
@@ -1260,7 +1260,7 @@ const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAd
             React.createElement("div", { className: "flex items-center gap-2" }, /*#__PURE__*/
               React.createElement("div", {
                 className: "group relative cursor-pointer hover:text-neon transition-colors",
-                onClick: () => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }
+                onClick: () => { vibrate(5); window.location.href = `/profile?id=${post.user_id || post.profiles?.id}`; }
               }, /*#__PURE__*/
 
                 React.createElement("span", { className: "font-heading font-bold text-white text-sm truncate" }, post.name), /*#__PURE__*/
@@ -1268,7 +1268,7 @@ const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAd
               ), /*#__PURE__*/
               React.createElement("div", {
                 className: "group relative rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0 cursor-pointer",
-                onClick: () => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }
+                onClick: () => { vibrate(5); window.location.href = `/profile?id=${post.user_id || post.profiles?.id}`; }
               }, /*#__PURE__*/
 
                 React.createElement("span", { className: "font-heading font-bold text-[9px] text-white tracking-wide" }, "RQS ", post.rqs), /*#__PURE__*/
@@ -1277,7 +1277,7 @@ const PostCard = ({ post, index, onComment, onShare, onSave, comments = [], onAd
             ), /*#__PURE__*/
             React.createElement("div", {
               className: "group relative inline-block cursor-pointer",
-              onClick: () => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }
+              onClick: () => { vibrate(5); window.location.href = `/profile?id=${post.user_id || post.profiles?.id}`; }
             }, /*#__PURE__*/
 
               React.createElement("div", { className: "text-xs text-muted truncate hover:text-white transition-colors" }, "@", post.username), /*#__PURE__*/
@@ -2516,7 +2516,7 @@ const LensOverlay = ({ isOpen, onClose, handleRemove, onShare, onAddComment, onS
                   e.stopPropagation();
                   vibrate(5);
                   console.log('Navigating to profile:', reviewer.id);
-                  window.location.href = `PUBLIC POV PROFILE.HTML?id=${reviewer.id}`;
+                  window.location.href = `/profile?id=${reviewer.id}`;
                 }
               }, /*#__PURE__*/
 
@@ -2562,7 +2562,7 @@ const LensOverlay = ({ isOpen, onClose, handleRemove, onShare, onAddComment, onS
               React.createElement("div", {
                 key: profile.id,
                 className: "flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-neon/30 transition-all cursor-pointer active:scale-[0.98]",
-                onClick: () => { vibrate(5); window.location.href = `PUBLIC POV PROFILE.HTML?id=${profile.id}`; }
+                onClick: () => { vibrate(5); window.location.href = `/profile?id=${profile.id}`; }
               }, /*#__PURE__*/
 
                 React.createElement(Avatar, {
@@ -2916,7 +2916,7 @@ const ExploreProfilesModal = ({ isOpen, onClose, profiles }) => {
               className: "bg-white/5 border border-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/10 hover:border-neon/50 transition-all active:scale-95",
               onClick: () => {
                 vibrate(5);
-                window.location.href = `PUBLIC POV PROFILE.HTML?id=${profile.id}`;
+                window.location.href = `/profile?id=${profile.id}`;
               }
             }, /*#__PURE__*/
 
