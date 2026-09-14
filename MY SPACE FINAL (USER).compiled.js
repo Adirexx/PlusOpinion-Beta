@@ -33,7 +33,7 @@ const renderTextWithMentions = (text) => {
         React.createElement("span", { key: i, className: "text-neon font-semibold cursor-pointer hover:underline",
           onClick: (e) => {
             e.stopPropagation();vibrate(5);
-            window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+            window.location.href = `/profile?username=${username}`;
           } },
         part
         ));
@@ -2250,7 +2250,7 @@ const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
   return (/*#__PURE__*/
     React.createElement("div", { className: "fixed inset-0 z-[200] flex items-center justify-center p-4" }, /*#__PURE__*/
     React.createElement("div", { className: "absolute inset-0 bg-black/95 backdrop-blur-xl", onClick: () => isClosable && onClose() }), /*#__PURE__*/
-    React.createElement("div", { className: "w-full max-w-md bg-[#0A0E1A] p-8 rounded-3xl shadow-2xl relative border border-white/10", onClick: (e) => e.stopPropagation() },
+    React.createElement("div", { className: "w-full max-w-md bg-[#000000] p-8 rounded-3xl shadow-2xl relative border border-white/10", onClick: (e) => e.stopPropagation() },
     isClosable && /*#__PURE__*/
     React.createElement("button", { onClick: onClose, className: "absolute top-6 right-6 text-slate-500 hover:text-white transition-colors" }, /*#__PURE__*/
     React.createElement(Icon, { icon: "X", size: 24 })
@@ -2282,7 +2282,7 @@ const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
       onChange: (e) => setFormData({ ...formData, name: e.target.value }),
       type: "text",
       placeholder: "John Doe",
-      className: "w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
+      className: "w-full bg-[#000000] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
     )
     ), /*#__PURE__*/
 
@@ -2320,7 +2320,7 @@ const AuthModal = ({ isOpen, onClose, isClosable = true }) => {
       onChange: (e) => setFormData({ ...formData, confirmPassword: e.target.value }),
       type: "password",
       placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
-      className: "w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
+      className: "w-full bg-[#000000] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" }
     )
     ),
 
