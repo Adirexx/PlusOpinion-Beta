@@ -336,11 +336,12 @@ window.getUnreadCount = async function () {
 };
 
 /**
- * Subscribe to unread count changes
- * @param {Function} onCountChange - Callback(count)
- * @returns {Function} unsubscribe
+ * [LEGACY - do not call externally]
+ * Original v1 subscription kept for reference only. Replaced by the
+ * improved version below that includes a cancellation guard and cache.
+ * Renamed to avoid accidental invocation.
  */
-window.subscribeToUnreadCount = function (onCountChange) {
+window._legacySubscribeToUnreadCount_v1 = function (onCountChange) {
     if (!window.supabase) return () => { };
 
     let subscription = null;
@@ -353,16 +354,15 @@ window.subscribeToUnreadCount = function (onCountChange) {
         const count = await window.getUnreadCount();
         onCountChange(count);
 
-        // Subscribe to changes
+        // Subscribe to changes — note: uses unique user-scoped name
         subscription = window.supabase
-            .channel('public:notifications:count')
+            .channel(`notifications:count:legacy:${user.id}`)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
                 table: 'notifications',
                 filter: `user_id=eq.${user.id}`
             }, async () => {
-                // On any change (INSERT, UPDATE, DELETE), re-fetch count
                 const newCount = await window.getUnreadCount();
                 onCountChange(newCount);
             })
@@ -926,9 +926,10 @@ window.subscribeToUnreadCount = function (onCountChange) {
             }
         }
 
-        // Subscribe to changes
+        // Subscribe to changes — channel name scoped to user ID to prevent
+        // duplicate channel collision when multiple callers subscribe.
         const sub = window.supabase
-            .channel('public:notifications:count')
+            .channel(`notifications:count:${user.id}`)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
