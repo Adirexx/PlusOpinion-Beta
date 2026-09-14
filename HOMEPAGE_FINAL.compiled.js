@@ -692,6 +692,7 @@ const formatTime = (timestamp) => {
   const diffWeeks = Math.floor(diffMs / 604800000);
   const diffMonths = Math.floor(diffMs / 2592000000);
 
+  if (diffMins < 1) return 'Just now';
   if (diffMins < 60) return `${diffMins}m`;
   if (diffHours < 24) return `${diffHours}h`;
   if (diffDays < 7) return `${diffDays}d`;
