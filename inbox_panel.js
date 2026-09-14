@@ -1258,12 +1258,9 @@
         // ─── NAVIGATE TO PROFILE ────────────────────────────────────────────────
         async function navigateToProfile(uid) {
             if (!uid) return;
-            // Close inbox and navigate to public profile
+            // Close inbox and navigate to public profile via clean route
             closeInbox();
-            
-            // For variety and compatibility, we use the standard physical file path directly
-            // this ensures it works on all server configurations (localhost, cloudflare, etc.)
-            window.location.href = `PUBLIC POV PROFILE.HTML?id=${uid}`;
+            window.location.href = `/profile?id=${uid}`;
         }
 
         // ─── LIVE TIMESTAMP REFRESH ──────────────────────────────────────────────
