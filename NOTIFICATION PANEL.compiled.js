@@ -114,7 +114,7 @@ const renderTextWithMentions = (text) => {
         React.createElement("span", { key: i, className: "text-neon font-semibold cursor-pointer hover:underline",
           onClick: (e) => {
             e.stopPropagation();vibrate(5);
-            window.location.href = `PUBLIC POV PROFILE.HTML?username=${username}`;
+            window.location.href = `/profile?username=${username}`;
           } },
         part
         ));
@@ -572,7 +572,7 @@ const NotificationItem = ({ data, onSwipe, onClick, highlightId }) => {
       className: `text-[14px] leading-tight cursor-pointer hover:text-neon transition-colors ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`,
       onClick: (e) => {
         e.stopPropagation();
-        window.location.href = `PUBLIC POV PROFILE.HTML?id=${data.actor_id}`;
+        window.location.href = `/profile?id=${data.actor_id}`;
       } },
 
     title
