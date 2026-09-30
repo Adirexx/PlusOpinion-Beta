@@ -1,8 +1,8 @@
 // Dynamic version - will be replaced at build time
-// Updated at: sept14_2026_V9.5.0
+// Updated at: sept14_2026_V9.6.0
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
-  : 'BUILD_20260826_V9.5.0';
+  : 'BUILD_20260826_V9.7.0';
 
 const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const SUPABASE_HOSTNAME = 'ogqyemyrxogpnwitumsr.supabase.co';
