@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <!-- ── Primary Meta ──────────────────────────────────── -->
+  <title>PlusOpinion — Your opinions, rewarded</title>
+  <meta name="description" content="The platform where opinions matter. Share your perspective, engage with the community, and earn through the partners program." />
+  <meta name="keywords" content="PlusOpinion, opinions, reviews, RQS, creator economy, social network, thought leadership, debates, verified opinions" />
+  <meta name="author" content="PlusOpinion" />
+  <meta name="theme-color" content="#020205" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="https://plusopinion.com" />
+
+  <!-- ── PWA / Manifest ────────────────────────────────── -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PlusOpinion" />
+
+  <!-- ── Favicons ──────────────────────────────────────── -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
+
+  <!-- ── Open Graph / Social ───────────────────────────── -->
+  <meta property="og:site_name"   content="PlusOpinion" />
+  <meta property="og:locale"      content="en_US" />
+  <meta property="og:title"       content="PlusOpinion — Your opinions, rewarded" />
+  <meta property="og:description" content="Share your perspective, engage with the community, and earn through the partners program." />
+  <meta property="og:image"       content="https://plusopinion.com/seo-preview.jpg" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://plusopinion.com" />
+  <meta name="twitter:card"       content="summary_large_image" />
+  <meta name="twitter:site"       content="@plusopinion" />
+  <meta name="twitter:creator"    content="@plusopinion" />
+  <meta name="twitter:title"      content="PlusOpinion — Your opinions, rewarded" />
+  <meta name="twitter:description" content="Share your perspective, engage with the community, and earn through the partners program." />
+  <meta name="twitter:image"      content="https://plusopinion.com/seo-preview.jpg" />
+
+  <!-- ── GEO & AEO Structured Data (JSON-LD) ───────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://plusopinion.com/#website",
+        "url": "https://plusopinion.com",
+        "name": "PlusOpinion",
+        "description": "The decentralized opinion and review ecosystem where perspectives are rewarded via RQS (Reputation Quotient Score).",
+        "publisher": { "@id": "https://plusopinion.com/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://plusopinion.com/lens?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://plusopinion.com/#organization",
+        "name": "PlusOpinion",
+        "url": "https://plusopinion.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://plusopinion.com/icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "sameAs": [
+          "https://twitter.com/plusopinion"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "PlusOpinion",
+        "applicationCategory": "SocialNetworkingApplication",
+        "operatingSystem": "Android, Web",
+        "url": "https://plusopinion.com",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!--
+    Fonts (@fontsource npm — imported in main.jsx, not via <link>)
+    No external Google Fonts network request — fonts are bundled.
+  -->
+
+  <!-- Prevent white FOUC — body stays dark from byte 1 before CSS loads -->
+  <style>html,body,#root{background:#020205;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}</style>
+</head>
+<body>
+  <!--
+    Single root div. React mounts here exactly once.
+    The old project mounted a new React root on EVERY page navigation.
+    This div never changes — only its React children do.
+  -->
+  <div id="root"></div>
+
+  <!-- Vite injects the module entry point here at build time -->
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

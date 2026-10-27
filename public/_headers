@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════════════════════
+# PlusOpinion — Cloudflare Pages Cache & Security Headers
+# Vite SPA Production Headers
+# ═══════════════════════════════════════════════════════════
+
+# Root / — preload manifest
+/
+  Link: </manifest.json>; rel=manifest
+
+# Version file — never cache
+/version.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Vite Immutable Assets (hashed filenames)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Images & Media — long cache
+/*.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/*.jpg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/*.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/*.mp4
+  Cache-Control: public, max-age=2592000
+
+# Web Fonts
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+
+# Manifest — short cache so updates apply quickly
+/manifest.json
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Content-Type: application/manifest+json
+
+# TWA Digital Asset Links — must be served with correct MIME type
+/.well-known/assetlinks.json
+  Cache-Control: public, max-age=3600
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+
+# Security Headers (all routes)
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://accounts.google.com https://www.googletagmanager.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https://*.supabase.co https://wsrv.nl https://lh3.googleusercontent.com; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plusopinion.com https://accounts.google.com https://www.google-analytics.com; font-src 'self' data:; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'

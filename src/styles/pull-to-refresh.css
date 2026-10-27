@@ -1,0 +1,97 @@
+/* ============================================================
+   PLUSOPINION — PULL-TO-REFRESH STYLES
+   Phase 9.2: "Orbit Loader" for both Pull Gesture & Active Refresh
+
+   POSITIONING: fixed — decoupled from DOM structure so the indicator
+   always appears at a consistent place (below status bar + header)
+   on every page, with zero overlap.
+
+   All animations use transform + opacity ONLY for GPU compositing.
+   Zero layout thrash. OLED-friendly dark theme native.
+   ============================================================ */
+
+/* ── Indicator Container — FIXED so it's consistent across all pages ── */
+.ptr-indicator {
+  position: fixed;
+  /* Uses --header-total or env(safe-area-inset-top) + standard 56px header.
+     Can be overridden per-page via --ptr-top-offset or inline top style. */
+  top: calc(var(--header-total, calc(env(safe-area-inset-top, 0px) + 56px)) + var(--ptr-top-offset, 0px));
+  left: 0;
+  right: 0;
+  max-width: 450px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 9999;
+  height: 56px;
+  transform: translateY(-100%);
+  transition: none;
+}
+
+.ptr-indicator.ptr-active {
+  will-change: transform, opacity;
+}
+
+.ptr-indicator.ptr-completing {
+  animation: ptr-fade-out 250ms var(--ease-smooth, cubic-bezier(0.2, 0.8, 0.2, 1)) forwards;
+}
+
+/* ── Orbit Loader Wrapper ────────────────────────────────────── */
+.ptr-loader-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: filter 0.15s ease;
+  will-change: transform;
+}
+
+/* Continuous spin during active refreshing */
+.ptr-loader-wrap.ptr-spinning {
+  animation: ptr-spin 1.2s linear infinite;
+}
+
+@keyframes ptr-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Orbit Loader Glow & Shadows ─────────────────────────────── */
+.ptr-orbit {
+  filter: drop-shadow(0 0 10px rgba(47, 139, 255, 0.4));
+}
+
+/* Glow builds as pull progress increases */
+.ptr-loader-wrap.ptr-glow-low   { filter: drop-shadow(0 0 6px  rgba(47, 139, 255, 0.25)); }
+.ptr-loader-wrap.ptr-glow-mid   { filter: drop-shadow(0 0 10px rgba(47, 139, 255, 0.45)); }
+.ptr-loader-wrap.ptr-glow-high  { filter: drop-shadow(0 0 16px rgba(47, 139, 255, 0.70)); }
+.ptr-loader-wrap.ptr-glow-armed { filter: drop-shadow(0 0 22px rgba(47, 139, 255, 0.95)); }
+
+/* ── Keyframes ───────────────────────────────────────────────── */
+@keyframes ptr-fade-out {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* ── Content Translation (applied to scroll containers during pull) ── */
+.ptr-content-pulling {
+  transition: none !important;
+}
+
+.ptr-content-snapping {
+  transition: transform 300ms var(--ease-smooth, cubic-bezier(0.2, 0.8, 0.2, 1)) !important;
+}
+
+.ptr-content-auto-pull {
+  transition: transform 300ms var(--ease-smooth, cubic-bezier(0.2, 0.8, 0.2, 1)) !important;
+}
+
+/* ── Overscroll containment for PTR-enabled containers ───────── */
+.ptr-enabled {
+  overscroll-behavior-y: contain;
+  -webkit-overscroll-behavior-y: contain;
+}

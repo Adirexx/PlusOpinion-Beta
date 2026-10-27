@@ -1,0 +1,92 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "com.plusopinion.app"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.plusopinion.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 8
+        versionName "1.0.8"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        release {
+            // Keystore credentials — set as environment variables on CI/local machine
+            // NEVER commit the .jks file or passwords to git
+            // Generate keystore: keytool -genkeypair -v -storetype PKCS12 -keystore plusopinion-release.jks
+            //   -alias plusopinion-key -keyalg RSA -keysize 4096 -validity 10000
+            def keystorePath = System.getenv("KEYSTORE_PATH") ?: rootProject.file("../plusopinion-release.jks").absolutePath
+            def keystoreExists = new File(keystorePath).exists()
+            if (keystoreExists) {
+                storeFile file(keystorePath)
+                storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias System.getenv("KEY_ALIAS") ?: "plusopinion-key"
+                keyPassword System.getenv("KEY_PASSWORD") ?: ""
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            // Keep debug builds fast — no minification
+            minifyEnabled false
+            debuggable true
+        }
+        release {
+            // R8 shrinking + optimization for Play Store AAB
+            minifyEnabled true
+            shrinkResources false  // Keep false — Capacitor loads web assets from /assets/
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Wire signing — silently skipped if keystore file is absent (debug-only machines)
+            def ks = signingConfigs.release.storeFile
+            if (ks != null && ks.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    // Prevent duplicate META-INF entries from Capacitor plugins
+    packaging {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/NOTICE']
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

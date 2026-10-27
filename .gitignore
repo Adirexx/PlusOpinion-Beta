@@ -1,0 +1,57 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env.local
+.env
+
+# ── Release Keystore (NEVER commit) ─────────────────────────
+*.jks
+*.keystore
+keystore.properties
+KEYSTORE_PASSWORD
+KEY_PASSWORD
+
+# ── Android Build Artifacts & Caches ────────────────────────
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/captures/
+.gradle/
+
+# ── Scratch & Migration Scripts ─────────────────────────────
+*.cjs
+*.py
+*.mjs
+PLUSOPINION BETA*
+phase*_report.md
+completed_fixes.txt
+dev-dist/
+acceptance-test-runner.js
+missing.js
+missing.jsx
+test.jsx
+test_*
+ANTIGRAVITY_*
+SHIM_USAGE.md

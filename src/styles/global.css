@@ -1,0 +1,520 @@
+/* Tailwind CSS v3 directives — PostCSS processes these at build time */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   PLUSOPINION BETA — GLOBAL DESIGN SYSTEM
+   Ported exactly from global.css in the old project.
+   All rules preserved. Only additions:
+     - @tailwind directives prepended (required by Tailwind v3)
+     - ::view-transition-old/new blocks removed (tied to
+       document.startViewTransition() / spa_router.js — dead
+       in React Router). Their keyframes (vt-slide-in/out,
+       vt-fade-in) also removed. All other rules: identical.
+   ========================================================= */
+
+/* -------------------------------
+     ROOT DESIGN TOKENS
+   (canonical copy is tokens.css;
+    this block kept for browsers that
+    load global.css directly in tests)
+   -------------------------------- */
+:root {
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --bg-deep: #020205;
+  --bg-surface: #0a0f1d;
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --text-primary: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --muted: var(--text-muted);
+  --neon: #2f8bff;
+  --neon-soft: rgba(47, 139, 255, 0.18);
+  --neon-weak: var(--neon-soft);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --glass-border: var(--border-glass);
+  --success: #6bffb6;
+  --accent-green: #6bffb6;
+  --accent-gold: #FFD700;
+  --danger: #ff6b6b;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius: var(--radius-md);
+  --ease-smooth: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* -------------------------------
+     GLOBAL RESET
+   -------------------------------- */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* React mount point — app shell pages are centered at 450px,
+   while auth pages (login/signup) expand to 100% full-width on desktop. */
+#root {
+  height: 100%;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Auth / Login page desktop breakout: full viewport width, unscrollable single-screen front page */
+html.auth-mode,
+body.auth-mode,
+html:has(.auth-layout-frame),
+body:has(.auth-layout-frame) {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#root.auth-mode,
+#root:has(.auth-layout-frame),
+#root:has(.login-page-root) {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Static / legal page desktop breakout: full viewport width, scrollable */
+#root:has(.static-page) {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: auto !important;
+}
+
+html:has(.static-page),
+body:has(.static-page) {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: auto !important;
+}
+
+
+
+
+/* -------------------------------
+     TYPOGRAPHY
+   -------------------------------- */
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* -------------------------------
+     GLASSMORPHISM
+   -------------------------------- */
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+}
+
+.header-glass {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.glow-tip {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #fff, 0 0 20px var(--neon);
+  opacity: 0.8;
+}
+
+.rqs-svg {
+  transform: rotate(-90deg);
+}
+
+.progress-circle {
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+.neon-filter {
+  filter: drop-shadow(0 0 10px var(--neon));
+}
+
+/* -------------------------------
+     NAV GLASS (now SOLID per Option 3)
+   -------------------------------- */
+.top-nav-glass,
+.bottom-nav-glass,
+.nav-glass {
+  background-color: var(--bg-deep);
+  border: none;
+}
+
+/* -------------------------------
+     SCROLL BEHAVIOR
+   -------------------------------- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* -------------------------------
+     INTERACTIONS
+   -------------------------------- */
+.touch-scale:active {
+  transform: scale(0.94);
+}
+
+.media-zoom-effect {
+  transition: transform 0.5s var(--ease-smooth);
+}
+
+.media-zoom-effect:hover {
+  transform: scale(1.025);
+}
+
+@media (max-width: 768px) {
+  .media-zoom-effect:active {
+    transform: scale(1.025);
+  }
+}
+
+/* -------------------------------
+     RQS BADGE
+   -------------------------------- */
+.rqs-pill {
+  background: linear-gradient(90deg, var(--neon), #6fb6ff);
+  color: #fff;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 12px var(--neon-soft);
+}
+
+/* -------------------------------
+     VERIFIED PURCHASE BADGE
+   -------------------------------- */
+.verified-badge {
+  color: var(--success);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* -------------------------------
+     BUTTONS
+   -------------------------------- */
+.btn-primary {
+  background: var(--neon);
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 600;
+  border: none;
+  transition: transform 0.2s var(--ease-smooth);
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+}
+
+/* -------------------------------
+     FLOATING + OPINION BUTTON
+   -------------------------------- */
+.fab-opinion {
+  position: fixed;
+  bottom: 90px;
+  right: 18px;
+  background: var(--neon);
+  color: #fff;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 25px var(--neon-soft);
+  z-index: 50;
+  transition: all 0.4s var(--ease-smooth);
+}
+
+/* -------------------------------
+     ANIMATIONS
+   -------------------------------- */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-up {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s var(--ease-smooth) forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s var(--ease-smooth) forwards;
+}
+
+.animate-scale-up {
+  animation: scale-up 0.3s var(--ease-smooth) forwards;
+}
+
+/* -------------------------------
+     LINKS
+   -------------------------------- */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* SKELETON LOADING ANIMATION */
+.skeleton-bg {
+  background: #1a1c2e;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-bg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* --- CUSTOM PULSE ANIMATION --- */
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.15);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* =======================================================
+   NATIVE APP LAYER — Safe Area + TWA
+   Ported from global.css v10.0.0 section.
+
+   REMOVED (tied to spa_router.js / document.startViewTransition):
+     @keyframes vt-slide-in
+     @keyframes vt-slide-out
+     @keyframes vt-fade-in
+     ::view-transition-old(root)
+     ::view-transition-new(root)
+     @media prefers-reduced-motion ::view-transition-* block
+   Route transitions are now handled by AppLayout (.route-enter
+   class in app-shell.css), which matches the old 180ms slide-in
+   feel without requiring View Transitions API.
+   ======================================================= */
+
+/* ─── Safe Area Insets — Notch / Dynamic Island / Home bar ─── */
+:root {
+  --safe-top:    env(safe-area-inset-top,    0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+}
+
+/* Bottom nav must clear the home bar indicator on iPhone/Android */
+.bottom-nav-glass,
+[class*="bottom-nav"],
+[class*="bottomNav"] {
+  padding-bottom: max(8px, var(--safe-bottom));
+}
+
+/* Top nav / status bar awareness */
+.top-nav-glass,
+[class*="top-nav"],
+[class*="topNav"] {
+  padding-top: max(0px, var(--safe-top));
+}
+
+/* ─── Android TWA / Standalone mode overrides ─── */
+@media (display-mode: standalone) {
+  html {
+    height: 100dvh;
+  }
+
+  body {
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  body::before {
+    content: '';
+    display: block;
+    height: env(safe-area-inset-top);
+    background: var(--bg-deep);
+  }
+}
+
+/* ─── Hardware acceleration for interactive elements ─── */
+/* KEPT as-is from old global.css (named selectors only —
+   NOT the wildcard [class*="card"] etc. which are removed
+   per §5.6. See app-shell.css for the full removal record.) */
+.glass-panel,
+.top-nav-glass,
+.bottom-nav-glass {
+  will-change: transform;
+}
+
+/* ─── Prevent tap highlight flash & disable web text selection app-wide (native app feel) ─── */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection strictly where needed (inputs, textareas, composers, search bars) */
+input,
+textarea,
+[contenteditable="true"],
+.selectable-text,
+.allow-select {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* -------------------------------
+     TOOLTIPS (DELAYED LABELS)
+   -------------------------------- */
+.delayed-label {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition-delay: 0s;
+}
+
+.group:active .delayed-label,
+.group:hover .delayed-label {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0.5s;
+}
+
+/* -------------------------------
+   App Shell Scroll Transitions
+   Provides GPU-accelerated transition for side-panels without animating layout changes (which causes infinite scroll jitter)
+------------------------------- */
+.transition-app-shell {
+  transition-property: transform, filter, opacity;
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.mask-fade-edges {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+}
+
+/* Logo shimmer for new users — subtle, no scale/layout shift */
+@keyframes logoTwinkle {
+  0%   { filter: brightness(1);    opacity: 1; }
+  30%  { filter: brightness(1.12) drop-shadow(0 0 6px rgba(255,255,255,0.55)); opacity: 0.95; }
+  60%  { filter: brightness(1.06) drop-shadow(0 0 3px rgba(47,139,255,0.35)); opacity: 1; }
+  80%  { filter: brightness(1.10) drop-shadow(0 0 5px rgba(255,255,255,0.4)); opacity: 0.97; }
+  100% { filter: brightness(1);    opacity: 1; }
+}
+
+.animate-logo-twinkle {
+  animation: logoTwinkle 2.4s ease-in-out infinite;
+  /* No transform — keeps layout stable */
+}
+
+/* .tour-spotlight-active removed — new tour uses SVG cutout mask, no DOM class needed */
+

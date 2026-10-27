@@ -1,0 +1,81 @@
+/* ============================================================
+   PLUSOPINION — DESIGN TOKENS
+   Ported exactly from global.css (:root blocks) + old inline
+   per-page <style> :root blocks. Single source of truth.
+
+   Token name mapping (old → new where renamed):
+     --card-bg          kept (was in global.css)
+     --border-glass     → aliased as --glass-border for old JSX compat
+     --neon-soft        → aliased as --neon-weak for old JSX compat
+     --text-muted       → aliased as --muted for old JSX compat
+     --radius-md        → aliased as --radius for old JSX compat
+   ============================================================ */
+
+:root {
+  /* ── Fonts ─────────────────────────────────────────────── */
+  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;   /* matches global.css exactly */
+
+  /* ── Core Background ────────────────────────────────────── */
+  --bg-deep:      #020205;
+  --bg-surface:   #0a0f1d;
+
+  /* ── Surface / Cards ─────────────────────────────────────── */
+  --card-bg:      rgba(255, 255, 255, 0.04);
+
+  /* ── Text ────────────────────────────────────────────────── */
+  --text-primary: #ffffff;
+  --text-muted:   rgba(255, 255, 255, 0.65);
+  --muted:        var(--text-muted);  /* alias — old JSX used --muted directly */
+
+  /* ── Brand Accent ────────────────────────────────────────── */
+  --neon:         #2f8bff;
+  --neon-soft:    rgba(47, 139, 255, 0.18);
+  --neon-weak:    var(--neon-soft);   /* alias — used in some inline styles */
+
+  /* ── Borders ─────────────────────────────────────────────── */
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --glass-border: var(--border-glass); /* alias */
+
+  /* ── Status / Semantic ───────────────────────────────────── */
+  /* NOTE on --success / --accent-green:
+     global.css defined: --success: #6bffb6
+     My Space (USER) tailwind config used: accent-green: '#00E676'
+     My Space (USER) also defined --accent-green: #00E676 inline.
+     Home / Bookmarks / Companies / MyProfile defined --accent-green: var(--neon-soft)
+     or #6bffb6 in their :root blocks.
+     Q1 resolution (approved): keep BOTH as separate tokens.
+     --success / --accent-green  = #6bffb6 (global.css canonical value)
+     --success-earnings          = #00E676 (My Space partner/earnings states only)
+     Scoped override applied in MySpace.jsx via a data-page attr or local CSS. */
+  --success:        #6bffb6;
+  --accent-green:   #6bffb6;        /* same value — two names used by old code */
+  --accent-gold:    #FFD700;
+  --danger:         #ff6b6b;        /* from global.css — NOT #FF5252 (invented) */
+
+  /* ── Radii ────────────────────────────────────────────────── */
+  --radius-sm:    10px;   /* from global.css */
+  --radius-md:    16px;   /* from global.css */
+  --radius-lg:    24px;   /* from global.css */
+  --radius:       var(--radius-md); /* alias used by old JSX */
+
+  /* ── Motion ──────────────────────────────────────────────── */
+  --ease-smooth:  cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ── Safe Area (also in global.css second :root block) ───── */
+  --safe-top:    env(safe-area-inset-top,    0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+
+  /* ── Nav (new — not in old CSS, needed by AppLayout) ─────── */
+  --nav-height:   64px;
+  --nav-bg:       rgba(3, 4, 18, 0.9);  /* matches .top-nav-glass/.bottom-nav-glass in global.css */
+
+  /* ── Z-index (new — not in old CSS, needed by AppLayout) ─── */
+  --z-nav:     100;
+  --z-drawer:  200;
+  --z-modal:   300;
+  --z-toast:   400;
+  --z-overlay: 500;
+}

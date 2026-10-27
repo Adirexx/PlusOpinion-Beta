@@ -1,0 +1,71 @@
+# ============================================
+# PlusOpinion — Production robots.txt
+# Modern SPA + AI Search & Answer Engine (GEO / AEO)
+# ============================================
+
+# ── General Search Engines (Google, Bing, Yahoo, etc.) ──
+User-agent: *
+Allow: /
+Allow: /feed
+Allow: /categories
+Allow: /post/
+Allow: /profile/
+Allow: /about
+Allow: /support
+Allow: /privacy-policy
+Allow: /t&c
+Allow: /cookies-policy
+Allow: /llms.txt
+
+# Private & authenticated user areas
+Disallow: /myprofile
+Disallow: /myspace
+Disallow: /workspace
+Disallow: /bookmarks
+Disallow: /notifications
+Disallow: /settings
+Disallow: /reset-password
+Disallow: /change-password
+Disallow: /api/
+Disallow: /node_modules/
+Disallow: /.env
+
+# Static assets for rendering
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.svg$
+Allow: /*.woff2$
+
+# ── Generative Engine Optimization (GEO & AEO) ──
+# Allows OpenAI, Perplexity, Anthropic, Google Gemini to index and cite opinions
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: cohere-ai
+User-agent: Meta-ExternalAgent
+Allow: /
+Allow: /feed
+Allow: /categories
+Allow: /post/
+Allow: /profile/
+Allow: /about
+Allow: /llms.txt
+Disallow: /myprofile
+Disallow: /myspace
+Disallow: /workspace
+Disallow: /bookmarks
+Disallow: /notifications
+Disallow: /settings
+
+# ── Sitemap & LLMs Discovery ──
+Sitemap: https://plusopinion.com/sitemap.xml
+LLM: https://plusopinion.com/llms.txt

@@ -1,0 +1,49 @@
+# ============================================
+# PlusOpinion — Cloudflare Pages Redirects
+# Modern SPA + Legacy Compatibility Rules
+# ============================================
+
+# --- Static Assets (serve directly, 200) ---
+/icon-192.png               /icon-192.png               200
+/icon-512.png               /icon-512.png               200
+/manifest.json              /manifest.json              200
+/robots.txt                 /robots.txt                 200
+/sitemap.xml                /sitemap.xml                200
+/offline.html               /offline.html               200
+/bg-video.mp4               /bg-video.mp4               200
+/.well-known/assetlinks.json /.well-known/assetlinks.json 200
+
+# --- Legacy .HTML redirects (301 Permanent) ---
+/HOMEPAGE_FINAL.HTML        /feed                       301
+/homepage_final.html        /feed                       301
+/BOOKMARKS.HTML             /bookmarks                  301
+/bookmarks.html             /bookmarks                  301
+/CATAGORYPAGE.HTML          /categories                 301
+/catagorypage.html          /categories                 301
+/MY%20SPACE%20FINAL%20(USER).HTML /myspace              301
+/MY%20SPACE%20FINAL(COMPANIES).HTML /workspace          301
+/NOTIFICATION%20PANEL.HTML  /notifications              301
+/notification_panel.html    /notifications              301
+/PRIVATE%20OWNER%20PROFILE.HTML /myprofile              301
+/PUBLIC%20POV%20PROFILE.HTML /profile                   301
+/ONBOARDING.HTML            /login                      301
+/onboarding.html            /login                      301
+/ABOUT.HTML                 /about                      301
+/about.html                 /about                      301
+/SUPPORT.HTML               /support                    301
+/support.html               /support                    301
+/PRIVACY_POLICY.HTML        /privacy-policy             301
+/privacy_policy.html        /privacy-policy             301
+/TERMS_AND_CONDITIONS.HTML  /t&c                        301
+/terms_and_conditions.html  /t&c                        301
+/COOKIES.HTML               /cookies-policy             301
+/cookies.html               /cookies-policy             301
+/MAINTENANCE.HTML           /maintenance                301
+/maintenance.html           /maintenance                301
+/reset-password.html        /reset-password             301
+/change-password.html       /change-password            301
+/settings.html              /settings                   301
+/SETTINGS.HTML              /settings                   301
+
+# --- Single Page Application Fallback ---
+/*                          /index.html                 200

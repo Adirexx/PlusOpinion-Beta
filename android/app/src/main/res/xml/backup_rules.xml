@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup Rules — PlusOpinion Android (API 23-30)
+  Phase 8 Native Hardening
+
+  For devices running Android 6-11 (API 23-30).
+  Same security rationale as data_extraction_rules.xml.
+-->
+<full-backup-content>
+    <!-- Exclude auth/session data -->
+    <exclude domain="sharedpref" path="." />
+    <!-- Exclude WebView databases (localStorage, IndexedDB) -->
+    <exclude domain="database" path="." />
+    <!-- Exclude cache -->
+    <exclude domain="root" path="cache/" />
+    <!-- Exclude Capacitor WebView storage -->
+    <exclude domain="root" path="app_webview/" />
+    <exclude domain="root" path="WebView/" />
+</full-backup-content>

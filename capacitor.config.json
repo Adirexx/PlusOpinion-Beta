@@ -1,0 +1,25 @@
+{
+  "appId": "com.plusopinion.app",
+  "appName": "PlusOpinion",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 200,
+      "backgroundColor": "#020205",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#020205"
+    }
+  }
+}

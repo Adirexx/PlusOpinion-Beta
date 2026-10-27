@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Data Extraction Rules — PlusOpinion Android (API 31+)
+  Phase 8 Native Hardening
+
+  Android 12+ (API 31) requires explicit data extraction rules.
+  This file controls what gets backed up to Google cloud AND what
+  can be transferred during device-to-device migration.
+
+  SECURITY CRITICAL:
+    - EXCLUDE auth tokens (Supabase session stored in SharedPreferences/localStorage)
+    - EXCLUDE E2EE inbox private keys (stored in localStorage as po_inbox_pk_*)
+    - EXCLUDE WebView cookies and session data
+    - INCLUDE app preferences (theme, settings) — non-sensitive
+
+  Reference: https://developer.android.com/identity/data/autobackup
+-->
+<data-extraction-rules>
+    <!-- Cloud backup rules -->
+    <cloud-backup>
+        <!-- Exclude all SharedPreferences (may contain auth tokens) -->
+        <exclude domain="sharedpref" path="." />
+        <!-- Exclude WebView data (localStorage, IndexedDB, cookies) -->
+        <exclude domain="database" path="." />
+        <!-- Exclude all files in the app's internal cache -->
+        <exclude domain="root" path="cache/" />
+        <!-- Exclude Capacitor WebView local storage -->
+        <exclude domain="root" path="app_webview/" />
+        <exclude domain="root" path="WebView/" />
+    </cloud-backup>
+
+    <!-- Device-to-device transfer rules (Android 12+ migration) -->
+    <device-transfer>
+        <!-- Same exclusions apply — auth tokens must never transfer -->
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="root" path="cache/" />
+        <exclude domain="root" path="app_webview/" />
+        <exclude domain="root" path="WebView/" />
+    </device-transfer>
+</data-extraction-rules>

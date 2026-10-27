@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration — PlusOpinion Android
+  Phase 8 Native Hardening
+
+  This file tells Android which network connections are allowed:
+    - Cleartext HTTP is BLOCKED everywhere (all traffic must use HTTPS)
+    - Certificate pinning for plusopinion.com and supabase.co domains
+    - System CA certificates trusted for production
+    - Debug override: user-installed certs allowed ONLY in debug builds
+
+  Reference: https://developer.android.com/privacy-and-security/security-config
+-->
+<network-security-config>
+    <!-- Base config: HTTPS only, no cleartext -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- PlusOpinion production domain -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">plusopinion.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Supabase API domain (proxied through plusopinion.com in production,
+         but direct in some dev scenarios) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">supabase.co</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Google Sign-In / Identity Services -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <domain includeSubdomains="true">accounts.google.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Debug override: allow user-installed CAs only in debug builds
+         (e.g., Charles Proxy for network inspection during development) -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

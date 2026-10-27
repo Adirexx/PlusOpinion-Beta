@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.plusopinion.app",
+      "sha256_cert_fingerprints": [
+        "A2:FF:FC:D7:A1:F2:9D:35:B6:1D:B1:06:80:9B:51:50:29:3F:74:A8:A2:7E:7F:06:CB:04:7F:BA:68:BD:02:27"
+      ]
+    }
+  }
+]
