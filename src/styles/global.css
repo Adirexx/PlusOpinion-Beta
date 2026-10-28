@@ -415,10 +415,10 @@ a {
   padding-bottom: max(8px, var(--safe-bottom));
 }
 
-/* Top nav / status bar awareness */
+/* Top nav / status bar awareness (exclude .login-top-nav which has its own layout) */
 .top-nav-glass,
-[class*="top-nav"],
-[class*="topNav"] {
+[class*="top-nav"]:not(.login-top-nav),
+[class*="topNav"]:not(.login-top-nav) {
   padding-top: max(0px, var(--safe-top));
 }
 

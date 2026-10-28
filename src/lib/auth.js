@@ -468,6 +468,7 @@ export function scanAndRenderGoogleButtons() {
     el.style.width = '100%'
     el.style.display = 'flex'
     el.style.justifyContent = 'center'
+    el.style.colorScheme = 'light'
 
     window.google.accounts.id.renderButton(el, {
       theme: 'filled_black',

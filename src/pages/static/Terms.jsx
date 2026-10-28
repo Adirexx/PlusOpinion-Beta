@@ -22,7 +22,7 @@ export default function Terms() {
       <main className="static-main">
         <header className="static-page-header">
           <h1>Terms and Conditions</h1>
-          <p className="static-meta">Effective Date: February 11, 2026. Last Updated: February 11, 2026.</p>
+          <p className="static-meta">Effective Date: February 11, 2026. Last Updated: October 27, 2026.</p>
         </header>
 
         <div className="static-sections">
@@ -121,7 +121,7 @@ export default function Terms() {
               <p style={{ fontSize: 14, color: '#cbd5e1', marginBottom: 16 }}>
                 In accordance with our privacy-first philosophy, sensitive documentation (including government IDs
                 and banking information) is <strong style={{ color: '#fff' }}>strictly collected only upon qualification
-                for the Partner Program.</strong>
+                  for the Partner Program.</strong>
               </p>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 200, fontSize: 12, color: '#94a3b8', borderLeft: '2px solid rgba(59,130,246,0.3)', paddingLeft: 16 }}>

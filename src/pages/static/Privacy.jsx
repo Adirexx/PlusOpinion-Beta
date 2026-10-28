@@ -22,7 +22,7 @@ export default function Privacy() {
       <main className="static-main">
         <header className="static-page-header">
           <h1>Privacy Policy</h1>
-          <p className="static-meta">Effective Date: February 11, 2026. Last Updated: February 11, 2026.</p>
+          <p className="static-meta">Effective Date: February 11, 2026. Last Updated: October 27, 2026.</p>
         </header>
 
         <div className="static-sections">
@@ -96,7 +96,7 @@ export default function Privacy() {
               <h4 style={{ fontSize: 18, color: '#fff', marginBottom: 16 }}>Conditional Collection &amp; Data Minimization</h4>
               <p style={{ fontSize: 14, color: '#cbd5e1', marginBottom: 16 }}>
                 To ensure maximal privacy, <strong style={{ color: '#fff' }}>PlusOpinion does NOT collect government-issued
-                IDs or bank details during initial onboarding.</strong> Document collection is triggered{' '}
+                  IDs or bank details during initial onboarding.</strong> Document collection is triggered{' '}
                 <em style={{ color: '#60a5fa' }}>ONLY</em> upon meeting the{' '}
                 <Link to="/t&c">Partner Program</Link> eligibility thresholds.
               </p>
