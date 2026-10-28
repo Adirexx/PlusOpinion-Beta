@@ -1119,7 +1119,7 @@ textarea.pc-form-input {
   }
 
   .drift-column img {
-    filter: brightness(0.3) blur(0.6px);
+    filter: brightness(0.3) blur(0.5px);
     border-radius: 10px;
   }
 
