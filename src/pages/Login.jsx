@@ -1375,8 +1375,8 @@ export default function Login() {
                 <Link to="/cookies-policy">Cookies</Link>
               </div>
               <div className="m-footer-right">
-                <div className="login-footer-socials" style={{ margin: 0, gap: 8 }}>
-                  <SocialIcons size={22} iconSize={11} />
+                <div className="login-footer-socials">
+                  <SocialIcons size={18} iconSize={9} />
                 </div>
                 <span className="login-footer-beta-tag">Version BETA</span>
               </div>
