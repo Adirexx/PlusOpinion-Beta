@@ -204,6 +204,7 @@ export default function Terms() {
               <li>Posting false, misleading, defamatory, or harmful content.</li>
               <li>Harassing, threatening, or intimidating other users.</li>
               <li>Impersonating any person, brand, or entity.</li>
+              <li>Publishing, sharing, or facilitating any Child Sexual Abuse Material (CSAM) or Child Sexual Exploitation and Abuse (CSAE). We maintain zero tolerance for child exploitation and immediately report violations to law enforcement and NCMEC.</li>
               <li>Using automated tools, bots, or scripts to interact with the Platform.</li>
               <li>Attempting to access another user's account without authorization.</li>
               <li>Circumventing or disabling any security features of the Platform.</li>

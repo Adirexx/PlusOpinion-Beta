@@ -460,16 +460,24 @@ export default function Privacy() {
             </div>
           </section>
 
-          {/* CHILDREN'S PRIVACY */}
+          {/* CHILDREN'S PRIVACY & CHILD SAFETY STANDARDS */}
           <section className="static-section">
-            <h2>8. Children's Privacy</h2>
+            <h2>8. Children's Privacy & Child Safety Standards</h2>
             <p>
               PlusOpinion is strictly intended for users who are 18 years of age or older. We do
               not knowingly collect personal information from individuals under 18. During
               registration, we collect date of birth solely to verify age eligibility. If we
               discover that a user under 18 has created an account, we will immediately suspend the
-              account and delete the associated personal data. If you are a parent or guardian and
-              believe a minor has registered on our Platform, please contact us immediately at{' '}
+              account and delete the associated personal data.
+            </p>
+            <p style={{ marginTop: '12px' }}>
+              <strong style={{ color: '#fff' }}>Zero Tolerance for Child Sexual Abuse and Exploitation (CSAE):</strong> PlusOpinion maintains a strict zero-tolerance policy against Child Sexual Abuse Material (CSAM) and any form of Child Sexual Abuse and Exploitation (CSAE). We strictly prohibit users from creating, sharing, storing, or transmitting any content that depicts, promotes, or facilitates the sexual abuse or exploitation of minors.
+            </p>
+            <p style={{ marginTop: '12px' }}>
+              <strong style={{ color: '#fff' }}>In-App Reporting & Enforcement:</strong> The Platform provides functional in-app reporting tools (via post menus and user profile moderation) allowing users to report any suspicious or inappropriate content immediately. Any confirmed CSAM will result in immediate content removal, permanent account termination, and mandatory reporting to the National Center for Missing and Exploited Children (NCMEC) and relevant law enforcement authorities.
+            </p>
+            <p style={{ marginTop: '12px' }}>
+              For urgent child safety matters or inquiries, contact our designated safety team directly at{' '}
               <a href="mailto:support@plusopinion.com">support@plusopinion.com</a>.
             </p>
           </section>
