@@ -88,32 +88,46 @@ const SUPABASE_ORIGIN   = `https://${SUPABASE_HOSTNAME}`
  * before the request hits the network. Works in browser, Capacitor WebView,
  * and any environment where fetch() is available.
  *
- * On localhost: /supabase-api → Vite dev proxy → real supabase.co
- * On production / Capacitor: /supabase-api → Cloudflare _worker.js → real supabase.co
+ * Includes automatic dual-path failover: attempts proxied request first,
+ * and seamlessly falls back to direct Supabase if proxy network fails.
  */
-function _proxyFetch(input, init = {}) {
-  let url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+async function _proxyFetch(input, init = {}) {
+  const originalUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url || ''
 
-  if (typeof url === 'string' && url.includes(SUPABASE_HOSTNAME)) {
-    // In Capacitor, origin is https://localhost (with no local proxy server).
-    // Route to production Cloudflare proxy to preserve ISP bypass and CORS.
+  if (typeof originalUrl === 'string' && originalUrl.includes(SUPABASE_HOSTNAME)) {
     const origin = _isCapacitor
       ? 'https://plusopinion.com'
       : (typeof window !== 'undefined' ? window.location.origin : '')
-    url = url.replace(SUPABASE_ORIGIN, origin + '/supabase-api')
+    const proxiedUrl = originalUrl.replace(SUPABASE_ORIGIN, origin + '/supabase-api')
 
-    // Clone the Request if needed, preserving all init options
-    const requestInit = {
-      ...init,
-      // duplex: 'half' is required when a POST body is sent from a Service Worker;
-      // it's optional (but harmless) in a regular browser context. We set it
-      // here to future-proof Capacitor scenarios.
-      ...(init.body && init.method && !['GET', 'HEAD'].includes(init.method)
-        ? { duplex: 'half' }
-        : {}),
+    // Determine duplex option: ONLY if body is a true ReadableStream
+    // Do NOT set duplex for FormData, Blob, string, or Buffer as it causes "Failed to fetch" in Chromium
+    const isStreamBody = typeof ReadableStream !== 'undefined' && init?.body instanceof ReadableStream
+    const baseInit = { ...init }
+    if (isStreamBody) {
+      baseInit.duplex = 'half'
+    } else {
+      delete baseInit.duplex
     }
 
-    return fetch(url, requestInit)
+    try {
+      const response = await fetch(proxiedUrl, baseInit)
+      // If the proxy returns a server/gateway error (502-504), retry with direct connection
+      if (response.status >= 502 && response.status <= 504) {
+        console.warn(`[SupabaseProxy] Proxy returned HTTP ${response.status}, retrying via direct Supabase...`)
+        return await fetch(originalUrl, baseInit)
+      }
+      return response
+    } catch (proxyError) {
+      // Network/CORS failure on proxy: seamlessly fallback to direct Supabase
+      console.warn('[SupabaseProxy] Proxy connection failed, falling back to direct Supabase:', proxyError.message)
+      try {
+        return await fetch(originalUrl, baseInit)
+      } catch {
+        // If both failed, throw original error
+        throw proxyError
+      }
+    }
   }
 
   // Non-supabase URL — pass through unchanged

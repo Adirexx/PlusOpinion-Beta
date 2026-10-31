@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useActions } from '../../context/ActionsContext'
 import { useInbox } from '../../context/InboxContext'
 import { decryptFromUser, getChatImageUrl } from '../../lib/inbox/inboxCrypto'
+import { rewriteMediaUrl } from '../../lib/api/media'
 import MessageReactions from './MessageReactions'
 import SharedPostPreview from './SharedPostPreview'
 import SharedProfilePreview from './SharedProfilePreview'
@@ -72,15 +73,18 @@ export default function MessageBubble({ msg, conv }) {
     useEffect(() => {
         if (msg.message_type === 'image' && msg.media_url) {
             if (msg.media_url.startsWith('http') || msg.media_url.startsWith('blob:')) {
-                setImageUrl(msg.media_url)
+                setImageUrl(rewriteMediaUrl(msg.media_url))
             } else {
                 getChatImageUrl(msg.media_url)
-                    .then(setImageUrl)
-                    .catch(() => setImageUrl(null))
+                    .then(url => setImageUrl(url))
+                    .catch((err) => {
+                        console.error('[MessageBubble] Failed to load chat image:', err)
+                        setImageUrl(null)
+                    })
             }
         } else if (msg.message_type === 'image' && msg.content && !msg.content_iv && msg.content !== '[image]') {
             // Optimistic image from content
-            setImageUrl(msg.content)
+            setImageUrl(rewriteMediaUrl(msg.content))
         }
     }, [msg.message_type, msg.media_url, msg.content, msg.content_iv])
 
@@ -211,9 +215,31 @@ export default function MessageBubble({ msg, conv }) {
                         alt="Chat" 
                         loading="lazy" 
                         onClick={() => openImage(imageUrl)}
+                        onError={(e) => {
+                            const current = e.currentTarget.src;
+                            if (e.currentTarget.dataset.retried) {
+                                return;
+                            }
+                            let fallback = null;
+                            if (current.includes('/supabase-api')) {
+                                fallback = current.replace(/https?:\/\/[^\/]+\/supabase-api/, 'https://ogqyemyrxogpnwitumsr.supabase.co');
+                            } else if (current.includes('ogqyemyrxogpnwitumsr.supabase.co')) {
+                                fallback = current.replace('https://ogqyemyrxogpnwitumsr.supabase.co', 'https://plusopinion.com/supabase-api');
+                            }
+                            if (fallback && fallback !== current) {
+                                e.currentTarget.dataset.retried = 'true';
+                                e.currentTarget.src = fallback;
+                            }
+                        }}
                     />
                 ) : (
-                    <div style={{ width: 240, height: 160, background: 'rgba(255,255,255,0.05)', borderRadius: 12 }} />
+                    <div style={{ width: 240, height: 160, background: 'rgba(255,255,255,0.05)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </div>
                 )}
                 <div className="chat-msg-time" style={{ display: 'flex', alignItems: 'center' }}>
                     {timeStr}

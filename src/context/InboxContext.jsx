@@ -13,6 +13,7 @@ import { useAuth } from './AuthContext'
 import * as inboxApi from '../lib/inbox/inboxApi.js'
 import * as inboxCrypto from '../lib/inbox/inboxCrypto.js'
 import { getCached, setCached } from '../lib/dataCache.js'
+import { rewriteMediaUrl } from '../lib/api/media.js'
 
 const InboxContext = createContext(null)
 
@@ -25,13 +26,6 @@ function escHtml(s) {
 function extractFirstUrl(text) {
     const match = text.match(/https?:\/\/[^\s]+/);
     return match ? match[0] : null;
-}
-
-// Avatar URL rewriting (same logic as old window.rewriteMediaUrl)
-function rewriteMediaUrl(url) {
-    if (!url) return url;
-    // If URL contains supabase storage path, it's already correct
-    return url;
 }
 
 const DEFAULT_AVATAR = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8'/%3E%3C/svg%3E`;

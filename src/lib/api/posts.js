@@ -165,12 +165,9 @@ export async function getPost(postId) {
         .single();
 
     if (error) throw error;
-    // Rewrite media URL so video/image sources are proxied
-    if (data && rewriteMediaUrl) {
-        data.media_url = data.media_url ? rewriteMediaUrl(data.media_url) : data.media_url;
-        if (data.profiles?.avatar_url) {
-            data.profiles.avatar_url = rewriteMediaUrl(data.profiles.avatar_url);
-        }
+    // Rewrite all media/avatar URLs so video/image sources are proxied
+    if (data && rewritePostUrls) {
+        return rewritePostUrls([data])[0];
     }
     return data;
 };
@@ -190,7 +187,7 @@ export async function updatePost(postId, updates) {
         .single();
 
     if (error) throw error;
-    return data;
+    return rewritePostUrls ? rewritePostUrls(data) : data;
 };
 
 /**
@@ -222,7 +219,7 @@ export async function getMyDrafts() {
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return rewritePostUrls ? rewritePostUrls(data) : data;
 };
 
 /**
@@ -269,7 +266,7 @@ export async function getMyCommentedPosts() {
         .eq('is_draft', false); // Don't show drafts even if commented (edge case)
 
     if (postsError) throw postsError;
-    return posts;
+    return rewritePostUrls ? rewritePostUrls(posts) : posts;
 };
 
 

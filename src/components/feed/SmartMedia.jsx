@@ -6,6 +6,37 @@ const getAspectClass = (ratio) => {
   return 'aspect-[4/5]'; // Portrait → 4:5 (covers tall too)
 };
 
+const getFallbackUrl = (failedUrl) => {
+  if (!failedUrl || typeof failedUrl !== 'string') return null;
+  if (failedUrl.includes('wsrv.nl/?url=')) {
+    try {
+      return decodeURIComponent(failedUrl.split('url=')[1].split('&')[0]);
+    } catch (_) {}
+  }
+  if (failedUrl.includes('/supabase-api')) {
+    return failedUrl.replace(/https?:\/\/[^\/]+\/supabase-api/, 'https://ogqyemyrxogpnwitumsr.supabase.co');
+  }
+  if (failedUrl.includes('ogqyemyrxogpnwitumsr.supabase.co')) {
+    return failedUrl.replace('https://ogqyemyrxogpnwitumsr.supabase.co', 'https://plusopinion.com/supabase-api');
+  }
+  return null;
+};
+
+const handleImgError = (e) => {
+  const current = e.currentTarget.src;
+  if (e.currentTarget.dataset.retried) {
+    e.currentTarget.style.opacity = '0';
+    return;
+  }
+  const fallback = getFallbackUrl(current);
+  if (fallback && fallback !== current) {
+    e.currentTarget.dataset.retried = 'true';
+    e.currentTarget.src = fallback;
+  } else {
+    e.currentTarget.style.opacity = '0';
+  }
+};
+
 const SmartMedia = ({ src, type, images, onImageClick }) => {
             const isVideo = type === 'video' || type?.startsWith('video/') || src?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
             const isMulti = images && images.length > 1;
@@ -228,6 +259,7 @@ const SmartMedia = ({ src, type, images, onImageClick }) => {
                                             decoding="async"
                                             className="w-full h-full object-cover pointer-events-none"
                                             onLoad={idx === 0 ? handleMediaLoad : undefined}
+                                            onError={handleImgError}
                                             draggable="false"
                                         />
                                     </div>
@@ -265,6 +297,7 @@ const SmartMedia = ({ src, type, images, onImageClick }) => {
                                 decoding="async"
                                 className="w-full h-full object-cover pointer-events-none"
                                 onLoad={handleMediaLoad}
+                                onError={handleImgError}
                                 draggable="false"
                             />
                         </div>

@@ -10,60 +10,100 @@ import { supabase } from '../supabaseClient.js'
 import { getCurrentUser } from '../auth.js'
 
 const _SUPABASE_ORIGIN = 'https://ogqyemyrxogpnwitumsr.supabase.co'
-const _VIDEO_EXTS = /\.(mp4|mov|webm|ogg|avi|mkv|m4v|3gp)(\?|$)/i
-const _IMAGE_EXTS = /\.(jpg|jpeg|png|gif|webp|heic|avif|svg|bmp|tiff)(\?|$)/i
+const _PROXY_ORIGIN = 'https://plusopinion.com/supabase-api'
 
-export function rewriteMediaUrl(url) {
+/**
+ * Recovers the direct, canonical Supabase URL from any proxied, CDN, or wsrv.nl URL.
+ */
+export function getDirectSupabaseUrl(url) {
     if (!url || typeof url !== 'string') return url;
-    if (!url.includes('ogqyemyrxogpnwitumsr.supabase.co')) return url;
 
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.') ||
-        hostname.endsWith('.local');
-
-    const isVideo = _VIDEO_EXTS.test(url);
-
-    if (isLocalhost) {
-        if (isVideo) {
-            // Videos MUST go through a real proxy that supports:
-            // - HTTP Range requests (206 Partial Content — required for seeking)
-            // - Proper Content-Type, Content-Length, Accept-Ranges headers
-            // wsrv.nl cannot provide any of these for video files.
-            return url.replace(_SUPABASE_ORIGIN, 'https://plusopinion.com/supabase-api');
-        }
-        // Images: wsrv.nl CDN — very fast, compresses to WebP
-        return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=900&fit=cover&output=webp&q=82`;
+    // Unwrap wsrv.nl if present
+    if (url.includes('wsrv.nl/?url=')) {
+        try {
+            const raw = decodeURIComponent(url.split('url=')[1].split('&')[0]);
+            return getDirectSupabaseUrl(raw);
+        } catch (_) {}
     }
 
-    // Production (Cloudflare Pages): same-origin proxy handles everything
-    return url.replace(_SUPABASE_ORIGIN, window.location.origin + '/supabase-api');
+    // Revert /supabase-api proxy to direct supabase.co
+    if (url.includes('/supabase-api')) {
+        return url.replace(/https?:\/\/[^\/]+\/supabase-api/, _SUPABASE_ORIGIN);
+    }
+
+    return url;
+}
+
+/**
+ * Rewrites any Supabase storage URL to the high-performance Cloudflare proxy,
+ * ensuring ISP-level resilience across both web and native mobile apps without
+ * relying on fragile third-party CDNs.
+ */
+export function rewriteMediaUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+
+    // If it's wrapped in wsrv.nl, unwrap it first
+    if (url.includes('wsrv.nl/?url=')) {
+        url = getDirectSupabaseUrl(url);
+    }
+
+    const isSupabase = url.includes('ogqyemyrxogpnwitumsr.supabase.co');
+    const isAlreadyProxied = url.includes('/supabase-api');
+
+    if (!isSupabase && !isAlreadyProxied) return url;
+
+    // In web production: use same-origin proxy (window.location.origin + '/supabase-api')
+    // In Capacitor mobile app / dev: use absolute https://plusopinion.com/supabase-api
+    const isWebProd = typeof window !== 'undefined' &&
+        window.location.hostname !== 'localhost' &&
+        window.location.hostname !== '127.0.0.1' &&
+        !window.location.protocol.startsWith('capacitor');
+
+    const targetProxy = isWebProd
+        ? window.location.origin + '/supabase-api'
+        : _PROXY_ORIGIN;
+
+    if (isSupabase) {
+        return url.replace(_SUPABASE_ORIGIN, targetProxy);
+    }
+
+    // Standardize existing proxy URLs if needed
+    if (isAlreadyProxied && !url.startsWith(targetProxy)) {
+        return url.replace(/https?:\/\/[^\/]+\/supabase-api/, targetProxy);
+    }
+
+    return url;
 };
 
 /**
  * Post-process an array of post objects to rewrite all media URLs.
- * Call this after any API fetch that returns post data with media_url / avatar_url.
+ * Call this after any API fetch that returns post data with media_url / avatar_url / images.
  * This ensures the HTML never even sees raw supabase.co URLs.
  */
-
-
-
 export function rewritePostUrls(posts) {
-    if (!posts || !rewriteMediaUrl) return posts;
+    if (!posts || !Array.isArray(posts)) return posts;
     const rewrite = rewriteMediaUrl;
-    return posts.map(post => ({
-        ...post,
-        media_url: post.media_url ? rewrite(post.media_url) : post.media_url,
-        verification_proof_url: post.verification_proof_url ? rewrite(post.verification_proof_url) : post.verification_proof_url,
-        profiles: post.profiles ? {
-            ...post.profiles,
-            avatar_url: post.profiles.avatar_url ? rewrite(post.profiles.avatar_url) : post.profiles.avatar_url
-        } : post.profiles
-    }));
-};
 
+    return posts.map(post => {
+        const mediaUrl = post.media_url ? rewrite(post.media_url) : post.media_url;
+        const media = post.media ? rewrite(post.media) : mediaUrl;
+        const images = Array.isArray(post.images)
+            ? post.images.map(img => (typeof img === 'string' ? rewrite(img) : img))
+            : post.images;
+
+        return {
+            ...post,
+            media_url: mediaUrl,
+            media: media,
+            images: images,
+            verification_proof_url: post.verification_proof_url ? rewrite(post.verification_proof_url) : post.verification_proof_url,
+            profiles: post.profiles ? {
+                ...post.profiles,
+                avatar_url: post.profiles.avatar_url ? rewrite(post.profiles.avatar_url) : post.profiles.avatar_url
+            } : post.profiles
+        };
+    });
+};
 
 /**
  * Get current authenticated user
@@ -75,8 +115,6 @@ export function rewritePostUrls(posts) {
  * Get user's engraved specific number (Badge)
  * Logic: Rank by created_at ascending + 4 (So 1st user gets #5)
  */
-
-
 
 export async function uploadMedia(file) {
     const user = await getCurrentUser();
@@ -92,12 +130,12 @@ export async function uploadMedia(file) {
 
     if (uploadError) throw uploadError;
 
-    // Get public URL
+    // Get canonical public URL to store in DB
     const { data } = supabase.storage
         .from('post-media')
         .getPublicUrl(fileName);
 
-    return rewriteMediaUrl ? rewriteMediaUrl(data.publicUrl) : data.publicUrl;
+    return data.publicUrl;
 };
 
 /**

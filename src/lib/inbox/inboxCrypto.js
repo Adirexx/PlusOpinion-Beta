@@ -23,6 +23,7 @@
 
 import { supabase } from '../supabaseClient.js'
 import { encryptPrivateKeyWithPin, decryptPrivateKeyWithPin } from './pinCrypto.js'
+import { rewriteMediaUrl } from '../api/media.js'
 
 const STORAGE_KEY_PREFIX = 'po_inbox_pk_'; // po = PlusOpinion
 
@@ -572,7 +573,10 @@ export async function uploadChatImage(blob, conversationId, senderId) {
  */
 export async function getChatImageUrl(path) {
     if (!path) return null;
-    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return rewriteMediaUrl(path);
+    }
+    if (path.startsWith('blob:')) {
         return path;
     }
     const cleanPath = path.replace(/^chat-media\//, '');
@@ -583,7 +587,7 @@ export async function getChatImageUrl(path) {
         console.error('[Crypto] getChatImageUrl error for', cleanPath, error);
         throw error;
     }
-    return data.signedUrl;
+    return rewriteMediaUrl(data.signedUrl);
 }
 
 // Lower-level exports for testing

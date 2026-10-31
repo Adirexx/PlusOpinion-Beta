@@ -134,12 +134,17 @@ export default {
             const proxyHeaders = new Headers(request.headers);
             proxyHeaders.set('Host', SUPABASE_HOSTNAME);
 
-            const proxyRequest = new Request(targetUrl.toString(), {
+            const proxyRequestInit = {
                 method: request.method,
                 headers: proxyHeaders,
                 body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
-                redirect: 'follow'
-            });
+                redirect: 'follow',
+            };
+            if (request.body && !['GET', 'HEAD'].includes(request.method)) {
+                proxyRequestInit.duplex = 'half';
+            }
+
+            const proxyRequest = new Request(targetUrl.toString(), proxyRequestInit);
 
             try {
                 const response = await fetch(proxyRequest);
