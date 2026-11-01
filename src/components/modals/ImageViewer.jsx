@@ -1,11 +1,31 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Icon from '../ui/Icon';
+import { rewriteMediaUrl } from '../../lib/api/media';
 
 const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
-            // Normalize: images[] takes priority; fall back to single src
-            const imgList = (images && images.length > 0) ? images : (src && type !== 'video' ? [src] : []);
+            // Rewrite all incoming URLs through the proxy for mobile/ISP resilience
+            const rw = (u) => (u && typeof u === 'string') ? rewriteMediaUrl(u) : u;
+            const imgListRaw = (images && images.length > 0) ? images : (src && type !== 'video' ? [src] : []);
+            const imgList = imgListRaw.map(rw);
+            const rwSrc = rw(src);
             const isVideo = type === 'video' && (!images || images.length === 0);
             const isMulti = imgList.length > 1;
+
+            // onError handler: swap proxy ↔ direct Supabase URL on failure
+            const handleImgError = (e) => {
+                const cur = e.currentTarget.src;
+                if (e.currentTarget.dataset.retried) return;
+                let fallback = null;
+                if (cur.includes('/supabase-api')) {
+                    fallback = cur.replace(/https?:\/\/[^\/]+\/supabase-api/, 'https://ogqyemyrxogpnwitumsr.supabase.co');
+                } else if (cur.includes('ogqyemyrxogpnwitumsr.supabase.co')) {
+                    fallback = cur.replace('https://ogqyemyrxogpnwitumsr.supabase.co', 'https://plusopinion.com/supabase-api');
+                }
+                if (fallback && fallback !== cur) {
+                    e.currentTarget.dataset.retried = 'true';
+                    e.currentTarget.src = fallback;
+                }
+            };
 
             const [currentIdx, setCurrentIdx] = useState(initialIndex || 0);
             const [scale, setScale] = useState(1);
@@ -110,7 +130,7 @@ const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
                         /* ── Full-screen video ─────────── */
                         <div className="w-full h-full flex items-center justify-center p-4" onClick={onClose}>
                             <video
-                                src={src}
+                                src={rwSrc}
                                 className="max-w-full max-h-full object-contain"
                                 controls autoPlay
                                 onClick={e => e.stopPropagation()}
@@ -135,6 +155,7 @@ const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
                                             className={`select-none ${type === 'avatar' ? 'w-[85vw] h-[85vw] max-w-[400px] max-h-[400px] rounded-full object-cover shadow-2xl border-4 border-white/10' : 'max-w-full max-h-full object-contain p-2'}`}
                                             style={idx === currentIdx ? { transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s' } : {}}
                                             onDoubleClick={idx === currentIdx ? handleDoubleTap : undefined}
+                                            onError={handleImgError}
                                             draggable="false"
                                             onClick={e => e.stopPropagation()}
                                         />
@@ -160,10 +181,11 @@ const ImageViewer = ({ src, type, images, initialIndex = 0, onClose }) => {
                             onClick={onClose}
                         >
                             <img
-                                src={imgList[0] || src}
+                                src={imgList[0] || rwSrc}
                                 className={`select-none ${type === 'avatar' ? 'w-[85vw] h-[85vw] max-w-[400px] max-h-[400px] rounded-full object-cover shadow-2xl border-4 border-white/10' : 'max-w-full max-h-full object-contain p-2'}`}
                                 style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`, transition: isPinching ? 'none' : 'transform 0.1s ease-out' }}
                                 onDoubleClick={handleDoubleTap}
+                                onError={handleImgError}
                                 onClick={e => e.stopPropagation()}
                                 draggable="false"
                             />

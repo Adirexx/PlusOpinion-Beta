@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-
 const getAspectClass = (ratio) => {
   if (ratio >= 1.55) return 'aspect-[16/9]'; // Landscape → 16:9
   if (ratio >= 0.89) return 'aspect-square'; // Square / near-square → 1:1
@@ -45,9 +44,10 @@ const SmartMedia = ({ src, type, images, onImageClick }) => {
             // Global mute state
             const [isMuted, setIsMuted] = useState(() => {
                 const stored = localStorage.getItem('globalVideoMuted');
-                return stored ? stored === 'true' : false; // default unmuted
+                return stored ? stored === 'true' : true; // default muted (required for autoplay)
             });
             const [isInView, setIsInView] = useState(false);
+            const videoRef = useRef(null);
 
             useEffect(() => {
                 const handleMuteChange = (e) => setIsMuted(e.detail.isMuted);
@@ -58,8 +58,17 @@ const SmartMedia = ({ src, type, images, onImageClick }) => {
             useEffect(() => {
                 if (!isVideo || !containerRef.current) return;
                 const observer = new IntersectionObserver(([entry]) => {
-                    setIsInView(entry.isIntersecting);
-                }, { threshold: 0.6 });
+                    const inView = entry.isIntersecting;
+                    setIsInView(inView);
+                    // Imperatively play/pause so autoplay works on Capacitor WebView
+                    if (videoRef.current) {
+                        if (inView) {
+                            videoRef.current.play().catch(() => {});
+                        } else {
+                            videoRef.current.pause();
+                        }
+                    }
+                }, { threshold: 0.3 }); // Lower threshold for earlier trigger on mobile
 
                 observer.observe(containerRef.current);
                 return () => observer.disconnect();
@@ -70,6 +79,8 @@ const SmartMedia = ({ src, type, images, onImageClick }) => {
                 const newMuted = !isMuted;
                 setIsMuted(newMuted);
                 localStorage.setItem('globalVideoMuted', newMuted);
+                // Apply mute immediately to the video element
+                if (videoRef.current) videoRef.current.muted = newMuted;
                 window.dispatchEvent(new CustomEvent('globalMuteToggle', { detail: { isMuted: newMuted } }));
             };
 
@@ -213,10 +224,13 @@ const SmartMedia = ({ src, type, images, onImageClick }) => {
                             style={{ transform: `scale(${scale})`, transformOrigin: `${pinchOrigin.x}% ${pinchOrigin.y}%`, transition: isPinching ? 'none' : 'transform 0.3s' }}
                         >
                             <video
+                                ref={videoRef}
                                 src={src}
                                 className="w-full h-full object-cover pointer-events-none"
-                                playsInline loop muted={isMuted || !isInView} autoPlay={isInView}
-                                preload="metadata"
+                                playsInline loop
+                                muted={isMuted}
+                                autoPlay
+                                preload="auto"
                                 onLoadStart={handleMediaLoad}
                                 onLoadedMetadata={handleMediaLoad}
                             />

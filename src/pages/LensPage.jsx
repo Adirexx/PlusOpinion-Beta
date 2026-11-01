@@ -119,6 +119,22 @@ const ExploreProfilesLayer = ({ onClose }) => {
   );
 };
 
+
+const handleProductImgError = (e) => {
+  const cur = e.currentTarget.src;
+  if (e.currentTarget.dataset.retried) return;
+  const SUPABASE = 'https://ogqyemyrxogpnwitumsr.supabase.co';
+  const PROXY = 'https://plusopinion.com/supabase-api';
+  let fb = null;
+  if (cur.includes('/supabase-api')) {
+    const path = cur.slice(cur.indexOf('/supabase-api') + '/supabase-api'.length);
+    fb = SUPABASE + path;
+  } else if (cur.includes(SUPABASE)) {
+    const path = cur.slice(cur.indexOf(SUPABASE) + SUPABASE.length);
+    fb = PROXY + path;
+  }
+  if (fb && fb !== cur) { e.currentTarget.dataset.retried = 'true'; e.currentTarget.src = fb; }
+};
 const ExploreProductsLayer = ({ onClose }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -176,10 +192,11 @@ const ExploreProductsLayer = ({ onClose }) => {
                 >
                   <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#0B1221] border border-white/5 group-hover:border-white/20 transition-colors duration-300">
                     <img
-                      src={product.image}
+                      src={rewriteMediaUrl(product.image)}
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
                       alt={product.name}
                       loading="lazy"
+                      onError={handleProductImgError}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
                     <div className="absolute bottom-2.5 left-2.5 right-2.5">
@@ -417,15 +434,15 @@ const LensPage = () => {
       id: post.id,
       name: post.profiles?.full_name || 'User',
       username: post.profiles?.username || 'user',
-      avatar: post.profiles?.avatar_url || "",
+      avatar: rewriteMediaUrl(post.profiles?.avatar_url || ""),
       rqs: post.profiles?.rqs_score || 0,
       verified: (post.is_verified_purchase === true) || (post.is_verified_purchase === null && !!post.media_url) || post.profiles?.is_verified,
       category: post.category,
       product: post.product_name,
       text: post.text_content,
-      media: post.media_url,
+      media: rewriteMediaUrl(post.media_url),
       media_type: post.media_type || 'image',
-      images: post.images || null,
+      images: Array.isArray(post.images) ? post.images.map(img => rewriteMediaUrl(img)) : post.images,
       time: formatTimeAgo(post.created_at),
       agrees: post.agrees_count || 0,
       comments: post.comments_count || 0,
@@ -596,7 +613,7 @@ const LensPage = () => {
                     onClick={() => { vibrate(5); setSearchQuery(product.name); }}
                   >
                     <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#0B1221] border border-white/5 group-hover:border-white/20 transition-colors duration-300">
-                      <img src={product.image} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out" alt={product.name} loading="lazy" />
+                      <img src={rewriteMediaUrl(product.image)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out" alt={product.name} loading="lazy" onError={handleProductImgError} />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
                       <div className="absolute bottom-2 left-2 right-2">
                         <p className="text-[9px] text-neon font-bold uppercase mb-0.5 tracking-wider truncate">{product.brand}</p>
