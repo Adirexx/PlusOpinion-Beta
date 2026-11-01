@@ -21,6 +21,30 @@ function formatTime(dateStr) {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+// Proxy ↔ direct Supabase swap — same pattern used throughout the codebase
+const SUPABASE = 'https://ogqyemyrxogpnwitumsr.supabase.co'
+const PROXY = 'https://plusopinion.com/supabase-api'
+
+function handleAvatarImgError(e, DEFAULT_AVATAR) {
+    const cur = e.currentTarget.src
+    if (e.currentTarget.dataset.retried) {
+        e.currentTarget.src = DEFAULT_AVATAR
+        return
+    }
+    let fallback = null
+    if (cur.includes('/supabase-api')) {
+        fallback = SUPABASE + cur.slice(cur.indexOf('/supabase-api') + '/supabase-api'.length)
+    } else if (cur.includes(SUPABASE)) {
+        fallback = PROXY + cur.slice(cur.indexOf(SUPABASE) + SUPABASE.length)
+    }
+    if (fallback && fallback !== cur) {
+        e.currentTarget.dataset.retried = 'true'
+        e.currentTarget.src = fallback
+    } else {
+        e.currentTarget.src = DEFAULT_AVATAR
+    }
+}
+
 export default function ConversationRow({ conv, onClick, onLongPressStart, onLongPressEnd }) {
     const { DEFAULT_AVATAR, escHtml, closeInbox } = useInbox()
     const navigate = useNavigate()
@@ -50,7 +74,7 @@ export default function ConversationRow({ conv, onClick, onLongPressStart, onLon
                 src={conv.otherAvatar || DEFAULT_AVATAR}
                 alt=""
                 onClick={handleAvatarClick}
-                onError={(e) => { e.target.src = DEFAULT_AVATAR }}
+                onError={(e) => handleAvatarImgError(e, DEFAULT_AVATAR)}
             />
             <div className="inbox-conv-info">
                 <div className="inbox-conv-name-wrapper">

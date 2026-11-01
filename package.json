@@ -11,7 +11,7 @@
     "cap:sync": "npx cap sync android",
     "cap:build": "vite build && npx cap sync android",
     "cap:open": "npx cap open android",
-    "clean:android": "rm -rf android/app/build android/.gradle node_modules/@capacitor/*/android/build node_modules/@capacitor/*/android/.gradle"
+    "clean:android": "find node_modules/@capacitor -name build -type d -prune -exec rm -rf {} + && find node_modules/@capacitor -name .gradle -type d -prune -exec rm -rf {} + && rm -rf android/app/build android/build android/.gradle android/capacitor-cordova-android-plugins/build"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

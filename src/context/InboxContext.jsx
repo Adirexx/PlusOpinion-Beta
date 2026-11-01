@@ -1009,7 +1009,13 @@ export function InboxProvider({ children }) {
         const recentConvs = conversations.slice(0, 5)
         const { data: people } = await inboxApi.discoverPeople(user.id)
 
-        const result = { recentConvs, people: people || [] }
+        // Rewrite avatar URLs for discoverPeople results (needed for Capacitor native)
+        const peopleWithAvatars = (people || []).map(p => ({
+            ...p,
+            avatar_url: rewriteMediaUrl(p.avatar_url)
+        }))
+
+        const result = { recentConvs, people: peopleWithAvatars }
         setSearchDefault(result)
         setCached(cacheKey, result)
         setLoadingSearch(false)
