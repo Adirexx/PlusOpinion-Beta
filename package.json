@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "cap:sync": "npx cap sync android",
     "cap:build": "vite build && npx cap sync android",
-    "cap:open": "npx cap open android"
+    "cap:open": "npx cap open android",
+    "clean:android": "rm -rf android/app/build android/.gradle node_modules/@capacitor/*/android/build node_modules/@capacitor/*/android/.gradle"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
