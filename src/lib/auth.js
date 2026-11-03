@@ -529,4 +529,65 @@ export async function signInWithProvider(provider) {
   }
 }
 
+// ── Native Google Sign-In (Capacitor only) ────────────────────────
+// Uses @codetrix-studio/capacitor-google-auth which invokes the REAL
+// native Android Google Sign-In SDK (play-services-auth).
+// This shows the native Google account picker bottom sheet — exactly
+// like Instagram, Twitter, Pinterest — no browser redirect at all.
+//
+// Flow:
+//   1. GoogleAuth.signIn() → native Android account picker appears
+//   2. User selects Google account (stays fully inside the app)
+//   3. Plugin returns a Google ID token
+//   4. supabase.auth.signInWithIdToken() exchanges it for a session
+//   5. onAuthStateChange fires → AuthContext picks up user automatically
+//
+// onSuccess(session) and onError(err) are callbacks used by Login.jsx.
+export async function signInWithGoogleNative(onSuccess, onError) {
+  try {
+    const { Capacitor } = await import('@capacitor/core')
+    if (!Capacitor.isNativePlatform()) {
+      throw new Error('signInWithGoogleNative() called on non-native platform')
+    }
+
+    const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+
+    // Initialize with the Web Client ID — no google-services.json needed
+    await GoogleAuth.initialize({
+      clientId: GOOGLE_CLIENT_ID,
+      scopes: ['profile', 'email'],
+      grantOfflineAccess: false
+    })
+
+    // Triggers the NATIVE Android Google account picker bottom sheet
+    const googleUser = await GoogleAuth.signIn()
+
+    const idToken = googleUser?.authentication?.idToken
+    if (!idToken) throw new Error('No ID token returned from Google Sign-In')
+
+    // Exchange Google ID token for a Supabase session
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken
+    })
+
+    if (error) throw error
+    if (!data?.user?.id) throw new Error('No user returned from Supabase')
+
+    console.log('[NativeAuth] ✅ Native Google Sign-In success:', data.user.id)
+    onSuccess?.(data)
+
+  } catch (err) {
+    const msg = String(err?.message || err || '')
+    // User cancelled — don't show error, just close silently
+    if (msg.includes('cancel') || msg.includes('Cancel') || msg.includes('12501') || msg.includes('sign_in_cancelled')) {
+      console.log('[NativeAuth] User cancelled Google Sign-In')
+      onError?.(null)
+      return
+    }
+    console.error('[NativeAuth] signInWithGoogleNative error:', err)
+    onError?.(err)
+  }
+}
+
 console.log('✅ Auth module loaded (OTP flow enabled)')

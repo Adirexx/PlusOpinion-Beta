@@ -39,6 +39,16 @@
                 <data android:scheme="https" android:host="www.plusopinion.com" android:pathPrefix="/post/" />
                 <data android:scheme="https" android:host="www.plusopinion.com" android:pathPrefix="/profile/" />
             </intent-filter>
+
+            <!-- Google OAuth callback — custom URI scheme (no verification needed) -->
+            <!-- Supabase redirects here after Google authentication completes.   -->
+            <!-- @capacitor/app fires appUrlOpen with: plusopinion://callback?code=... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="plusopinion" android:host="callback" />
+            </intent-filter>
         </activity>
 
         <provider

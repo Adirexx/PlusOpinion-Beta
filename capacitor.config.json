@@ -8,6 +8,11 @@
     "cleartext": false
   },
   "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "409858133156-vho68t8ci9mob650b1lokl9drgqr2eih.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": false
+    },
     "SplashScreen": {
       "launchShowDuration": 1500,
       "launchAutoHide": true,

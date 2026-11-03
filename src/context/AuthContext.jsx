@@ -237,23 +237,30 @@ export function AuthProvider({ children }) {
       }
     )
 
-    // Init GIS on mount — handles Google One Tap
-    initGoogleIdentityServices(async (response) => {
-      try {
-        const { user: gUser, isComplete } = await handleGoogleSignIn(response)
-        if (!isComplete) {
-          await autoAcceptTerms(gUser.id)
-          setNeedsOnboarding(true)
-          window.dispatchEvent(new CustomEvent('auth:profileSetupRequired', {
-            detail: { user: gUser }
-          }))
+    // Init GIS on mount — only on web (not on native Capacitor)
+    // On native, Google Sign-In goes through signInWithGoogleNative() which
+    // uses @capacitor/browser + PKCE. GIS iframes break on native due to
+    // origin_mismatch (WebView reports origin=https://localhost).
+    const isNative = (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) ||
+                     (typeof window !== 'undefined' && window.Capacitor?.platform !== 'web')
+    if (!isNative) {
+      initGoogleIdentityServices(async (response) => {
+        try {
+          const { user: gUser, isComplete } = await handleGoogleSignIn(response)
+          if (!isComplete) {
+            await autoAcceptTerms(gUser.id)
+            setNeedsOnboarding(true)
+            window.dispatchEvent(new CustomEvent('auth:profileSetupRequired', {
+              detail: { user: gUser }
+            }))
+          }
+          // If complete, onAuthStateChange SIGNED_IN fires → sets user/profile
+        } catch (err) {
+          console.error('[Auth] Google Sign-In Error:', err)
+          window.dispatchEvent(new CustomEvent('auth:error', { detail: { error: err.message } }))
         }
-        // If complete, onAuthStateChange SIGNED_IN fires → sets user/profile
-      } catch (err) {
-        console.error('[Auth] Google Sign-In Error:', err)
-        window.dispatchEvent(new CustomEvent('auth:error', { detail: { error: err.message } }))
-      }
-    })
+      })
+    }
 
     // ── App resume: refresh session after backgrounding ──────────
     // On Android, the app may be backgrounded for hours. When it resumes,
