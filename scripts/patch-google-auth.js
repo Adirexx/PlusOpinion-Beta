@@ -86,3 +86,4 @@ try {
   console.error('[patch-google-auth] Error:', err.message);
   process.exit(1);
 }
+

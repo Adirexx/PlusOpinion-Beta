@@ -11,7 +11,7 @@
     "cap:sync": "npx cap sync android",
     "cap:build": "vite build && npx cap sync android",
     "cap:open": "npx cap open android",
-    "clean:android": "find node_modules/@capacitor -name build -type d -prune -exec rm -rf {} + && find node_modules/@capacitor -name .gradle -type d -prune -exec rm -rf {} + && rm -rf android/app/build android/build android/.gradle android/capacitor-cordova-android-plugins/build",
+    "clean:android": "rm -rf node_modules/@capacitor/*/android/build node_modules/@codetrix-studio/*/android/build node_modules/@capacitor/android/capacitor/build android/app/build android/build android/.gradle android/capacitor-cordova-android-plugins/build && find . -name '* 2.*' -delete 2>/dev/null && find . -name '* 3.*' -delete 2>/dev/null",
     "postinstall": "node scripts/patch-google-auth.js"
   },
   "dependencies": {
